@@ -123,35 +123,22 @@ const UpcomingExams: React.FC<UpcomingExamsProps> = ({ exams }) => {
 
                             {/* Participants */}
                             {exam.max_participants && (
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-2 text-sm text-tg-hint">
-                                        <Users size={14} />
-                                        <span>
-                                            {exam.current_participants} / {exam.max_participants} registered
-                                        </span>
-                                    </div>
+                                <div className="flex items-center gap-2 text-sm text-tg-hint">
+                                    <Users size={14} />
+                                    <span>
+                                        {exam.current_participants} / {exam.max_participants} registered
+                                    </span>
                                     {isFull && (
-                                        <span className="text-xs text-red-500 font-medium">Full</span>
+                                        <span className="text-xs text-red-500 font-medium ml-auto">Full</span>
                                     )}
                                 </div>
                             )}
 
                             {/* Time Until */}
-                            <div className="flex items-center justify-between pt-2 border-t border-tg-hint/10">
-                                <span className="text-xs font-medium text-tg-button">
+                            <div className="pt-2 border-t border-tg-hint/10">
+                                <span className="text-sm font-medium text-tg-button">
                                     {getTimeUntil(exam.scheduled_date)}
                                 </span>
-                                <button
-                                    disabled={!!isFull}
-                                    className={cn(
-                                        "px-4 py-2 rounded-lg text-sm font-medium transition-all",
-                                        isFull
-                                            ? "bg-gray-500/20 text-gray-500 cursor-not-allowed"
-                                            : "bg-tg-button text-tg-button-text hover:opacity-90"
-                                    )}
-                                >
-                                    {isFull ? 'Full' : 'Register'}
-                                </button>
                             </div>
 
                             {/* Duration */}

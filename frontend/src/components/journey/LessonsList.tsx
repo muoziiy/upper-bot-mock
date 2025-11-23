@@ -129,33 +129,10 @@ const LessonsList: React.FC<LessonsListProps> = ({ lessons }) => {
                                                     ))}
                                                 </div>
                                             </div>
-                                        )}
-
-                                        {lesson.progress?.completion_date && (
-                                            <p className="text-xs text-green-500">
-                                                ✓ Completed on {new Date(lesson.progress.completion_date).toLocaleDateString()}
-                                            </p>
-                                        )}
-
-                                        <button
-                                            className={cn(
-                                                "w-full py-2 px-4 rounded-lg font-medium transition-all",
-                                                isCompleted
-                                                    ? "bg-tg-button/20 text-tg-button hover:bg-tg-button/30"
-                                                    : "bg-tg-button text-tg-button-text hover:opacity-90"
-                                            )}
-                                        >
-                                            {isCompleted ? 'Review Lesson' : 'Start Lesson'}
-                                        </button>
-                                    </div>
-                                </motion.div>
-                            )}
-                        </AnimatePresence>
-                    </motion.div>
-                );
+                                        );
             })}
-        </div>
-    );
+                                    </div>
+                                    );
 };
 
-export default LessonsList;
+                                    export default LessonsList;
