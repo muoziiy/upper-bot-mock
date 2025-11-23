@@ -5,6 +5,8 @@ import authRoutes from './routes/auth';
 import studentRoutes from './routes/students';
 import teacherRoutes from './routes/teachers';
 import adminRoutes from './routes/admin';
+import dashboardRoutes from './routes/dashboard';
+import streakRoutes from './routes/streak';
 import bot from './bot';
 
 dotenv.config();
@@ -17,6 +19,8 @@ app.use(express.json());
 
 app.use('/api/auth', authRoutes);
 app.use('/api/students', studentRoutes);
+app.use('/api/students', dashboardRoutes);
+app.use('/api/students', streakRoutes);
 app.use('/api/teachers', teacherRoutes);
 app.use('/api/admin', adminRoutes);
 
