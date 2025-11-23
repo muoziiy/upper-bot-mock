@@ -8,6 +8,7 @@ import adminRoutes from './routes/admin';
 import dashboardRoutes from './routes/dashboard';
 import streakRoutes from './routes/streak';
 import achievementsRoutes from './routes/achievements';
+import leaderboardRoutes from './routes/leaderboard';
 import bot from './bot';
 
 dotenv.config();
@@ -23,6 +24,7 @@ app.use('/api/students', studentRoutes);
 app.use('/api/students', dashboardRoutes);
 app.use('/api/students', streakRoutes);
 app.use('/api/students', achievementsRoutes);
+app.use('/api/leaderboard', leaderboardRoutes);
 app.use('/api/teachers', teacherRoutes);
 app.use('/api/admin', adminRoutes);
 

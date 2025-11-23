@@ -4,48 +4,41 @@ import { TelegramProvider, useTelegram } from './context/TelegramContext';
 import StudentDashboard from './pages/StudentDashboard';
 import TeacherDashboard from './pages/TeacherDashboard';
 import AdminDashboard from './pages/AdminDashboard';
-
-const AppContent: React.FC = () => {
-  const { user } = useTelegram();
-  const [role, setRole] = useState<string>('guest');
-
-  useEffect(() => {
-    // Mock role fetching based on user ID
-    // In real app, fetch from backend
-    if (user) {
-      // For demo, we default to student. 
-      // You can change this to 'teacher' or 'admin' to test other views.
-      setRole('student');
-    }
-  }, [user]);
-
-  if (!user) {
-    return <div className="p-4 text-center">Loading Telegram Data...</div>;
-  }
-
-  return (
-    <Routes>
-      <Route path="/" element={
-        role === 'student' ? <Navigate to="/student" /> :
-          role === 'teacher' ? <Navigate to="/teacher" /> :
-            role === 'admin' ? <Navigate to="/admin" /> :
-              <div className="p-4">Welcome Guest! Please register.</div>
-      } />
-      <Route path="/student" element={<StudentDashboard />} />
-      <Route path="/teacher" element={<TeacherDashboard />} />
-      <Route path="/admin" element={<AdminDashboard />} />
-    </Routes>
-  );
-};
+import Leaderboard from './pages/Leaderboard';
 
 function App() {
   return (
     <TelegramProvider>
-      <Router>
-        <AppContent />
-      </Router>
+      <AppContent />
     </TelegramProvider>
   );
 }
+
+const AppContent: React.FC = () => {
+  const { user } = useTelegram();
+  const [role, setRole] = useState<string>('student');
+
+  useEffect(() => {
+    if (user) {
+      setRole('student'); // Default to student
+    }
+  }, [user]);
+
+  if (!user) {
+    return <div className="flex min-h-screen items-center justify-center bg-tg-secondary text-tg-text">Loading...</div>;
+  }
+
+  return (
+    <Router>
+      <Routes>
+        <Route path="/" element={<Navigate to="/student" replace />} />
+        <Route path="/student" element={<StudentDashboard />} />
+        <Route path="/student/leaderboard" element={<Leaderboard />} />
+        <Route path="/teacher" element={<TeacherDashboard />} />
+        <Route path="/admin" element={<AdminDashboard />} />
+      </Routes>
+    </Router>
+  );
+};
 
 export default App;
