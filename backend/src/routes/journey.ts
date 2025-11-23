@@ -85,21 +85,43 @@ router.get('/journey', async (req: Request, res: Response) => {
             }
         }
 
-        // Fetch upcoming exam schedules with exam details
-        const { data: upcomingExamSchedules } = await supabase
+        // Fetch upcoming exam schedules with exam details (filtered by user's groups)
+        // First get user's groups
+        const { data: userGroups } = await supabase
+            .from('group_members')
+            .select('group_id')
+            .eq('student_id', user.id);
+
+        const groupIds = userGroups?.map((g: any) => g.group_id) || [];
+
+        // Fetch exam schedules
+        // Include global exams (group_id IS NULL) and exams for user's groups
+        let examScheduleQuery = supabase
             .from('exam_schedule')
             .select(`
                 *,
                 exams:exam_id (
                     title,
                     description,
-                    duration_minutes
+                    duration_minutes,
+                    group_id
                 )
             `)
             .eq('is_cancelled', false)
             .gte('scheduled_date', new Date().toISOString())
             .order('scheduled_date', { ascending: true })
             .limit(10);
+
+        const { data: allExamSchedules } = await examScheduleQuery;
+
+        // Filter to only include exams that are global or for user's groups
+        const upcomingExamSchedules = allExamSchedules?.filter((schedule: any) => {
+            const exam = schedule.exams;
+            if (!exam) return false;
+
+            // Include if exam is global (no group_id) or if user is in the exam's group
+            return exam.group_id === null || groupIds.includes(exam.group_id);
+        }) || [];
 
         res.json({
             userLevel: userLevel || {
