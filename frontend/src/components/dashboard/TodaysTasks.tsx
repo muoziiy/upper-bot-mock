@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Calendar, Clock } from 'lucide-react';
+import ExamInfoModal from './ExamInfoModal';
 
 interface Exam {
     id: string;
@@ -15,7 +16,9 @@ interface TodaysTasksProps {
     upcomingExams: Exam[];
 }
 
-const TodaysTasksProps: React.FC<TodaysTasksProps> = ({ upcomingExams }) => {
+const TodaysTasks: React.FC<TodaysTasksProps> = ({ upcomingExams }) => {
+    const [selectedExam, setSelectedExam] = useState<Exam | null>(null);
+
     const formatDate = (dateString: string) => {
         const date = new Date(dateString);
         const today = new Date();
@@ -48,6 +51,8 @@ const TodaysTasksProps: React.FC<TodaysTasksProps> = ({ upcomingExams }) => {
 
     return (
         <div className="space-y-2">
+            <ExamInfoModal exam={selectedExam} onClose={() => setSelectedExam(null)} />
+
             {upcomingExams.map((exam) => (
                 <Card key={exam.id} className="flex items-center justify-between">
                     <div className="flex-1">
@@ -63,8 +68,12 @@ const TodaysTasksProps: React.FC<TodaysTasksProps> = ({ upcomingExams }) => {
                             </span>
                         </div>
                     </div>
-                    <Button size="sm" className="ml-4 shrink-0">
-                        View
+                    <Button
+                        size="sm"
+                        className="ml-4 shrink-0"
+                        onClick={() => setSelectedExam(exam)}
+                    >
+                        More Info
                     </Button>
                 </Card>
             ))}
@@ -72,4 +81,5 @@ const TodaysTasksProps: React.FC<TodaysTasksProps> = ({ upcomingExams }) => {
     );
 };
 
-export default TodaysTasksProps;
+export default TodaysTasks;
+
