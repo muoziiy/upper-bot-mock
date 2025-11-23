@@ -3,7 +3,6 @@ import { useAppData } from '../context/AppDataContext';
 import { Section } from '../components/ui/Section';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
-import BottomNav from '../components/BottomNav';
 import { motion } from 'framer-motion';
 import { Trophy, Flame, BookOpen, Award, Settings } from 'lucide-react';
 
@@ -105,8 +104,6 @@ const Profile: React.FC = () => {
                     </Card>
                 </Section>
             </motion.div>
-
-            <BottomNav />
         </div>
     );
 };

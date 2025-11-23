@@ -1,7 +1,6 @@
 import React from 'react';
 import { useAppData } from '../context/AppDataContext';
 import { Section } from '../components/ui/Section';
-import BottomNav from '../components/BottomNav';
 import LevelCard from '../components/journey/LevelCard';
 import LessonsList from '../components/journey/LessonsList';
 import UpcomingExams from '../components/journey/UpcomingExams';
@@ -53,8 +52,6 @@ const Journey: React.FC = () => {
                     <UpcomingExams exams={journeyData.upcomingExams} />
                 </Section>
             </motion.div>
-
-            <BottomNav />
         </div>
     );
 };

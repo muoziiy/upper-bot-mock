@@ -1,7 +1,6 @@
 import React from 'react';
 import { useAppData } from '../context/AppDataContext';
 import { Section } from '../components/ui/Section';
-import BottomNav from '../components/BottomNav';
 import StreakCard from '../components/dashboard/StreakCard';
 import QuickStats from '../components/dashboard/QuickStats';
 import TodaysTasks from '../components/dashboard/TodaysTasks';
@@ -50,8 +49,6 @@ const StudentDashboard: React.FC = () => {
                     <TodaysTasks upcomingExams={dashboardData?.upcoming_exams || []} />
                 </Section>
             </motion.div>
-
-            <BottomNav />
         </div>
     );
 };

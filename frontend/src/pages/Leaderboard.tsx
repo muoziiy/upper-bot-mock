@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { useAppData } from '../context/AppDataContext';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
-import BottomNav from '../components/BottomNav';
 import { motion } from 'framer-motion';
 import { Trophy, Medal, Award } from 'lucide-react';
 
@@ -110,8 +109,6 @@ const Leaderboard: React.FC = () => {
                     </Card>
                 )}
             </motion.div>
-
-            <BottomNav />
         </div>
     );
 };

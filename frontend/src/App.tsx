@@ -23,6 +23,8 @@ function App() {
 
 
 
+import BottomNav from './components/BottomNav';
+
 const AppContent: React.FC = () => {
   const { user } = useTelegram();
   const { loading } = useAppData();
@@ -44,6 +46,7 @@ const AppContent: React.FC = () => {
   return (
     <div className="w-full">
       {element}
+      <BottomNav />
     </div>
   );
 };

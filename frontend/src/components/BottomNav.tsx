@@ -30,14 +30,15 @@ const BottomNav: React.FC = () => {
                             onClick={() => navigate(tab.path)}
                             className={cn(
                                 "relative z-10 flex flex-1 items-center justify-center gap-1.5 rounded-full py-2.5 px-2 min-w-0 transition-colors duration-200",
-                                isActive ? "text-tg-button-text" : "text-tg-hint"
+                                isActive ? "font-medium" : "text-tg-hint"
                             )}
+                            style={isActive ? { color: themeColor } : {}}
                         >
                             {isActive && (
                                 <motion.div
                                     layoutId="activeNavPill"
                                     className="absolute inset-0 backdrop-blur-xl rounded-full border border-white/20 shadow-2xl"
-                                    style={{ backgroundColor: `${themeColor}4D` }}
+                                    style={{ backgroundColor: `${themeColor}33` }} // 20% opacity (approx 33 in hex)
                                     transition={{
                                         type: "spring",
                                         stiffness: 380,
