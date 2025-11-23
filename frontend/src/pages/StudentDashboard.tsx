@@ -1,107 +1,105 @@
+```
 import React, { useEffect, useState } from 'react';
 import { useTelegram } from '../context/TelegramContext';
 import { Section } from '../components/ui/Section';
-import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import BottomNav from '../components/BottomNav';
+import StreakCard from '../components/dashboard/StreakCard';
+import QuickStats from '../components/dashboard/QuickStats';
+import TodaysTasks from '../components/dashboard/TodaysTasks';
 import { motion } from 'framer-motion';
-import { Trophy, Clock, ChevronRight } from 'lucide-react';
+
+interface DashboardData {
+  user: {
+    id: string;
+    first_name: string;
+    role: string;
+  };
+  streak: {
+    current_streak: number;
+    longest_streak: number;
+    total_active_days: number;
+  };
+  total_stats: {
+    total_study_minutes: number;
+    total_tests: number;
+    total_questions: number;
+  };
+  average_score: number;
+  upcoming_exams: any[];
+}
 
 const StudentDashboard: React.FC = () => {
-    const { user } = useTelegram();
-    const [exams, setExams] = useState<any[]>([]);
+  const { user } = useTelegram();
+  const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
+  const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        const fetchExams = async () => {
-            if (user?.id) {
-                try {
-                    const res = await fetch(`${import.meta.env.VITE_API_URL}/students/exams`, {
-                        headers: { 'x-user-id': user.id.toString() }
-                    });
-                    if (res.ok) {
-                        const data = await res.json();
-                        setExams(data);
-                    }
-                } catch (e) {
-                    console.error("Failed to fetch exams", e);
-                }
-            }
-        };
-        fetchExams();
-    }, [user]);
+  useEffect(() => {
+    const fetchDashboard = async () => {
+      if (user?.id) {
+        try {
+          const res = await fetch(`${ import.meta.env.VITE_API_URL } /students/dashboard`, {
+            headers: { 'x-user-id': user.id.toString() }
+          });
+          if (res.ok) {
+            const data = await res.json();
+            setDashboardData(data);
+          }
+        } catch (e) {
+          console.error("Failed to fetch dashboard", e);
+        } finally {
+          setLoading(false);
+        }
+      }
+    };
+    fetchDashboard();
+  }, [user]);
 
+  if (loading) {
     return (
-        <div className="min-h-screen bg-tg-secondary pb-24 pt-4 text-tg-text">
-            <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="px-4"
-            >
-                <header className="mb-6">
-                    <h1 className="text-3xl font-bold">Hello, {user?.first_name} 👋</h1>
-                    <p className="text-tg-hint">Ready to learn something new today?</p>
-                </header>
-
-                <Section title="Your Stats">
-                    <div className="grid grid-cols-2 gap-4">
-                        <Card className="flex flex-col items-center justify-center p-4">
-                            <Trophy className="mb-2 h-8 w-8 text-yellow-500" />
-                            <span className="text-2xl font-bold">1,250</span>
-                            <span className="text-xs text-tg-hint">Total Points</span>
-                        </Card>
-                        <Card className="flex flex-col items-center justify-center p-4">
-                            <Clock className="mb-2 h-8 w-8 text-blue-500" />
-                            <span className="text-2xl font-bold">12</span>
-                            <span className="text-xs text-tg-hint">Exams Taken</span>
-                        </Card>
-                    </div>
-                </Section>
-
-                <Section title="Available Exams" action={<Button variant="ghost" size="sm">See All</Button>}>
-                    {exams.length === 0 ? (
-                        <Card className="flex flex-col items-center py-8 text-center">
-                            <p className="text-tg-hint">No exams available right now.</p>
-                            <Button variant="secondary" className="mt-4">Refresh</Button>
-                        </Card>
-                    ) : (
-                        exams.map((exam: any) => (
-                            <Card key={exam.id} className="flex items-center justify-between active:scale-[0.98] transition-transform">
-                                <div>
-                                    <h3 className="font-bold">{exam.title}</h3>
-                                    <p className="text-sm text-tg-hint line-clamp-1">{exam.description}</p>
-                                </div>
-                                <Button size="sm" className="ml-4 shrink-0">
-                                    Start
-                                </Button>
-                            </Card>
-                        ))
-                    )}
-                </Section>
-
-                <Section title="Recent Activity">
-                    <Card>
-                        <div className="flex items-center justify-between py-2">
-                            <div className="flex items-center gap-3">
-                                <div className="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center text-green-600">
-                                    <Trophy size={20} />
-                                </div>
-                                <div>
-                                    <p className="font-medium">Mathematics Final</p>
-                                    <p className="text-xs text-tg-hint">Yesterday</p>
-                                </div>
-                            </div>
-                            <div className="text-right">
-                                <p className="font-bold text-green-500">95%</p>
-                                <ChevronRight size={16} className="ml-auto text-tg-hint" />
-                            </div>
-                        </div>
-                    </Card>
-                </Section>
-            </motion.div>
-
-            <BottomNav />
-        </div>
+      <div className="flex min-h-screen items-center justify-center bg-tg-secondary text-tg-text">
+        <p>Loading...</p>
+      </div>
     );
+  }
+
+  return (
+    <div className="min-h-screen bg-tg-secondary pb-24 pt-4 text-tg-text">
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="px-4"
+      >
+        <header className="mb-6">
+          <h1 className="text-3xl font-bold">Hello, {dashboardData?.user.first_name || user?.first_name} 👋</h1>
+          <p className="text-tg-hint">Ready to learn something new today?</p>
+        </header>
+
+        <Section title="Your Streak 🔥">
+          <StreakCard
+            currentStreak={dashboardData?.streak.current_streak || 0}
+            longestStreak={dashboardData?.streak.longest_streak || 0}
+            totalActiveDays={dashboardData?.streak.total_active_days || 0}
+          />
+        </Section>
+
+        <Section title="Quick Stats">
+          <QuickStats
+            totalTests={dashboardData?.total_stats.total_tests || 0}
+            totalQuestions={dashboardData?.total_stats.total_questions || 0}
+            averageScore={dashboardData?.average_score || 0}
+          />
+        </Section>
+
+        <Section title="Upcoming Exams">
+          <TodaysTasks upcomingExams={dashboardData?.upcoming_exams || []} />
+        </Section>
+      </motion.div>
+      
+      <BottomNav />
+    </div>
+  );
 };
 
 export default StudentDashboard;
+```
