@@ -12,7 +12,6 @@ const StudentDashboard: React.FC = () => {
     const [exams, setExams] = useState<any[]>([]);
 
     useEffect(() => {
-        // Fetch exams
         const fetchExams = async () => {
             if (user?.id) {
                 try {
@@ -32,7 +31,7 @@ const StudentDashboard: React.FC = () => {
     }, [user]);
 
     return (
-        <div className="min-h-screen bg-tg-bg pb-24 pt-4 text-tg-text">
+        <div className="min-h-screen bg-tg-secondary pb-24 pt-4 text-tg-text">
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
