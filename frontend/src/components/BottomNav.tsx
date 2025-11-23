@@ -3,10 +3,14 @@ import { Home, Trophy, User, Map } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../lib/utils';
+import { useTelegram } from '../context/TelegramContext';
 
 const BottomNav: React.FC = () => {
     const navigate = useNavigate();
     const location = useLocation();
+    const { webApp } = useTelegram();
+
+    const themeColor = webApp.themeParams?.button_color || '#3390ec';
 
     const tabs = [
         { name: 'Home', icon: Home, path: '/student' },
@@ -17,7 +21,7 @@ const BottomNav: React.FC = () => {
 
     return (
         <div className="fixed bottom-4 left-4 right-4 z-50">
-            <div className="relative flex items-center justify-between gap-1 rounded-full bg-tg-secondary/80 backdrop-blur-xl p-1.5 shadow-2xl border border-tg-hint/10">
+            <div className="relative flex items-center justify-between gap-1 rounded-full bg-tg-secondary/80 backdrop-blur-xl p-1.5 shadow-2xl border border-white/10">
                 {tabs.map((tab) => {
                     const isActive = location.pathname === tab.path;
                     return (
@@ -32,7 +36,8 @@ const BottomNav: React.FC = () => {
                             {isActive && (
                                 <motion.div
                                     layoutId="activeNavPill"
-                                    className="absolute inset-0 bg-tg-button/30 backdrop-blur-xl rounded-full border border-tg-hint/20 shadow-2xl"
+                                    className="absolute inset-0 backdrop-blur-xl rounded-full border border-white/20 shadow-2xl"
+                                    style={{ backgroundColor: `${themeColor}4D` }}
                                     transition={{
                                         type: "spring",
                                         stiffness: 380,
