@@ -9,10 +9,7 @@ interface CardProps {
 const Card: React.FC<CardProps> = ({ children, className }) => {
     return (
         <div
-            className={cn(
-                'rounded-xl bg-tg-bg/70 backdrop-blur-md p-4 shadow-sm border border-tg-hint/5',
-                className
-            )}
+            className={cn('rounded-xl bg-tg-button/30 backdrop-blur-xl p-4 border border-tg-hint/20 shadow-2xl', className)}
         >
             {children}
         </div>

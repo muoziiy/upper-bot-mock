@@ -32,7 +32,7 @@ const BottomNav: React.FC = () => {
                             {isActive && (
                                 <motion.div
                                     layoutId="activeNavPill"
-                                    className="absolute inset-0 bg-tg-button/90 backdrop-blur-sm rounded-full shadow-lg"
+                                    className="absolute inset-0 bg-tg-button/30 backdrop-blur-xl rounded-full border border-tg-hint/20 shadow-2xl"
                                     transition={{
                                         type: "spring",
                                         stiffness: 380,
