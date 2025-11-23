@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { TelegramProvider, useTelegram } from './context/TelegramContext';
 import StudentDashboard from './pages/StudentDashboard';
@@ -16,13 +16,6 @@ function App() {
 
 const AppContent: React.FC = () => {
   const { user } = useTelegram();
-  const [role, setRole] = useState<string>('student');
-
-  useEffect(() => {
-    if (user) {
-      setRole('student'); // Default to student
-    }
-  }, [user]);
 
   if (!user) {
     return <div className="flex min-h-screen items-center justify-center bg-tg-secondary text-tg-text">Loading...</div>;
