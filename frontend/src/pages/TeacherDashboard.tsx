@@ -10,7 +10,7 @@ const TeacherDashboard: React.FC = () => {
             <p className="text-tg-hint mb-4">Welcome, {user?.first_name}!</p>
 
             <div className="grid grid-cols-1 gap-4">
-                <div className="bg-tg-secondary p-4 rounded-lg shadow">
+                <div className="bg-tg-secondary p-4 rounded-lg border border-white/5">
                     <h2 className="font-bold text-tg-text">My Groups</h2>
                     <p className="text-tg-hint">Manage your student groups.</p>
                     <button className="mt-2 bg-tg-button text-tg-button-text px-4 py-2 rounded">
@@ -18,7 +18,7 @@ const TeacherDashboard: React.FC = () => {
                     </button>
                 </div>
 
-                <div className="bg-tg-secondary p-4 rounded-lg shadow">
+                <div className="bg-tg-secondary p-4 rounded-lg border border-white/5">
                     <h2 className="font-bold text-tg-text">Create Exam</h2>
                     <p className="text-tg-hint">Create new exams for your groups.</p>
                     <button className="mt-2 bg-tg-button text-tg-button-text px-4 py-2 rounded">

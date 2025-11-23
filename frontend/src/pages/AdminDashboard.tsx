@@ -10,7 +10,7 @@ const AdminDashboard: React.FC = () => {
             <p className="text-tg-hint mb-4">Welcome, {user?.first_name}!</p>
 
             <div className="space-y-4">
-                <div className="bg-tg-secondary p-4 rounded-lg shadow">
+                <div className="bg-tg-secondary p-4 rounded-lg border border-white/5">
                     <h2 className="font-bold text-tg-text">User Management</h2>
                     <button className="mt-2 bg-tg-button text-tg-button-text px-4 py-2 rounded">
                         Manage Users

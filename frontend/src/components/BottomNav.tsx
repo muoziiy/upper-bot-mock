@@ -21,7 +21,7 @@ const BottomNav: React.FC = () => {
 
     return (
         <div className="fixed bottom-4 left-4 right-4 z-50">
-            <div className="relative flex items-center justify-between gap-1 rounded-full bg-tg-secondary/80 backdrop-blur-xl p-1.5 shadow-2xl border border-white/10">
+            <div className="relative flex items-center justify-between gap-1 rounded-full bg-tg-secondary/90 backdrop-blur-xl p-1.5 border border-white/5">
                 {tabs.map((tab) => {
                     const isActive = location.pathname === tab.path;
                     return (
@@ -37,7 +37,7 @@ const BottomNav: React.FC = () => {
                             {isActive && (
                                 <motion.div
                                     layoutId="activeNavPill"
-                                    className="absolute inset-0 backdrop-blur-xl rounded-full border border-white/20 shadow-2xl"
+                                    className="absolute inset-0 backdrop-blur-xl rounded-full border border-white/10"
                                     style={{ backgroundColor: `${themeColor}33` }} // 20% opacity (approx 33 in hex)
                                     transition={{
                                         type: "spring",

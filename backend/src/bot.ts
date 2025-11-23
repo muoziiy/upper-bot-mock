@@ -1,14 +1,17 @@
 import { Telegraf } from 'telegraf';
 import { supabase } from './supabase';
-import dotenv from 'dotenv';
+import { config } from './config';
 
-dotenv.config();
-
-const bot = new Telegraf(process.env.BOT_TOKEN || '');
+const bot = new Telegraf(config.botToken);
 
 // Handle /start command
 bot.start(async (ctx) => {
     const user = ctx.from;
+    // Extract start payload (e.g., /start ref123 -> ref123)
+    // ctx.message is not always present in all updates, but for 'start' command it usually is.
+    // We can use ctx.payload if available (Telegraf 4.x doesn't have it by default on Context type without middleware, but we can parse text)
+    const text = 'text' in ctx.message ? ctx.message.text : '';
+    const startPayload = text.split(' ')[1] || '';
 
     if (!user) {
         return ctx.reply('Unable to identify user.');
@@ -37,6 +40,13 @@ bot.start(async (ctx) => {
             return ctx.reply('Something went wrong. Please try again.');
         }
 
+        // Construct Web App URL with start param if present
+        let webAppUrl = config.miniAppUrl;
+        if (startPayload) {
+            const separator = webAppUrl.includes('?') ? '&' : '?';
+            webAppUrl = `${webAppUrl}${separator}start_param=${startPayload}`;
+        }
+
         // Send welcome message with Mini App button
         await ctx.reply(
             `Welcome, ${user.first_name}! 🎓\n\nClick the button below to open the Education Center app.`,
@@ -46,7 +56,7 @@ bot.start(async (ctx) => {
                         [
                             {
                                 text: '📚 Open Education Center',
-                                web_app: { url: process.env.MINI_APP_URL || 'https://your-frontend-url.com' }
+                                web_app: { url: webAppUrl }
                             }
                         ]
                     ]

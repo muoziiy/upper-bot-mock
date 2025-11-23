@@ -37,11 +37,28 @@ interface AchievementsData {
     };
 }
 
+interface PaymentRecord {
+    id: string;
+    date: string;
+    amount: number;
+    status: 'paid' | 'pending' | 'overdue';
+    description: string;
+}
+
+interface AttendanceRecord {
+    id: string;
+    date: string;
+    status: 'present' | 'absent' | 'late';
+    subject: string;
+}
+
 interface AppDataContextType {
     dashboardData: DashboardData | null;
     leaderboardData: LeaderboardData | null;
     achievementsData: AchievementsData | null;
     journeyData: JourneyData | null;
+    paymentHistory: PaymentRecord[];
+    attendanceHistory: AttendanceRecord[];
     loading: boolean;
     error: string | null;
     refreshData: () => Promise<void>;
@@ -63,6 +80,22 @@ export const AppDataProvider: React.FC<{ children: ReactNode }> = ({ children })
     const [leaderboardData, setLeaderboardData] = useState<LeaderboardData | null>(null);
     const [achievementsData, setAchievementsData] = useState<AchievementsData | null>(null);
     const [journeyData, setJourneyData] = useState<JourneyData | null>(null);
+
+    // Mock Data for History
+    const [paymentHistory] = useState<PaymentRecord[]>([
+        { id: '1', date: '2023-11-01', amount: 150000, status: 'paid', description: 'Monthly Tuition - November' },
+        { id: '2', date: '2023-10-01', amount: 150000, status: 'paid', description: 'Monthly Tuition - October' },
+        { id: '3', date: '2023-09-01', amount: 150000, status: 'paid', description: 'Monthly Tuition - September' },
+    ]);
+
+    const [attendanceHistory] = useState<AttendanceRecord[]>([
+        { id: '1', date: '2023-11-20', status: 'present', subject: 'Mathematics' },
+        { id: '2', date: '2023-11-18', status: 'present', subject: 'Physics' },
+        { id: '3', date: '2023-11-15', status: 'absent', subject: 'Mathematics' },
+        { id: '4', date: '2023-11-13', status: 'late', subject: 'English' },
+        { id: '5', date: '2023-11-10', status: 'present', subject: 'Physics' },
+    ]);
+
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -119,6 +152,8 @@ export const AppDataProvider: React.FC<{ children: ReactNode }> = ({ children })
         leaderboardData,
         achievementsData,
         journeyData,
+        paymentHistory,
+        attendanceHistory,
         loading,
         error,
         refreshData: fetchAllData,
