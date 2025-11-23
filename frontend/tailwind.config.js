@@ -1,14 +1,34 @@
-hint: 'var(--tg-theme-hint-color)',
-    link: 'var(--tg-theme-link-color)',
-        button: 'var(--tg-theme-button-color)',
-            'button-text': 'var(--tg-theme-button-text-color)',
-                secondary: 'var(--tg-theme-secondary-bg-color)',
+/** @type {import('tailwindcss').Config} */
+export default {
+    content: [
+        "./index.html",
+        "./src/**/*.{js,ts,jsx,tsx}",
+    ],
+    safelist: [
+        'bg-tg-bg',
+        'bg-tg-secondary',
+        'text-tg-text',
+        'text-tg-hint',
+        'text-tg-button-text',
+        'bg-tg-button',
+    ],
+    theme: {
+        extend: {
+            colors: {
+                tg: {
+                    bg: 'var(--tg-theme-bg-color)',
+                    text: 'var(--tg-theme-text-color)',
+                    hint: 'var(--tg-theme-hint-color)',
+                    link: 'var(--tg-theme-link-color)',
+                    button: 'var(--tg-theme-button-color)',
+                    'button-text': 'var(--tg-theme-button-text-color)',
+                    secondary: 'var(--tg-theme-secondary-bg-color)',
                     header: 'var(--tg-theme-header-bg-color)',
-                        accent: 'var(--tg-theme-accent-text-color)',
-                            section: 'var(--tg-theme-section-bg-color)',
+                    accent: 'var(--tg-theme-accent-text-color)',
+                    section: 'var(--tg-theme-section-bg-color)',
                 }
             }
         },
     },
-plugins: [],
+    plugins: [],
 }
