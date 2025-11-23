@@ -5,6 +5,7 @@ import authRoutes from './routes/auth';
 import studentRoutes from './routes/students';
 import teacherRoutes from './routes/teachers';
 import adminRoutes from './routes/admin';
+import bot from './bot';
 
 dotenv.config();
 
@@ -25,4 +26,11 @@ app.get('/', (req, res) => {
 
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
+
+    // Start Telegram bot
+    bot.launch().then(() => {
+        console.log('Telegram bot started successfully');
+    }).catch((err) => {
+        console.error('Failed to start Telegram bot:', err);
+    });
 });
