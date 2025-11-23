@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 import { useTelegram } from './TelegramContext';
+import type { JourneyData } from '../types/journey.types';
 
 interface DashboardData {
     user: {
@@ -40,6 +41,7 @@ interface AppDataContextType {
     dashboardData: DashboardData | null;
     leaderboardData: LeaderboardData | null;
     achievementsData: AchievementsData | null;
+    journeyData: JourneyData | null;
     loading: boolean;
     error: string | null;
     refreshData: () => Promise<void>;
@@ -60,6 +62,7 @@ export const AppDataProvider: React.FC<{ children: ReactNode }> = ({ children })
     const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
     const [leaderboardData, setLeaderboardData] = useState<LeaderboardData | null>(null);
     const [achievementsData, setAchievementsData] = useState<AchievementsData | null>(null);
+    const [journeyData, setJourneyData] = useState<JourneyData | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -73,10 +76,11 @@ export const AppDataProvider: React.FC<{ children: ReactNode }> = ({ children })
             const apiUrl = import.meta.env.VITE_API_URL;
             const headers = { 'x-user-id': user.id.toString() };
 
-            const [dashboardRes, leaderboardRes, achievementsRes] = await Promise.all([
+            const [dashboardRes, leaderboardRes, achievementsRes, journeyRes] = await Promise.all([
                 fetch(`${apiUrl}/students/dashboard`, { headers }),
                 fetch(`${apiUrl}/leaderboard?category=global&period=all-time&limit=50`, { headers }),
                 fetch(`${apiUrl}/students/achievements`, { headers }),
+                fetch(`${apiUrl}/students/journey`, { headers }),
             ]);
 
             if (dashboardRes.ok) {
@@ -92,6 +96,11 @@ export const AppDataProvider: React.FC<{ children: ReactNode }> = ({ children })
             if (achievementsRes.ok) {
                 const data = await achievementsRes.json();
                 setAchievementsData(data);
+            }
+
+            if (journeyRes.ok) {
+                const data = await journeyRes.json();
+                setJourneyData(data);
             }
         } catch (err) {
             console.error('Failed to fetch app data:', err);
@@ -109,6 +118,7 @@ export const AppDataProvider: React.FC<{ children: ReactNode }> = ({ children })
         dashboardData,
         leaderboardData,
         achievementsData,
+        journeyData,
         loading,
         error,
         refreshData: fetchAllData,

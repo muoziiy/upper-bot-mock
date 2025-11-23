@@ -1,5 +1,5 @@
 import React from 'react';
-import { Home, Trophy, User } from 'lucide-react';
+import { Home, Trophy, User, Map } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../lib/utils';
@@ -10,17 +10,14 @@ const BottomNav: React.FC = () => {
 
     const tabs = [
         { name: 'Home', icon: Home, path: '/student' },
+        { name: 'Journey', icon: Map, path: '/student/journey' },
         { name: 'Leaderboard', icon: Trophy, path: '/student/leaderboard' },
         { name: 'Profile', icon: User, path: '/student/profile' },
     ];
 
     return (
         <div className="fixed bottom-4 left-4 right-4 z-50">
-            <motion.div
-                initial={{ y: 100, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                className="flex items-center justify-between gap-2 rounded-full bg-tg-bg/95 p-2 shadow-lg backdrop-blur-sm border border-tg-hint/10"
-            >
+            <div className="flex items-center justify-between gap-1.5 rounded-full bg-tg-bg/95 p-1.5 shadow-lg backdrop-blur-md border border-tg-hint/5">
                 {tabs.map((tab) => {
                     const isActive = location.pathname === tab.path;
                     return (
@@ -28,49 +25,59 @@ const BottomNav: React.FC = () => {
                             key={tab.name}
                             onClick={() => navigate(tab.path)}
                             className={cn(
-                                "relative flex flex-1 items-center justify-center gap-2 rounded-full py-3 px-4 overflow-hidden",
+                                "relative flex flex-1 items-center justify-center gap-2 rounded-full py-2.5 px-3 overflow-hidden",
                                 isActive ? "text-tg-button-text" : "text-tg-hint"
                             )}
-                            whileTap={{ scale: 0.95 }}
-                            transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                            whileTap={{ scale: 0.92 }}
+                            transition={{ duration: 0.1 }}
                         >
                             {isActive && (
                                 <motion.div
-                                    layoutId="activeTab"
-                                    className="absolute inset-0 bg-tg-button rounded-full shadow-md"
-                                    transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                                    layoutId="navPill"
+                                    className="absolute inset-0 bg-tg-button rounded-full"
+                                    transition={{
+                                        type: "spring",
+                                        stiffness: 400,
+                                        damping: 30,
+                                        mass: 0.8
+                                    }}
                                 />
                             )}
 
                             <motion.div
-                                className="relative z-10"
+                                className="relative z-10 flex items-center gap-1.5"
                                 animate={{
-                                    scale: isActive ? 1.1 : 1,
-                                    rotate: isActive ? [0, -10, 10, 0] : 0
+                                    scale: isActive ? 1 : 0.9,
                                 }}
-                                transition={{ type: "spring", stiffness: 400, damping: 10 }}
+                                transition={{
+                                    type: "spring",
+                                    stiffness: 500,
+                                    damping: 25
+                                }}
                             >
-                                <tab.icon size={20} />
-                            </motion.div>
+                                <tab.icon size={18} strokeWidth={2.5} />
 
-                            <AnimatePresence mode="wait">
-                                {isActive && (
-                                    <motion.span
-                                        key="label"
-                                        initial={{ opacity: 0, width: 0 }}
-                                        animate={{ opacity: 1, width: "auto" }}
-                                        exit={{ opacity: 0, width: 0 }}
-                                        transition={{ duration: 0.2 }}
-                                        className="relative z-10 text-sm font-medium whitespace-nowrap"
-                                    >
-                                        {tab.name}
-                                    </motion.span>
-                                )}
-                            </AnimatePresence>
+                                <AnimatePresence mode="wait">
+                                    {isActive && (
+                                        <motion.span
+                                            initial={{ opacity: 0, scale: 0.8, width: 0 }}
+                                            animate={{ opacity: 1, scale: 1, width: "auto" }}
+                                            exit={{ opacity: 0, scale: 0.8, width: 0 }}
+                                            transition={{
+                                                duration: 0.2,
+                                                ease: [0.4, 0.0, 0.2, 1]
+                                            }}
+                                            className="text-xs font-semibold whitespace-nowrap"
+                                        >
+                                            {tab.name}
+                                        </motion.span>
+                                    )}
+                                </AnimatePresence>
+                            </motion.div>
                         </motion.button>
                     );
                 })}
-            </motion.div>
+            </div>
         </div>
     );
 };

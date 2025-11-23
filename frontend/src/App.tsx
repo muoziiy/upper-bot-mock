@@ -7,6 +7,7 @@ import TeacherDashboard from './pages/TeacherDashboard';
 import AdminDashboard from './pages/AdminDashboard';
 import Leaderboard from './pages/Leaderboard';
 import Profile from './pages/Profile';
+import Journey from './pages/Journey';
 
 function App() {
   return (
@@ -30,6 +31,7 @@ const AppContent: React.FC = () => {
       <Routes>
         <Route path="/" element={<Navigate to="/student" replace />} />
         <Route path="/student" element={<StudentDashboard />} />
+        <Route path="/student/journey" element={<Journey />} />
         <Route path="/student/leaderboard" element={<Leaderboard />} />
         <Route path="/student/profile" element={<Profile />} />
         <Route path="/teacher" element={<TeacherDashboard />} />
