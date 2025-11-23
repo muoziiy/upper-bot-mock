@@ -35,11 +35,7 @@ const pageVariants = {
   })
 };
 
-const pageTransition = {
-  type: "tween",
-  ease: [0.4, 0.0, 0.2, 1],
-  duration: 0.3
-};
+// pageTransition removed; using inline transition in motion components
 
 const AppContent: React.FC = () => {
   const { user } = useTelegram();
@@ -68,73 +64,75 @@ const AppContent: React.FC = () => {
   }
 
   return (
-    <AnimatePresence mode="wait" custom={direction}>
-      <Routes location={location} key={location.pathname}>
-        <Route path="/" element={<Navigate to="/student" replace />} />
-        <Route
-          path="/student"
-          element={
-            <motion.div
-              custom={direction}
-              variants={pageVariants}
-              initial="initial"
-              animate="animate"
-              exit="exit"
-              transition={pageTransition}
-            >
-              <StudentDashboard />
-            </motion.div>
-          }
-        />
-        <Route
-          path="/student/journey"
-          element={
-            <motion.div
-              custom={direction}
-              variants={pageVariants}
-              initial="initial"
-              animate="animate"
-              exit="exit"
-              transition={pageTransition}
-            >
-              <Journey />
-            </motion.div>
-          }
-        />
-        <Route
-          path="/student/leaderboard"
-          element={
-            <motion.div
-              custom={direction}
-              variants={pageVariants}
-              initial="initial"
-              animate="animate"
-              exit="exit"
-              transition={pageTransition}
-            >
-              <Leaderboard />
-            </motion.div>
-          }
-        />
-        <Route
-          path="/student/profile"
-          element={
-            <motion.div
-              custom={direction}
-              variants={pageVariants}
-              initial="initial"
-              animate="animate"
-              exit="exit"
-              transition={pageTransition}
-            >
-              <Profile />
-            </motion.div>
-          }
-        />
-        <Route path="/teacher" element={<TeacherDashboard />} />
-        <Route path="/admin" element={<AdminDashboard />} />
-      </Routes>
-    </AnimatePresence>
+    <Router>
+      <AnimatePresence mode="wait" custom={direction}>
+        <Routes location={location} key={location.pathname}>
+          <Route path="/" element={<Navigate to="/student" replace />} />
+          <Route
+            path="/student"
+            element={
+              <motion.div
+                custom={direction}
+                variants={pageVariants}
+                initial="initial"
+                animate="animate"
+                exit="exit"
+                transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+              >
+                <StudentDashboard />
+              </motion.div>
+            }
+          />
+          <Route
+            path="/student/journey"
+            element={
+              <motion.div
+                custom={direction}
+                variants={pageVariants}
+                initial="initial"
+                animate="animate"
+                exit="exit"
+                transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+              >
+                <Journey />
+              </motion.div>
+            }
+          />
+          <Route
+            path="/student/leaderboard"
+            element={
+              <motion.div
+                custom={direction}
+                variants={pageVariants}
+                initial="initial"
+                animate="animate"
+                exit="exit"
+                transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+              >
+                <Leaderboard />
+              </motion.div>
+            }
+          />
+          <Route
+            path="/student/profile"
+            element={
+              <motion.div
+                custom={direction}
+                variants={pageVariants}
+                initial="initial"
+                animate="animate"
+                exit="exit"
+                transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+              >
+                <Profile />
+              </motion.div>
+            }
+          />
+          <Route path="/teacher" element={<TeacherDashboard />} />
+          <Route path="/admin" element={<AdminDashboard />} />
+        </Routes>
+      </AnimatePresence>
+    </Router>
   );
 };
 
