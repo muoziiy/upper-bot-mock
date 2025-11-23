@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { useTelegram } from '../context/TelegramContext';
+import React from 'react';
+import { useAppData } from '../context/AppDataContext';
 import { Section } from '../components/ui/Section';
 import BottomNav from '../components/BottomNav';
 import StreakCard from '../components/dashboard/StreakCard';
@@ -7,51 +7,8 @@ import QuickStats from '../components/dashboard/QuickStats';
 import TodaysTasks from '../components/dashboard/TodaysTasks';
 import { motion } from 'framer-motion';
 
-interface DashboardData {
-    user: {
-        id: string;
-        first_name: string;
-        role: string;
-    };
-    streak: {
-        current_streak: number;
-        longest_streak: number;
-        total_active_days: number;
-    };
-    total_stats: {
-        total_study_minutes: number;
-        total_tests: number;
-        total_questions: number;
-    };
-    average_score: number;
-    upcoming_exams: any[];
-}
-
 const StudentDashboard: React.FC = () => {
-    const { user } = useTelegram();
-    const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        const fetchDashboard = async () => {
-            if (user?.id) {
-                try {
-                    const res = await fetch(`${import.meta.env.VITE_API_URL}/students/dashboard`, {
-                        headers: { 'x-user-id': user.id.toString() }
-                    });
-                    if (res.ok) {
-                        const data = await res.json();
-                        setDashboardData(data);
-                    }
-                } catch (e) {
-                    console.error("Failed to fetch dashboard", e);
-                } finally {
-                    setLoading(false);
-                }
-            }
-        };
-        fetchDashboard();
-    }, [user]);
+    const { dashboardData, loading } = useAppData();
 
     if (loading) {
         return (
@@ -69,7 +26,7 @@ const StudentDashboard: React.FC = () => {
                 className="px-4"
             >
                 <header className="mb-6">
-                    <h1 className="text-3xl font-bold">Hello, {dashboardData?.user.first_name || user?.first_name} 👋</h1>
+                    <h1 className="text-3xl font-bold">Hello, {dashboardData?.user.first_name} 👋</h1>
                     <p className="text-tg-hint">Ready to learn something new today?</p>
                 </header>
 

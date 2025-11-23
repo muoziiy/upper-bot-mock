@@ -1,15 +1,19 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { TelegramProvider, useTelegram } from './context/TelegramContext';
+import { AppDataProvider } from './context/AppDataContext';
 import StudentDashboard from './pages/StudentDashboard';
 import TeacherDashboard from './pages/TeacherDashboard';
 import AdminDashboard from './pages/AdminDashboard';
 import Leaderboard from './pages/Leaderboard';
+import Profile from './pages/Profile';
 
 function App() {
   return (
     <TelegramProvider>
-      <AppContent />
+      <AppDataProvider>
+        <AppContent />
+      </AppDataProvider>
     </TelegramProvider>
   );
 }
@@ -27,6 +31,7 @@ const AppContent: React.FC = () => {
         <Route path="/" element={<Navigate to="/student" replace />} />
         <Route path="/student" element={<StudentDashboard />} />
         <Route path="/student/leaderboard" element={<Leaderboard />} />
+        <Route path="/student/profile" element={<Profile />} />
         <Route path="/teacher" element={<TeacherDashboard />} />
         <Route path="/admin" element={<AdminDashboard />} />
       </Routes>
