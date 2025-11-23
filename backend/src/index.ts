@@ -1,0 +1,28 @@
+import express from 'express';
+import cors from 'cors';
+import dotenv from 'dotenv';
+import authRoutes from './routes/auth';
+import studentRoutes from './routes/students';
+import teacherRoutes from './routes/teachers';
+import adminRoutes from './routes/admin';
+
+dotenv.config();
+
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+app.use(cors());
+app.use(express.json());
+
+app.use('/api/auth', authRoutes);
+app.use('/api/students', studentRoutes);
+app.use('/api/teachers', teacherRoutes);
+app.use('/api/admin', adminRoutes);
+
+app.get('/', (req, res) => {
+    res.send('Education Center Bot API is running');
+});
+
+app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+});
