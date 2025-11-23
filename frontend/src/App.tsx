@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, useRoutes, Navigate, useLocation } from 'react-router-dom';
 import { TelegramProvider, useTelegram } from './context/TelegramContext';
 import { AppDataProvider } from './context/AppDataContext';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -14,7 +14,9 @@ function App() {
   return (
     <TelegramProvider>
       <AppDataProvider>
-        <AppContent />
+        <Router>
+          <AppContent />
+        </Router>
       </AppDataProvider>
     </TelegramProvider>
   );
@@ -34,8 +36,6 @@ const pageVariants = {
     opacity: 0
   })
 };
-
-// pageTransition removed; using inline transition in motion components
 
 const AppContent: React.FC = () => {
   const { user } = useTelegram();
@@ -59,80 +59,37 @@ const AppContent: React.FC = () => {
     setPrevPath(location.pathname);
   }, [location.pathname]);
 
+  const element = useRoutes([
+    { path: "/", element: <Navigate to="/student" replace /> },
+    { path: "/student", element: <StudentDashboard /> },
+    { path: "/student/journey", element: <Journey /> },
+    { path: "/student/leaderboard", element: <Leaderboard /> },
+    { path: "/student/profile", element: <Profile /> },
+    { path: "/teacher", element: <TeacherDashboard /> },
+    { path: "/admin", element: <AdminDashboard /> },
+  ]);
+
   if (!user) {
     return <div className="flex min-h-screen items-center justify-center bg-tg-secondary text-tg-text">Loading...</div>;
   }
 
   return (
-    <Router>
-      <AnimatePresence mode="wait" custom={direction}>
-        <Routes location={location} key={location.pathname}>
-          <Route path="/" element={<Navigate to="/student" replace />} />
-          <Route
-            path="/student"
-            element={
-              <motion.div
-                custom={direction}
-                variants={pageVariants}
-                initial="initial"
-                animate="animate"
-                exit="exit"
-                transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
-              >
-                <StudentDashboard />
-              </motion.div>
-            }
-          />
-          <Route
-            path="/student/journey"
-            element={
-              <motion.div
-                custom={direction}
-                variants={pageVariants}
-                initial="initial"
-                animate="animate"
-                exit="exit"
-                transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
-              >
-                <Journey />
-              </motion.div>
-            }
-          />
-          <Route
-            path="/student/leaderboard"
-            element={
-              <motion.div
-                custom={direction}
-                variants={pageVariants}
-                initial="initial"
-                animate="animate"
-                exit="exit"
-                transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
-              >
-                <Leaderboard />
-              </motion.div>
-            }
-          />
-          <Route
-            path="/student/profile"
-            element={
-              <motion.div
-                custom={direction}
-                variants={pageVariants}
-                initial="initial"
-                animate="animate"
-                exit="exit"
-                transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
-              >
-                <Profile />
-              </motion.div>
-            }
-          />
-          <Route path="/teacher" element={<TeacherDashboard />} />
-          <Route path="/admin" element={<AdminDashboard />} />
-        </Routes>
-      </AnimatePresence>
-    </Router>
+    <AnimatePresence mode="wait" custom={direction}>
+      {element && (
+        <motion.div
+          key={location.pathname}
+          custom={direction}
+          variants={pageVariants}
+          initial="initial"
+          animate="animate"
+          exit="exit"
+          transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+          className="w-full"
+        >
+          {element}
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 };
 
