@@ -60,6 +60,14 @@ interface PaymentRecord {
     student_name?: string; // For teacher view if needed
 }
 
+interface SalaryRecord {
+    id: string;
+    date: string;
+    amount: number;
+    status: 'paid' | 'pending';
+    description: string;
+}
+
 interface AttendanceRecord {
     id: string;
     date: string;
@@ -74,6 +82,7 @@ interface AppDataContextType {
     achievementsData: AchievementsData | null;
     journeyData: JourneyData | null;
     paymentHistory: PaymentRecord[];
+    salaryHistory: SalaryRecord[];
     attendanceHistory: AttendanceRecord[];
     loading: boolean;
     error: string | null;
@@ -103,6 +112,13 @@ export const AppDataProvider: React.FC<{ children: ReactNode }> = ({ children })
         { id: '1', date: '2023-11-01', amount: 150000, status: 'paid', description: 'Monthly Tuition - November' },
         { id: '2', date: '2023-10-01', amount: 150000, status: 'paid', description: 'Monthly Tuition - October' },
         { id: '3', date: '2023-09-01', amount: 150000, status: 'paid', description: 'Monthly Tuition - September' },
+        { id: '3', date: '2023-09-01', amount: 150000, status: 'paid', description: 'Monthly Tuition - September' },
+    ]);
+
+    const [salaryHistory] = useState<SalaryRecord[]>([
+        { id: '1', date: '2023-11-05', amount: 5000000, status: 'paid', description: 'Salary - October' },
+        { id: '2', date: '2023-10-05', amount: 5000000, status: 'paid', description: 'Salary - September' },
+        { id: '3', date: '2023-09-05', amount: 4800000, status: 'paid', description: 'Salary - August' },
     ]);
 
     const [attendanceHistory] = useState<AttendanceRecord[]>([
@@ -213,6 +229,7 @@ export const AppDataProvider: React.FC<{ children: ReactNode }> = ({ children })
         achievementsData,
         journeyData,
         paymentHistory,
+        salaryHistory,
         attendanceHistory,
         loading,
         error,
