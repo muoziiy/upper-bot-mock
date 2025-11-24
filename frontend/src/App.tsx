@@ -1,13 +1,16 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import { BrowserRouter as Router, useRoutes, Navigate } from 'react-router-dom';
 import { TelegramProvider, useTelegram } from './context/TelegramContext';
 import { AppDataProvider, useAppData } from './context/AppDataContext';
-import StudentDashboard from './pages/StudentDashboard';
-import TeacherDashboard from './pages/TeacherDashboard';
-import AdminDashboard from './pages/AdminDashboard';
-import Leaderboard from './pages/Leaderboard';
-import Profile from './pages/Profile';
-import Journey from './pages/Journey';
+import BottomNav from './components/BottomNav';
+
+// Lazy load pages
+const StudentDashboard = React.lazy(() => import('./pages/StudentDashboard'));
+const TeacherDashboard = React.lazy(() => import('./pages/TeacherDashboard'));
+const AdminDashboard = React.lazy(() => import('./pages/AdminDashboard'));
+const Leaderboard = React.lazy(() => import('./pages/Leaderboard'));
+const Profile = React.lazy(() => import('./pages/Profile'));
+const Journey = React.lazy(() => import('./pages/Journey'));
 
 function App() {
   return (
@@ -20,10 +23,6 @@ function App() {
     </TelegramProvider>
   );
 }
-
-
-
-import BottomNav from './components/BottomNav';
 
 const AppContent: React.FC = () => {
   const { user } = useTelegram();
@@ -45,7 +44,9 @@ const AppContent: React.FC = () => {
 
   return (
     <div className="w-full">
-      {element}
+      <Suspense fallback={<div className="flex min-h-screen items-center justify-center bg-tg-secondary text-tg-text">Loading...</div>}>
+        {element}
+      </Suspense>
       <BottomNav />
     </div>
   );

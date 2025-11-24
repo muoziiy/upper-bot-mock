@@ -23,6 +23,20 @@ interface DashboardData {
     upcoming_exams: any[];
 }
 
+interface TeacherData {
+    groups: {
+        id: string;
+        name: string;
+        student_count: number;
+        next_class: string;
+    }[];
+    stats: {
+        total_students: number;
+        active_groups: number;
+        upcoming_exams_count: number;
+    };
+}
+
 interface LeaderboardData {
     leaderboard: any[];
     user_rank: any;
@@ -43,6 +57,7 @@ interface PaymentRecord {
     amount: number;
     status: 'paid' | 'pending' | 'overdue';
     description: string;
+    student_name?: string; // For teacher view if needed
 }
 
 interface AttendanceRecord {
@@ -54,6 +69,7 @@ interface AttendanceRecord {
 
 interface AppDataContextType {
     dashboardData: DashboardData | null;
+    teacherData: TeacherData | null;
     leaderboardData: LeaderboardData | null;
     achievementsData: AchievementsData | null;
     journeyData: JourneyData | null;
@@ -77,6 +93,7 @@ export const useAppData = () => {
 export const AppDataProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const { user } = useTelegram();
     const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
+    const [teacherData, setTeacherData] = useState<TeacherData | null>(null);
     const [leaderboardData, setLeaderboardData] = useState<LeaderboardData | null>(null);
     const [achievementsData, setAchievementsData] = useState<AchievementsData | null>(null);
     const [journeyData, setJourneyData] = useState<JourneyData | null>(null);
@@ -120,6 +137,20 @@ export const AppDataProvider: React.FC<{ children: ReactNode }> = ({ children })
                 const data = await dashboardRes.json();
                 setDashboardData(data);
             }
+
+            // Mock Teacher Data (Injecting it always for now to support development)
+            setTeacherData({
+                groups: [
+                    { id: 'g1', name: 'Mathematics 101', student_count: 24, next_class: 'Today, 14:00' },
+                    { id: 'g2', name: 'Physics Advanced', student_count: 18, next_class: 'Tomorrow, 10:00' },
+                    { id: 'g3', name: 'Geometry Basics', student_count: 30, next_class: 'Wed, 16:00' },
+                ],
+                stats: {
+                    total_students: 72,
+                    active_groups: 3,
+                    upcoming_exams_count: 2,
+                }
+            });
 
             if (leaderboardRes.ok) {
                 // const data = await leaderboardRes.json();
@@ -167,6 +198,7 @@ export const AppDataProvider: React.FC<{ children: ReactNode }> = ({ children })
 
     const value: AppDataContextType = {
         dashboardData,
+        teacherData,
         leaderboardData,
         achievementsData,
         journeyData,
