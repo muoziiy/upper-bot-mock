@@ -89,7 +89,7 @@ const AttendanceModal: React.FC<AttendanceModalProps> = ({ isOpen, onClose, grou
                             <h1 className="text-xl font-bold text-tg-text">{t('teacher.mark_attendance')}</h1>
                         </div>
 
-                        <div className="p-4 space-y-4">
+                        <div className="p-4 pb-28 space-y-4">
                             {/* Date Selector */}
                             <div>
                                 <label className="block text-sm font-medium text-tg-hint mb-2">
@@ -148,8 +148,8 @@ const AttendanceModal: React.FC<AttendanceModalProps> = ({ isOpen, onClose, grou
                                             whileTap={{ scale: 0.98 }}
                                             onClick={() => toggleAttendance(student.id)}
                                             className={`flex items-center justify-between p-4 rounded-xl cursor-pointer transition-all ${student.isPresent
-                                                    ? 'bg-green-500/10 border-2 border-green-500/20'
-                                                    : 'bg-red-500/10 border-2 border-red-500/20'
+                                                ? 'bg-green-500/10 border-2 border-green-500/20'
+                                                : 'bg-red-500/10 border-2 border-red-500/20'
                                                 }`}
                                         >
                                             <span className="font-medium text-tg-text">{student.name}</span>
@@ -173,14 +173,14 @@ const AttendanceModal: React.FC<AttendanceModalProps> = ({ isOpen, onClose, grou
                                 </div>
                             )}
 
-                            {/* Save Button */}
+                            {/* Save Button - Fixed at bottom */}
                             {students.length > 0 && (
-                                <div className="flex gap-3 pt-4">
+                                <div className="fixed bottom-4 left-4 right-4 flex gap-3 z-20">
                                     <motion.button
                                         type="button"
                                         whileTap={{ scale: 0.98 }}
                                         onClick={onClose}
-                                        className="flex-1 bg-tg-secondary text-tg-text py-3 rounded-xl font-medium"
+                                        className="flex-1 bg-tg-secondary text-tg-text py-3 rounded-xl font-medium shadow-lg"
                                     >
                                         {t('teacher.cancel')}
                                     </motion.button>
@@ -188,7 +188,7 @@ const AttendanceModal: React.FC<AttendanceModalProps> = ({ isOpen, onClose, grou
                                         type="button"
                                         whileTap={{ scale: 0.98 }}
                                         onClick={handleSave}
-                                        className="flex-1 bg-tg-button text-tg-button-text py-3 rounded-xl font-medium"
+                                        className="flex-1 bg-tg-button text-tg-button-text py-3 rounded-xl font-medium shadow-lg"
                                     >
                                         {t('teacher.save')}
                                     </motion.button>

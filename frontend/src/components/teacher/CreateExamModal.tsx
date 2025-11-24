@@ -20,6 +20,12 @@ const CreateExamModal: React.FC<CreateExamModalProps> = ({ isOpen, onClose, grou
         type: 'online' as 'online' | 'offline',
         groupId: ''
     });
+    const [errors, setErrors] = useState<{ [key: string]: boolean }>({
+        title: false,
+        date: false,
+        time: false,
+        groupId: false
+    });
 
     useEffect(() => {
         if (isOpen) {
@@ -36,6 +42,23 @@ const CreateExamModal: React.FC<CreateExamModalProps> = ({ isOpen, onClose, grou
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+
+        // Validate all required fields
+        const newErrors = {
+            title: !formData.title.trim(),
+            date: !formData.date,
+            time: !formData.time,
+            groupId: !formData.groupId
+        };
+
+        setErrors(newErrors);
+
+        // If any errors, show haptic feedback and don't submit
+        if (Object.values(newErrors).some(error => error)) {
+            webApp.HapticFeedback.notificationOccurred('error');
+            return;
+        }
+
         console.log('Create exam:', formData);
         // TODO: Add API call to create exam
         webApp.HapticFeedback.notificationOccurred('success');
@@ -68,46 +91,70 @@ const CreateExamModal: React.FC<CreateExamModalProps> = ({ isOpen, onClose, grou
                             {/* Title */}
                             <div>
                                 <label className="block text-sm font-medium text-tg-hint mb-2">
-                                    {t('teacher.exam_title')}
+                                    {t('teacher.exam_title')} <span className="text-red-500">*</span>
                                 </label>
                                 <input
                                     type="text"
                                     value={formData.title}
-                                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                                    className="w-full bg-tg-secondary text-tg-text px-4 py-3 rounded-xl border border-tg-hint/10 focus:border-tg-button focus:outline-none transition-colors"
+                                    onChange={(e) => {
+                                        setFormData({ ...formData, title: e.target.value });
+                                        setErrors({ ...errors, title: false });
+                                    }}
+                                    className={`w-full bg-tg-secondary text-tg-text px-4 py-3 rounded-xl border-2 focus:outline-none transition-colors ${errors.title
+                                            ? 'border-red-500 focus:border-red-500'
+                                            : 'border-tg-hint/10 focus:border-tg-button'
+                                        }`}
                                     placeholder="e.g., Mid-Term Exam"
-                                    required
                                 />
+                                {errors.title && (
+                                    <p className="text-red-500 text-xs mt-1">Please enter exam title</p>
+                                )}
                             </div>
 
                             {/* Date */}
                             <div>
                                 <label className="block text-sm font-medium text-tg-hint mb-2">
                                     <Calendar size={16} className="inline mr-1" />
-                                    {t('teacher.exam_date')}
+                                    {t('teacher.exam_date')} <span className="text-red-500">*</span>
                                 </label>
                                 <input
                                     type="date"
                                     value={formData.date}
-                                    onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                                    className="w-full bg-tg-secondary text-tg-text px-4 py-3 rounded-xl border border-tg-hint/10 focus:border-tg-button focus:outline-none transition-colors"
-                                    required
+                                    onChange={(e) => {
+                                        setFormData({ ...formData, date: e.target.value });
+                                        setErrors({ ...errors, date: false });
+                                    }}
+                                    className={`w-full bg-tg-secondary text-tg-text px-4 py-3 rounded-xl border-2 focus:outline-none transition-colors ${errors.date
+                                            ? 'border-red-500 focus:border-red-500'
+                                            : 'border-tg-hint/10 focus:border-tg-button'
+                                        }`}
                                 />
+                                {errors.date && (
+                                    <p className="text-red-500 text-xs mt-1">Please select a date</p>
+                                )}
                             </div>
 
                             {/* Time */}
                             <div>
                                 <label className="block text-sm font-medium text-tg-hint mb-2">
                                     <Clock size={16} className="inline mr-1" />
-                                    {t('teacher.exam_time')}
+                                    {t('teacher.exam_time')} <span className="text-red-500">*</span>
                                 </label>
                                 <input
                                     type="time"
                                     value={formData.time}
-                                    onChange={(e) => setFormData({ ...formData, time: e.target.value })}
-                                    className="w-full bg-tg-secondary text-tg-text px-4 py-3 rounded-xl border border-tg-hint/10 focus:border-tg-button focus:outline-none transition-colors"
-                                    required
+                                    onChange={(e) => {
+                                        setFormData({ ...formData, time: e.target.value });
+                                        setErrors({ ...errors, time: false });
+                                    }}
+                                    className={`w-full bg-tg-secondary text-tg-text px-4 py-3 rounded-xl border-2 focus:outline-none transition-colors ${errors.time
+                                            ? 'border-red-500 focus:border-red-500'
+                                            : 'border-tg-hint/10 focus:border-tg-button'
+                                        }`}
                                 />
+                                {errors.time && (
+                                    <p className="text-red-500 text-xs mt-1">Please select a time</p>
+                                )}
                             </div>
 
                             {/* Type */}
@@ -143,13 +190,18 @@ const CreateExamModal: React.FC<CreateExamModalProps> = ({ isOpen, onClose, grou
                             <div>
                                 <label className="block text-sm font-medium text-tg-hint mb-2">
                                     <Users size={16} className="inline mr-1" />
-                                    {t('teacher.select_group')}
+                                    {t('teacher.select_group')} <span className="text-red-500">*</span>
                                 </label>
                                 <select
                                     value={formData.groupId}
-                                    onChange={(e) => setFormData({ ...formData, groupId: e.target.value })}
-                                    className="w-full bg-tg-secondary text-tg-text px-4 py-3 rounded-xl border border-tg-hint/10 focus:border-tg-button focus:outline-none transition-colors"
-                                    required
+                                    onChange={(e) => {
+                                        setFormData({ ...formData, groupId: e.target.value });
+                                        setErrors({ ...errors, groupId: false });
+                                    }}
+                                    className={`w-full bg-tg-secondary text-tg-text px-4 py-3 rounded-xl border-2 focus:outline-none transition-colors ${errors.groupId
+                                            ? 'border-red-500 focus:border-red-500'
+                                            : 'border-tg-hint/10 focus:border-tg-button'
+                                        }`}
                                 >
                                     <option value="">Select a group...</option>
                                     {groups.map((group) => (
@@ -158,6 +210,9 @@ const CreateExamModal: React.FC<CreateExamModalProps> = ({ isOpen, onClose, grou
                                         </option>
                                     ))}
                                 </select>
+                                {errors.groupId && (
+                                    <p className="text-red-500 text-xs mt-1">Please select a group</p>
+                                )}
                             </div>
 
                             {/* Buttons */}
