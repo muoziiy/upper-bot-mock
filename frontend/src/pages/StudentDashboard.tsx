@@ -1,13 +1,13 @@
 import React from 'react';
 import { useAppData } from '../context/AppDataContext';
 import { Section } from '../components/ui/Section';
-import StreakCard from '../components/dashboard/StreakCard';
-import QuickStats from '../components/dashboard/QuickStats';
-import TodaysTasks from '../components/dashboard/TodaysTasks';
+import LevelCard from '../components/journey/LevelCard';
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 
 const StudentDashboard: React.FC = () => {
-    const { dashboardData, loading } = useAppData();
+    const { t } = useTranslation();
+    const { dashboardData, journeyData, loading } = useAppData();
 
     if (loading) {
         return (
@@ -29,25 +29,11 @@ const StudentDashboard: React.FC = () => {
                     <p className="text-tg-hint">Ready to learn something new today?</p>
                 </header>
 
-                <Section title="Your Streak 🔥">
-                    <StreakCard
-                        currentStreak={dashboardData?.streak.current_streak || 0}
-                        longestStreak={dashboardData?.streak.longest_streak || 0}
-                        totalActiveDays={dashboardData?.streak.total_active_days || 0}
-                    />
-                </Section>
-
-                <Section title="Quick Stats">
-                    <QuickStats
-                        totalTests={dashboardData?.total_stats.total_tests || 0}
-                        totalQuestions={dashboardData?.total_stats.total_questions || 0}
-                        averageScore={dashboardData?.average_score || 0}
-                    />
-                </Section>
-
-                <Section title="Upcoming Exams">
-                    <TodaysTasks upcomingExams={dashboardData?.upcoming_exams || []} />
-                </Section>
+                {journeyData && (
+                    <Section title={t('journey.current_level')}>
+                        <LevelCard userLevel={journeyData.userLevel} />
+                    </Section>
+                )}
             </motion.div>
         </div>
     );

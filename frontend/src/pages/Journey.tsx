@@ -1,7 +1,6 @@
 import React from 'react';
 import { useAppData } from '../context/AppDataContext';
 import { Section } from '../components/ui/Section';
-import LevelCard from '../components/journey/LevelCard';
 import LessonsList from '../components/journey/LessonsList';
 import ExamsList from '../components/journey/ExamsList';
 import SegmentedControl from '../components/ui/SegmentedControl';
@@ -40,11 +39,6 @@ const Journey: React.FC = () => {
                     <h1 className="text-3xl font-bold">{t('journey.title')}</h1>
                     <p className="text-tg-hint">{t('journey.subtitle')}</p>
                 </header>
-
-                {/* Level Card */}
-                <Section title={t('journey.current_level')}>
-                    <LevelCard userLevel={journeyData.userLevel} />
-                </Section>
 
                 {/* Tabs */}
                 <SegmentedControl
