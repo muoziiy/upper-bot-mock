@@ -60,6 +60,7 @@ export interface LessonProgress {
 
 export interface LessonWithProgress extends Lesson {
     progress?: LessonProgress;
+    status: 'locked' | 'unlocked' | 'completed' | 'coming';
 }
 
 export interface UserCurrentLevel {
@@ -101,7 +102,11 @@ export interface JourneyData {
     userLevel: UserCurrentLevel;
     curriculum: Curriculum[];
     lessons: LessonWithProgress[];
-    upcomingExams: ExamSchedule[];
+    exams: {
+        upcoming: ExamSchedule[];
+        old: ExamSchedule[];
+        overall: ExamSchedule[];
+    };
 }
 
 // Helper function to get display name for user level

@@ -3,11 +3,13 @@ import { useAppData } from '../context/AppDataContext';
 import { Section } from '../components/ui/Section';
 import LevelCard from '../components/journey/LevelCard';
 import LessonsList from '../components/journey/LessonsList';
-import UpcomingExams from '../components/journey/UpcomingExams';
-import { motion } from 'framer-motion';
+import ExamsList from '../components/journey/ExamsList';
+import SegmentedControl from '../components/ui/SegmentedControl';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const Journey: React.FC = () => {
     const { journeyData, loading } = useAppData();
+    const [activeTab, setActiveTab] = React.useState<'curriculum' | 'exams'>('curriculum');
 
     if (loading) {
         return (
@@ -42,15 +44,45 @@ const Journey: React.FC = () => {
                     <LevelCard userLevel={journeyData.userLevel} />
                 </Section>
 
-                {/* Lessons List */}
-                <Section title="Curriculum & Lessons">
-                    <LessonsList lessons={journeyData.lessons} />
-                </Section>
+                {/* Tabs */}
+                <SegmentedControl
+                    options={[
+                        { label: 'Lesson Curriculum', value: 'curriculum' },
+                        { label: 'Exams', value: 'exams' }
+                    ]}
+                    value={activeTab}
+                    onChange={(val) => setActiveTab(val as any)}
+                    className="mb-6"
+                />
 
-                {/* Upcoming Exams */}
-                <Section title="Upcoming Exams">
-                    <UpcomingExams exams={journeyData.upcomingExams} />
-                </Section>
+                {/* Content */}
+                <AnimatePresence mode="wait">
+                    {activeTab === 'curriculum' ? (
+                        <motion.div
+                            key="curriculum"
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0, x: 20 }}
+                            transition={{ duration: 0.2 }}
+                        >
+                            <Section title="Curriculum & Lessons">
+                                <LessonsList lessons={journeyData.lessons} />
+                            </Section>
+                        </motion.div>
+                    ) : (
+                        <motion.div
+                            key="exams"
+                            initial={{ opacity: 0, x: 20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0, x: -20 }}
+                            transition={{ duration: 0.2 }}
+                        >
+                            <Section title="Exams">
+                                <ExamsList exams={journeyData.exams} />
+                            </Section>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
             </motion.div>
         </div>
     );

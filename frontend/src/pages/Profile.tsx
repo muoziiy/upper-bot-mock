@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useAppData } from '../context/AppDataContext';
+import { useTelegram } from '../context/TelegramContext';
 import { Section } from '../components/ui/Section';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
@@ -10,6 +11,7 @@ import AttendanceHistory from '../components/profile/AttendanceHistory';
 import SettingsModal from '../components/profile/SettingsModal';
 
 const Profile: React.FC = () => {
+    const { user } = useTelegram();
     const { dashboardData, achievementsData, paymentHistory, salaryHistory, attendanceHistory, teacherData, loading } = useAppData();
     const [showSettings, setShowSettings] = useState(false);
 
@@ -39,8 +41,12 @@ const Profile: React.FC = () => {
             >
                 {/* Header */}
                 <header className="mb-6 text-center">
-                    <div className="mx-auto mb-3 flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-tg-button to-tg-accent text-4xl font-bold text-white">
-                        {dashboardData?.user.first_name?.[0] || 'U'}
+                    <div className="mx-auto mb-3 flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-tg-button to-tg-accent text-4xl font-bold text-white overflow-hidden">
+                        {user?.photo_url ? (
+                            <img src={user.photo_url} alt="Profile" className="h-full w-full object-cover" />
+                        ) : (
+                            <span>{dashboardData?.user.first_name?.[0] || 'U'}</span>
+                        )}
                     </div>
                     <h1 className="text-2xl font-bold">{dashboardData?.user.first_name}</h1>
                     <p className="text-sm text-tg-hint capitalize">{dashboardData?.user.role}</p>

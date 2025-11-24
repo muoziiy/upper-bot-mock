@@ -137,11 +137,28 @@ const LessonsList: React.FC<LessonsListProps> = ({ lessons }) => {
                                             </p>
                                         )}
 
-                                        <button
-                                            className="w-full py-2 px-4 rounded-lg font-medium transition-all bg-tg-button/20 text-tg-button hover:bg-tg-button/30"
-                                        >
-                                            More Info
-                                        </button>
+                                        {lesson.status !== 'coming' && (
+                                            <div className="flex gap-2">
+                                                <button
+                                                    className="flex-1 py-2 px-4 rounded-lg font-medium transition-all bg-tg-button/20 text-tg-button hover:bg-tg-button/30"
+                                                >
+                                                    More Info
+                                                </button>
+                                                {lesson.status === 'completed' && (
+                                                    <button
+                                                        className="flex-1 py-2 px-4 rounded-lg font-medium transition-all bg-tg-secondary text-tg-text hover:bg-tg-secondary/80"
+                                                    >
+                                                        Homeworks
+                                                    </button>
+                                                )}
+                                            </div>
+                                        )}
+
+                                        {lesson.status === 'coming' && (
+                                            <p className="text-xs text-tg-hint italic text-center">
+                                                This lesson is coming soon.
+                                            </p>
+                                        )}
                                     </div>
                                 </motion.div>
                             )}
