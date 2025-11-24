@@ -5,18 +5,17 @@ import { Section } from '../components/ui/Section';
 import { Card } from '../components/ui/Card';
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
-import { Settings, ChevronRight, ExternalLink, Info } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Settings, ChevronRight, Info, Send } from 'lucide-react';
 import PaymentDotsView from '../components/profile/PaymentDotsView';
 import SubjectCard from '../components/profile/SubjectCard';
 import TeacherInfoModal from '../components/profile/TeacherInfoModal';
+import TeacherInfoPreview from '../components/profile/TeacherInfoPreview';
 import AttendanceHistory from '../components/profile/AttendanceHistory';
 import SettingsModal from '../components/profile/SettingsModal';
 
 const Profile: React.FC = () => {
     const { t } = useTranslation();
     const { user } = useTelegram();
-    const navigate = useNavigate();
     const { dashboardData, attendanceHistory, loading } = useAppData();
     const [showSettings, setShowSettings] = useState(false);
     const [selectedSubject, setSelectedSubject] = useState<string | null>(null);
@@ -30,28 +29,31 @@ const Profile: React.FC = () => {
         );
     }
 
-    // Mock data - Replace with actual data from Supabase
+    // Mock data - 3 subjects for demo
     const subjects = [
         {
             id: '1',
-            name: 'English Grammar',
-            teacher_name: 'John Smith',
+            name: 'Mathematics',
+            teacher_name: 'Sarah Johnson',
             progress: 75,
-            color: '#3b82f6'
+            color: '#3390EC',
+            telegram_username: 'sarahjohnson'
         },
         {
             id: '2',
-            name: 'Mathematics',
-            teacher_name: 'Sarah Johnson',
+            name: 'Physics',
+            teacher_name: 'Michael Brown',
             progress: 60,
-            color: '#10b981'
+            color: '#10b981',
+            telegram_username: 'michaelbrown'
         },
         {
             id: '3',
-            name: 'Physics',
-            teacher_name: 'Michael Brown',
-            progress: 45,
-            color: '#f59e0b'
+            name: 'English Grammar',
+            teacher_name: 'John Smith',
+            progress: 85,
+            color: '#f59e0b',
+            telegram_username: 'johnsmith'
         }
     ];
 
@@ -81,6 +83,14 @@ const Profile: React.FC = () => {
     ];
 
     const currentSubject = subjects.find(s => s.id === selectedSubject) || subjects[0];
+    const hasMultipleSubjects = subjects.length > 1;
+
+    // Handler for opening Telegram chat with teacher
+    const handleContactTeacher = (username: string) => {
+        if (username) {
+            window.open(`https://t.me/${username}`, '_blank');
+        }
+    };
 
     return (
         <div className="min-h-screen bg-tg-secondary pb-24 pt-4 text-tg-text">
@@ -111,91 +121,172 @@ const Profile: React.FC = () => {
                     </div>
                 </header>
 
-                {/* My Subjects */}
-                <Section title={t('profile.my_subjects')}>
-                    <div className="space-y-3">
-                        {subjects.map((subject) => (
-                            <SubjectCard
-                                key={subject.id}
-                                subject={subject}
-                                isSelected={selectedSubject === subject.id}
-                                onClick={() => setSelectedSubject(subject.id)}
-                            />
-                        ))}
-                    </div>
-                    {subjects.length === 0 && (
-                        <Card className="py-8 text-center">
-                            <p className="text-tg-hint">{t('profile.select_subject')}</p>
-                        </Card>
-                    )}
-                </Section>
-
-                {/* Teacher & Group Info */}
-                {currentSubject && (
-                    <Section title={t('profile.teacher') + ' & ' + t('profile.group')}>
-                        <div className="space-y-3">
-                            {/* Teacher Info Buttons */}
-                            <div className="grid grid-cols-2 gap-3">
-                                <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                                    <Card
-                                        className="p-4 cursor-pointer flex flex-col items-center text-center"
-                                        onClick={() => setShowTeacherModal(true)}
-                                    >
-                                        <div className="w-12 h-12 rounded-full bg-blue-500/20 flex items-center justify-center mb-2">
-                                            <Info size={24} className="text-blue-500" />
-                                        </div>
-                                        <span className="text-sm font-medium">{t('profile.teacher_info')}</span>
-                                    </Card>
-                                </motion.div>
-
-                                <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                                    <Card
-                                        className="p-4 cursor-pointer flex flex-col items-center text-center"
-                                        onClick={() => navigate(`/teacher/${teacherInfo.id}`)}
-                                    >
-                                        <div className="w-12 h-12 rounded-full bg-green-500/20 flex items-center justify-center mb-2">
-                                            <ExternalLink size={24} className="text-green-500" />
-                                        </div>
-                                        <span className="text-sm font-medium">{t('profile.view_teacher_profile')}</span>
-                                    </Card>
-                                </motion.div>
+                {/* Conditional Layout: Multi-Subject vs Single-Subject */}
+                {hasMultipleSubjects ? (
+                    <>
+                        {/* Multi-Subject View: Show Subject List */}
+                        <Section title={t('profile.my_subjects')}>
+                            <div className="space-y-3">
+                                {subjects.map((subject) => (
+                                    <SubjectCard
+                                        key={subject.id}
+                                        subject={subject}
+                                        isSelected={selectedSubject === subject.id}
+                                        onClick={() => setSelectedSubject(subject.id)}
+                                    />
+                                ))}
                             </div>
+                        </Section>
 
-                            {/* Group Info Card */}
-                            <Card className="p-4">
-                                <h3 className="font-semibold text-tg-text mb-3">{t('profile.group_info')}</h3>
-                                <div className="space-y-2 text-sm">
-                                    <div className="flex items-center justify-between">
-                                        <span className="text-tg-hint">Group Name</span>
-                                        <span className="text-tg-text font-medium">{groupInfo.name}</span>
+                        {/* Show selected subject details */}
+                        {currentSubject && (
+                            <>
+                                {/* Teacher Info Preview */}
+                                <Section title={t('profile.teacher')}>
+                                    <div className="space-y-3">
+                                        <TeacherInfoPreview
+                                            teacher={teacherInfo}
+                                            subjectName={currentSubject.name}
+                                        />
+
+                                        {/* Action Buttons */}
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <motion.div whileTap={{ scale: 0.98 }}>
+                                                <Card
+                                                    className="p-4 cursor-pointer flex flex-col items-center text-center gap-2"
+                                                    onClick={() => setShowTeacherModal(true)}
+                                                >
+                                                    <div className="w-12 h-12 rounded-full bg-tg-button/10 flex items-center justify-center">
+                                                        <Info size={24} className="text-tg-button" />
+                                                    </div>
+                                                    <span className="text-sm font-medium text-tg-text">{t('profile.teacher_info')}</span>
+                                                </Card>
+                                            </motion.div>
+
+                                            <motion.div whileTap={{ scale: 0.98 }}>
+                                                <Card
+                                                    className="p-4 cursor-pointer flex flex-col items-center text-center gap-2"
+                                                    onClick={() => handleContactTeacher(currentSubject.telegram_username || '')}
+                                                >
+                                                    <div className="w-12 h-12 rounded-full bg-tg-button flex items-center justify-center">
+                                                        <Send size={24} className="text-white" />
+                                                    </div>
+                                                    <span className="text-sm font-medium text-tg-text">{t('profile.contact_teacher')}</span>
+                                                </Card>
+                                            </motion.div>
+                                        </div>
                                     </div>
-                                    <div className="flex items-center justify-between">
-                                        <span className="text-tg-hint">Students</span>
-                                        <span className="text-tg-text font-medium">{groupInfo.student_count}</span>
+                                </Section>
+
+                                {/* Group Info */}
+                                <Section title={t('profile.group_info')}>
+                                    <Card className="p-4">
+                                        <div className="space-y-2 text-sm">
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-tg-hint">{t('profile.group_name')}</span>
+                                                <span className="text-tg-text font-medium">{groupInfo.name}</span>
+                                            </div>
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-tg-hint">{t('profile.students')}</span>
+                                                <span className="text-tg-text font-medium">{groupInfo.student_count}</span>
+                                            </div>
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-tg-hint">{t('profile.schedule')}</span>
+                                                <span className="text-tg-text font-medium">{groupInfo.schedule}</span>
+                                            </div>
+                                        </div>
+                                    </Card>
+                                </Section>
+
+                                {/* Payment Status */}
+                                <Section title={t('profile.payment_history')}>
+                                    <Card className="p-4">
+                                        <PaymentDotsView
+                                            payments={paymentRecords}
+                                            subjectName={currentSubject.name}
+                                        />
+                                    </Card>
+                                </Section>
+                            </>
+                        )}
+                    </>
+                ) : (
+                    <>
+                        {/* Single-Subject View: Show Details Directly (No Subject Selector) */}
+                        {currentSubject && (
+                            <>
+                                {/* Teacher Info Preview */}
+                                <Section title={currentSubject.name}>
+                                    <div className="space-y-3">
+                                        <TeacherInfoPreview
+                                            teacher={teacherInfo}
+                                            subjectName={currentSubject.name}
+                                        />
+
+                                        {/* Action Buttons */}
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <motion.div whileTap={{ scale: 0.98 }}>
+                                                <Card
+                                                    className="p-4 cursor-pointer flex flex-col items-center text-center gap-2"
+                                                    onClick={() => setShowTeacherModal(true)}
+                                                >
+                                                    <div className="w-12 h-12 rounded-full bg-tg-button/10 flex items-center justify-center">
+                                                        <Info size={24} className="text-tg-button" />
+                                                    </div>
+                                                    <span className="text-sm font-medium text-tg-text">{t('profile.teacher_info')}</span>
+                                                </Card>
+                                            </motion.div>
+
+                                            <motion.div whileTap={{ scale: 0.98 }}>
+                                                <Card
+                                                    className="p-4 cursor-pointer flex flex-col items-center text-center gap-2"
+                                                    onClick={() => handleContactTeacher(currentSubject.telegram_username || '')}
+                                                >
+                                                    <div className="w-12 h-12 rounded-full bg-tg-button flex items-center justify-center">
+                                                        <Send size={24} className="text-white" />
+                                                    </div>
+                                                    <span className="text-sm font-medium text-tg-text">{t('profile.contact_teacher')}</span>
+                                                </Card>
+                                            </motion.div>
+                                        </div>
                                     </div>
-                                    <div className="flex items-center justify-between">
-                                        <span className="text-tg-hint">Schedule</span>
-                                        <span className="text-tg-text font-medium">{groupInfo.schedule}</span>
-                                    </div>
-                                </div>
-                            </Card>
-                        </div>
-                    </Section>
+                                </Section>
+
+                                {/* Group Info */}
+                                <Section title={t('profile.group_info')}>
+                                    <Card className="p-4">
+                                        <div className="space-y-2 text-sm">
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-tg-hint">{t('profile.group_name')}</span>
+                                                <span className="text-tg-text font-medium">{groupInfo.name}</span>
+                                            </div>
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-tg-hint">{t('profile.students')}</span>
+                                                <span className="text-tg-text font-medium">{groupInfo.student_count}</span>
+                                            </div>
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-tg-hint">{t('profile.schedule')}</span>
+                                                <span className="text-tg-text font-medium">{groupInfo.schedule}</span>
+                                            </div>
+                                        </div>
+                                    </Card>
+                                </Section>
+
+                                {/* Payment Status */}
+                                <Section title={t('profile.payment_history')}>
+                                    <Card className="p-4">
+                                        <PaymentDotsView
+                                            payments={paymentRecords}
+                                            subjectName={currentSubject.name}
+                                        />
+                                    </Card>
+                                </Section>
+                            </>
+                        )}
+                    </>
                 )}
 
-                {/* Payment Status (12-Month Dots) */}
-                {currentSubject && (
-                    <Section title={t('profile.payment_history')}>
-                        <Card className="p-4">
-                            <PaymentDotsView
-                                payments={paymentRecords}
-                                subjectName={currentSubject.name}
-                            />
-                        </Card>
-                    </Section>
-                )}
-
-                {/* Attendance History (Keep Calendar View) */}
+                {/* Attendance History (Always Show) */}
                 <Section title={t('profile.attendance_history')}>
                     <AttendanceHistory attendance={attendanceHistory} />
                 </Section>

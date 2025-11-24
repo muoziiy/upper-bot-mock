@@ -73,29 +73,28 @@ const PaymentDotsView: React.FC<PaymentDotsViewProps> = ({ payments, subjectName
                     {subjectName && <span className="text-xs text-tg-hint">{subjectName}</span>}
                 </div>
 
-                {/* Payment Dots */}
-                <div className="grid grid-cols-12 gap-2">
+                {/* Payment Dots - 6x2 Grid */}
+                <div className="grid grid-cols-6 gap-3">
                     {monthlyPayments.map((payment, index) => (
                         <motion.button
                             key={index}
                             onClick={() => handleDotClick(payment)}
-                            whileHover={{ scale: 1.1 }}
                             whileTap={{ scale: 0.95 }}
-                            className="flex flex-col items-center gap-1"
+                            className="flex flex-col items-center gap-1.5"
                         >
                             <div
-                                className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${payment.paid
-                                    ? 'bg-green-500 shadow-lg shadow-green-500/30'
-                                    : 'bg-gray-300 dark:bg-gray-600'
+                                className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${payment.paid
+                                        ? 'bg-green-500 shadow-md shadow-green-500/20'
+                                        : 'bg-tg-secondary border-2 border-tg-hint/20'
                                     }`}
                             >
                                 {payment.paid ? (
-                                    <Check size={16} className="text-white" />
+                                    <Check size={18} className="text-white" />
                                 ) : (
-                                    <X size={16} className="text-gray-500" />
+                                    <X size={18} className="text-tg-hint/50" />
                                 )}
                             </div>
-                            <span className="text-[9px] text-tg-hint">{payment.monthName}</span>
+                            <span className="text-[10px] text-tg-hint font-medium">{payment.monthName}</span>
                         </motion.button>
                     ))}
                 </div>
