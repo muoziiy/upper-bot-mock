@@ -141,12 +141,12 @@ export function getLevelOrder(level: UserLevel): number {
 export function getLevelColor(level: UserLevel): string {
     const colors: Record<UserLevel, string> = {
         [UserLevel.BEGINNER]: '#22c55e', // green
-        [UserLevel.ELEMENTARY]: '#84cc16', // lime
-        [UserLevel.PRE_INTERMEDIATE]: '#eab308', // yellow
-        [UserLevel.INTERMEDIATE]: '#f97316', // orange
-        [UserLevel.UPPER_INTERMEDIATE]: '#ef4444', // red
-        [UserLevel.ADVANCED]: '#a855f7', // purple
-        [UserLevel.IELTS]: '#3b82f6' // blue
+        [UserLevel.ELEMENTARY]: '#eab308', // yellow
+        [UserLevel.PRE_INTERMEDIATE]: '#0ea5e9', // light blue
+        [UserLevel.INTERMEDIATE]: '#3b82f6', // blue
+        [UserLevel.UPPER_INTERMEDIATE]: '#1d4ed8', // dark blue
+        [UserLevel.ADVANCED]: '#f97316', // orange
+        [UserLevel.IELTS]: '#ef4444' // red
     };
     return colors[level];
 }
