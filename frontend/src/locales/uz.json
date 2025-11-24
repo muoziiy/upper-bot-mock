@@ -31,6 +31,67 @@
         "view": "Ko'rish",
         "active": "Faol"
     },
+    "journey": {
+        "title": "O'quv sayohatingiz 🗺️",
+        "subtitle": "Taraqqiyotingizni kuzating",
+        "current_level": "Joriy daraja",
+        "lesson_curriculum": "Darslar dasturi",
+        "exams": "Imtihonlar",
+        "curriculum_lessons": "Dastur va darslar",
+        "loading": "Sayohatingiz yuklanmoqda...",
+        "unable_to_load": "Ma'lumotlar yuklanmadi"
+    },
+    "lessons": {
+        "no_lessons": "Darslar hali mavjud emas.",
+        "check_back": "Tez orada yangi kontent paydo bo'ladi!",
+        "your_progress": "Taraqqiyotingiz",
+        "of": "dan",
+        "completed": "dars tugatildi",
+        "min": "daq",
+        "topics": "mavzular",
+        "topics_covered": "O'rganilgan mavzular:",
+        "completed_on": "✓ Tugatildi",
+        "more_info": "Batafsil",
+        "homeworks": "Uy vazifalar",
+        "coming_soon": "Bu dars tez orada mavjud bo'ladi."
+    },
+    "exams": {
+        "upcoming": "Kelayotgan",
+        "old": "O'tgan",
+        "overall": "Hammasi",
+        "online": "Onlayn",
+        "offline": "Oflayn",
+        "no_exams": "Imtihonlar topilmadi.",
+        "join_meeting": "Ulashish",
+        "participants": "Ishtirokchilar"
+    },
+    "profile": {
+        "overview": "Umumiy ko'rinish",
+        "day_streak": "Kunlar ketma-ket",
+        "total_points": "Jami ball",
+        "tests_taken": "Topshirilgan testlar",
+        "achievements": "Yutuqlar",
+        "students": "O'quvchilar",
+        "groups": "Guruhlar",
+        "exams": "Imtihonlar",
+        "payment_history": "To'lovlar tarixi",
+        "salary_history": "Maosh tarixi",
+        "attendance_history": "Davomat tarixi",
+        "upcoming_classes": "Kelayotgan darslar",
+        "recent_achievements": "So'nggi yutuqlar",
+        "no_achievements": "Yutuqlar hali ochilmagan",
+        "start_learning": "O'qishni boshlash",
+        "settings": "Sozlamalar",
+        "account_settings": "Hisob sozlamalari"
+    },
+    "leaderboard": {
+        "title": "Reyting",
+        "your_rank": "Sizning o'rningiz",
+        "top_learners": "Eng yaxshi o'quvchilar",
+        "rank": "O'rin",
+        "score": "Ball",
+        "you": "Siz"
+    },
     "settings": {
         "title": "Sozlamalar",
         "language": "Til",

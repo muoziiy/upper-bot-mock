@@ -6,15 +6,17 @@ import LessonsList from '../components/journey/LessonsList';
 import ExamsList from '../components/journey/ExamsList';
 import SegmentedControl from '../components/ui/SegmentedControl';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 
 const Journey: React.FC = () => {
+    const { t } = useTranslation();
     const { journeyData, loading } = useAppData();
     const [activeTab, setActiveTab] = React.useState<'curriculum' | 'exams'>('curriculum');
 
     if (loading) {
         return (
             <div className="flex min-h-screen items-center justify-center bg-tg-secondary text-tg-text">
-                <p>Loading your journey...</p>
+                <p>{t('journey.loading')}</p>
             </div>
         );
     }
@@ -22,7 +24,7 @@ const Journey: React.FC = () => {
     if (!journeyData) {
         return (
             <div className="flex min-h-screen items-center justify-center bg-tg-secondary text-tg-text">
-                <p>Unable to load journey data</p>
+                <p>{t('journey.unable_to_load')}</p>
             </div>
         );
     }
@@ -35,20 +37,20 @@ const Journey: React.FC = () => {
                 className="px-4"
             >
                 <header className="mb-6">
-                    <h1 className="text-3xl font-bold">Your Learning Journey 🗺️</h1>
-                    <p className="text-tg-hint">Track your progress and upcoming challenges</p>
+                    <h1 className="text-3xl font-bold">{t('journey.title')}</h1>
+                    <p className="text-tg-hint">{t('journey.subtitle')}</p>
                 </header>
 
                 {/* Level Card */}
-                <Section title="Current Level">
+                <Section title={t('journey.current_level')}>
                     <LevelCard userLevel={journeyData.userLevel} />
                 </Section>
 
                 {/* Tabs */}
                 <SegmentedControl
                     options={[
-                        { label: 'Lesson Curriculum', value: 'curriculum' },
-                        { label: 'Exams', value: 'exams' }
+                        { label: t('journey.lesson_curriculum'), value: 'curriculum' },
+                        { label: t('journey.exams'), value: 'exams' }
                     ]}
                     value={activeTab}
                     onChange={(val) => setActiveTab(val as any)}
@@ -65,7 +67,7 @@ const Journey: React.FC = () => {
                             exit={{ opacity: 0, x: 20 }}
                             transition={{ duration: 0.2 }}
                         >
-                            <Section title="Curriculum & Lessons">
+                            <Section title={t('journey.curriculum_lessons')}>
                                 <LessonsList lessons={journeyData.lessons} />
                             </Section>
                         </motion.div>
@@ -77,7 +79,7 @@ const Journey: React.FC = () => {
                             exit={{ opacity: 0, x: -20 }}
                             transition={{ duration: 0.2 }}
                         >
-                            <Section title="Exams">
+                            <Section title={t('journey.exams')}>
                                 <ExamsList exams={journeyData.exams} />
                             </Section>
                         </motion.div>

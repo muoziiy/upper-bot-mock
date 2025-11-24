@@ -3,20 +3,22 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { BookOpen, Check, Clock, ChevronDown, ChevronUp } from 'lucide-react';
 import type { LessonWithProgress } from '../../types/journey.types';
 import { cn } from '../../lib/utils';
+import { useTranslation } from 'react-i18next';
 
 interface LessonsListProps {
     lessons: LessonWithProgress[];
 }
 
 const LessonsList: React.FC<LessonsListProps> = ({ lessons }) => {
+    const { t } = useTranslation();
     const [expandedLesson, setExpandedLesson] = useState<string | null>(null);
 
     if (!lessons || lessons.length === 0) {
         return (
             <div className="text-center py-12 text-tg-hint">
                 <BookOpen size={48} className="mx-auto mb-4 opacity-50" />
-                <p>No lessons available yet.</p>
-                <p className="text-sm mt-2">Check back soon for new content!</p>
+                <p>{t('lessons.no_lessons')}</p>
+                <p className="text-sm mt-2">{t('lessons.check_back')}</p>
             </div>
         );
     }
@@ -29,9 +31,9 @@ const LessonsList: React.FC<LessonsListProps> = ({ lessons }) => {
             {/* Progress Summary */}
             <div className="flex items-center justify-between p-4 bg-tg-bg/50 rounded-xl border border-tg-hint/10">
                 <div>
-                    <p className="text-sm text-tg-hint">Your Progress</p>
+                    <p className="text-sm text-tg-hint">{t('lessons.your_progress')}</p>
                     <p className="text-lg font-bold text-tg-text">
-                        {completedCount} of {totalCount} lessons completed
+                        {completedCount} {t('lessons.of')} {totalCount} {t('lessons.completed')}
                     </p>
                 </div>
                 <div className="text-3xl font-bold text-tg-button">
@@ -86,12 +88,12 @@ const LessonsList: React.FC<LessonsListProps> = ({ lessons }) => {
                                     <div className="flex items-center gap-3 mt-2 text-xs text-tg-hint">
                                         <span className="flex items-center gap-1">
                                             <Clock size={12} />
-                                            {lesson.duration_minutes} min
+                                            {lesson.duration_minutes} {t('lessons.min')}
                                         </span>
                                         {lesson.topics && lesson.topics.length > 0 && (
                                             <span className="flex items-center gap-1">
                                                 <BookOpen size={12} />
-                                                {lesson.topics.length} topics
+                                                {lesson.topics.length} {t('lessons.topics')}
                                             </span>
                                         )}
                                     </div>
@@ -117,7 +119,7 @@ const LessonsList: React.FC<LessonsListProps> = ({ lessons }) => {
                                     <div className="p-4 space-y-3">
                                         {lesson.topics && lesson.topics.length > 0 && (
                                             <div>
-                                                <p className="text-sm font-medium text-tg-text mb-2">Topics Covered:</p>
+                                                <p className="text-sm font-medium text-tg-text mb-2">{t('lessons.topics_covered')}</p>
                                                 <div className="flex flex-wrap gap-2">
                                                     {lesson.topics.map((topic, i) => (
                                                         <span
@@ -133,7 +135,7 @@ const LessonsList: React.FC<LessonsListProps> = ({ lessons }) => {
 
                                         {lesson.progress?.completion_date && (
                                             <p className="text-xs text-green-500">
-                                                ✓ Completed on {new Date(lesson.progress.completion_date).toLocaleDateString()}
+                                                {t('lessons.completed_on')} {new Date(lesson.progress.completion_date).toLocaleDateString()}
                                             </p>
                                         )}
 
@@ -142,13 +144,13 @@ const LessonsList: React.FC<LessonsListProps> = ({ lessons }) => {
                                                 <button
                                                     className="flex-1 py-2 px-4 rounded-lg font-medium transition-all bg-tg-button/20 text-tg-button hover:bg-tg-button/30"
                                                 >
-                                                    More Info
+                                                    {t('lessons.more_info')}
                                                 </button>
                                                 {lesson.status === 'completed' && (
                                                     <button
                                                         className="flex-1 py-2 px-4 rounded-lg font-medium transition-all bg-tg-secondary text-tg-text hover:bg-tg-secondary/80"
                                                     >
-                                                        Homeworks
+                                                        {t('lessons.homeworks')}
                                                     </button>
                                                 )}
                                             </div>
@@ -156,7 +158,7 @@ const LessonsList: React.FC<LessonsListProps> = ({ lessons }) => {
 
                                         {lesson.status === 'coming' && (
                                             <p className="text-xs text-tg-hint italic text-center">
-                                                This lesson is coming soon.
+                                                {t('lessons.coming_soon')}
                                             </p>
                                         )}
                                     </div>

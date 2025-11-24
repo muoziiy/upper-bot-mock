@@ -31,6 +31,67 @@
         "view": "View",
         "active": "Active"
     },
+    "journey": {
+        "title": "Your Learning Journey 🗺️",
+        "subtitle": "Track your progress and upcoming challenges",
+        "current_level": "Current Level",
+        "lesson_curriculum": "Lesson Curriculum",
+        "exams": "Exams",
+        "curriculum_lessons": "Curriculum & Lessons",
+        "loading": "Loading your journey...",
+        "unable_to_load": "Unable to load journey data"
+    },
+    "lessons": {
+        "no_lessons": "No lessons available yet.",
+        "check_back": "Check back soon for new content!",
+        "your_progress": "Your Progress",
+        "of": "of",
+        "completed": "lessons completed",
+        "min": "min",
+        "topics": "topics",
+        "topics_covered": "Topics Covered:",
+        "completed_on": "✓ Completed on",
+        "more_info": "More Info",
+        "homeworks": "Homeworks",
+        "coming_soon": "This lesson is coming soon."
+    },
+    "exams": {
+        "upcoming": "Upcoming",
+        "old": "Old",
+        "overall": "Overall",
+        "online": "Online",
+        "offline": "Offline",
+        "no_exams": "No exams found in this category.",
+        "join_meeting": "Join Meeting",
+        "participants": "Participants"
+    },
+    "profile": {
+        "overview": "Overview",
+        "day_streak": "Day Streak",
+        "total_points": "Total Points",
+        "tests_taken": "Tests Taken",
+        "achievements": "Achievements",
+        "students": "Students",
+        "groups": "Groups",
+        "exams": "Exams",
+        "payment_history": "Payment History",
+        "salary_history": "Salary History",
+        "attendance_history": "Attendance History",
+        "upcoming_classes": "Upcoming Classes",
+        "recent_achievements": "Recent Achievements",
+        "no_achievements": "No achievements unlocked yet",
+        "start_learning": "Start Learning",
+        "settings": "Settings",
+        "account_settings": "Account Settings"
+    },
+    "leaderboard": {
+        "title": "Leaderboard",
+        "your_rank": "Your Rank",
+        "top_learners": "Top Learners",
+        "rank": "Rank",
+        "score": "Score",
+        "you": "You"
+    },
     "settings": {
         "title": "Settings",
         "language": "Language",
