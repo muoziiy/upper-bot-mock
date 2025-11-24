@@ -6,19 +6,38 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- ============================================
--- ENUMS
+-- ENUMS (Idempotent creation)
 -- ============================================
-CREATE TYPE user_role AS ENUM ('guest', 'student', 'teacher', 'admin');
-CREATE TYPE question_type AS ENUM ('multiple_choice', 'text', 'boolean');
-CREATE TYPE user_level AS ENUM ('beginner', 'elementary', 'pre_intermediate', 'intermediate', 'upper_intermediate', 'advanced', 'ielts');
-CREATE TYPE exam_type AS ENUM ('online', 'offline');
+DO $$ BEGIN
+    CREATE TYPE user_role AS ENUM ('guest', 'student', 'teacher', 'admin');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+    CREATE TYPE question_type AS ENUM ('multiple_choice', 'text', 'boolean');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+    CREATE TYPE user_level AS ENUM ('beginner', 'elementary', 'pre_intermediate', 'intermediate', 'upper_intermediate', 'advanced', 'ielts');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+    CREATE TYPE exam_type AS ENUM ('online', 'offline');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
 
 -- ============================================
--- 1. CORE TABLES (from schema.sql)
+-- 1. CORE TABLES
 -- ============================================
 
 -- USERS TABLE
-CREATE TABLE users (
+CREATE TABLE IF NOT EXISTS users (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     telegram_id BIGINT UNIQUE NOT NULL,
     username TEXT,
@@ -29,31 +48,31 @@ CREATE TABLE users (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
-CREATE INDEX idx_users_telegram_id ON users(telegram_id);
-CREATE INDEX idx_users_role ON users(role);
+CREATE INDEX IF NOT EXISTS idx_users_telegram_id ON users(telegram_id);
+CREATE INDEX IF NOT EXISTS idx_users_role ON users(role);
 
 -- GROUPS TABLE
-CREATE TABLE groups (
+CREATE TABLE IF NOT EXISTS groups (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name TEXT NOT NULL,
     teacher_id UUID REFERENCES users(id) ON DELETE SET NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
-CREATE INDEX idx_groups_teacher_id ON groups(teacher_id);
+CREATE INDEX IF NOT EXISTS idx_groups_teacher_id ON groups(teacher_id);
 
 -- GROUP MEMBERS TABLE
-CREATE TABLE group_members (
+CREATE TABLE IF NOT EXISTS group_members (
     group_id UUID REFERENCES groups(id) ON DELETE CASCADE,
     student_id UUID REFERENCES users(id) ON DELETE CASCADE,
     joined_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     PRIMARY KEY (group_id, student_id)
 );
 
-CREATE INDEX idx_group_members_student_id ON group_members(student_id);
+CREATE INDEX IF NOT EXISTS idx_group_members_student_id ON group_members(student_id);
 
 -- EXAMS TABLE
-CREATE TABLE exams (
+CREATE TABLE IF NOT EXISTS exams (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     title TEXT NOT NULL,
     description TEXT,
@@ -66,12 +85,12 @@ CREATE TABLE exams (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
-CREATE INDEX idx_exams_teacher_id ON exams(teacher_id);
-CREATE INDEX idx_exams_group_id ON exams(group_id);
-CREATE INDEX idx_exams_published ON exams(is_published);
+CREATE INDEX IF NOT EXISTS idx_exams_teacher_id ON exams(teacher_id);
+CREATE INDEX IF NOT EXISTS idx_exams_group_id ON exams(group_id);
+CREATE INDEX IF NOT EXISTS idx_exams_published ON exams(is_published);
 
 -- QUESTIONS TABLE
-CREATE TABLE questions (
+CREATE TABLE IF NOT EXISTS questions (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     exam_id UUID REFERENCES exams(id) ON DELETE CASCADE,
     text TEXT NOT NULL,
@@ -83,10 +102,10 @@ CREATE TABLE questions (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
-CREATE INDEX idx_questions_exam_id ON questions(exam_id);
+CREATE INDEX IF NOT EXISTS idx_questions_exam_id ON questions(exam_id);
 
 -- EXAM RESULTS TABLE
-CREATE TABLE exam_results (
+CREATE TABLE IF NOT EXISTS exam_results (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     exam_id UUID REFERENCES exams(id) ON DELETE CASCADE,
     student_id UUID REFERENCES users(id) ON DELETE CASCADE,
@@ -99,15 +118,15 @@ CREATE TABLE exam_results (
     UNIQUE(exam_id, student_id) -- One attempt per exam
 );
 
-CREATE INDEX idx_exam_results_student_id ON exam_results(student_id);
-CREATE INDEX idx_exam_results_exam_id ON exam_results(exam_id);
+CREATE INDEX IF NOT EXISTS idx_exam_results_student_id ON exam_results(student_id);
+CREATE INDEX IF NOT EXISTS idx_exam_results_exam_id ON exam_results(exam_id);
 
 -- ============================================
--- 2. STREAK SYSTEM (from streaks_schema.sql)
+-- 2. STREAK SYSTEM
 -- ============================================
 
 -- User daily activity tracking
-CREATE TABLE user_activity (
+CREATE TABLE IF NOT EXISTS user_activity (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID REFERENCES users(id) ON DELETE CASCADE,
     activity_date DATE NOT NULL,
@@ -118,10 +137,10 @@ CREATE TABLE user_activity (
     UNIQUE(user_id, activity_date)
 );
 
-CREATE INDEX idx_user_activity_user_date ON user_activity(user_id, activity_date DESC);
+CREATE INDEX IF NOT EXISTS idx_user_activity_user_date ON user_activity(user_id, activity_date DESC);
 
 -- User streak tracking
-CREATE TABLE user_streaks (
+CREATE TABLE IF NOT EXISTS user_streaks (
     user_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
     current_streak INTEGER DEFAULT 0,
     longest_streak INTEGER DEFAULT 0,
@@ -131,11 +150,11 @@ CREATE TABLE user_streaks (
 );
 
 -- ============================================
--- 3. ACHIEVEMENTS & BADGES (from achievements_schema.sql)
+-- 3. ACHIEVEMENTS & BADGES
 -- ============================================
 
 -- Achievement definitions
-CREATE TABLE achievements (
+CREATE TABLE IF NOT EXISTS achievements (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     slug TEXT UNIQUE NOT NULL,
     name TEXT NOT NULL,
@@ -148,11 +167,11 @@ CREATE TABLE achievements (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
-CREATE INDEX idx_achievements_category ON achievements(category);
-CREATE INDEX idx_achievements_rarity ON achievements(rarity);
+CREATE INDEX IF NOT EXISTS idx_achievements_category ON achievements(category);
+CREATE INDEX IF NOT EXISTS idx_achievements_rarity ON achievements(rarity);
 
 -- User unlocked achievements
-CREATE TABLE user_achievements (
+CREATE TABLE IF NOT EXISTS user_achievements (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID REFERENCES users(id) ON DELETE CASCADE,
     achievement_id UUID REFERENCES achievements(id) ON DELETE CASCADE,
@@ -161,15 +180,15 @@ CREATE TABLE user_achievements (
     UNIQUE(user_id, achievement_id)
 );
 
-CREATE INDEX idx_user_achievements_user ON user_achievements(user_id);
-CREATE INDEX idx_user_achievements_unlocked ON user_achievements(unlocked_at DESC);
+CREATE INDEX IF NOT EXISTS idx_user_achievements_user ON user_achievements(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_achievements_unlocked ON user_achievements(unlocked_at DESC);
 
 -- ============================================
--- 4. LEADERBOARDS (from leaderboard_schema.sql)
+-- 4. LEADERBOARDS
 -- ============================================
 
 -- Leaderboard entries
-CREATE TABLE leaderboard_entries (
+CREATE TABLE IF NOT EXISTS leaderboard_entries (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID REFERENCES users(id) ON DELETE CASCADE,
     category TEXT NOT NULL, -- 'global', 'weekly', 'monthly', 'class'
@@ -182,16 +201,16 @@ CREATE TABLE leaderboard_entries (
     UNIQUE(user_id, category, period, group_id)
 );
 
-CREATE INDEX idx_leaderboard_category_period ON leaderboard_entries(category, period, rank);
-CREATE INDEX idx_leaderboard_user ON leaderboard_entries(user_id);
-CREATE INDEX idx_leaderboard_group ON leaderboard_entries(group_id) WHERE group_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_leaderboard_category_period ON leaderboard_entries(category, period, rank);
+CREATE INDEX IF NOT EXISTS idx_leaderboard_user ON leaderboard_entries(user_id);
+CREATE INDEX IF NOT EXISTS idx_leaderboard_group ON leaderboard_entries(group_id) WHERE group_id IS NOT NULL;
 
 -- ============================================
--- 5. SOCIAL FEATURES (from social_schema.sql)
+-- 5. SOCIAL FEATURES
 -- ============================================
 
 -- Study Groups
-CREATE TABLE study_groups (
+CREATE TABLE IF NOT EXISTS study_groups (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name TEXT NOT NULL,
     description TEXT,
@@ -201,10 +220,10 @@ CREATE TABLE study_groups (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
-CREATE INDEX idx_study_groups_active ON study_groups(is_active) WHERE is_active = true;
+CREATE INDEX IF NOT EXISTS idx_study_groups_active ON study_groups(is_active) WHERE is_active = true;
 
 -- Study Group Members
-CREATE TABLE study_group_members (
+CREATE TABLE IF NOT EXISTS study_group_members (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     group_id UUID REFERENCES study_groups(id) ON DELETE CASCADE,
     user_id UUID REFERENCES users(id) ON DELETE CASCADE,
@@ -213,11 +232,11 @@ CREATE TABLE study_group_members (
     UNIQUE(group_id, user_id)
 );
 
-CREATE INDEX idx_group_members_user ON study_group_members(user_id);
-CREATE INDEX idx_group_members_group ON study_group_members(group_id);
+CREATE INDEX IF NOT EXISTS idx_group_members_user ON study_group_members(user_id);
+CREATE INDEX IF NOT EXISTS idx_group_members_group ON study_group_members(group_id);
 
 -- Challenges
-CREATE TABLE challenges (
+CREATE TABLE IF NOT EXISTS challenges (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     creator_id UUID REFERENCES users(id) ON DELETE CASCADE,
     opponent_id UUID REFERENCES users(id) ON DELETE SET NULL,
@@ -231,16 +250,16 @@ CREATE TABLE challenges (
     completed_at TIMESTAMP WITH TIME ZONE
 );
 
-CREATE INDEX idx_challenges_creator ON challenges(creator_id);
-CREATE INDEX idx_challenges_opponent ON challenges(opponent_id);
-CREATE INDEX idx_challenges_status ON challenges(status);
+CREATE INDEX IF NOT EXISTS idx_challenges_creator ON challenges(creator_id);
+CREATE INDEX IF NOT EXISTS idx_challenges_opponent ON challenges(opponent_id);
+CREATE INDEX IF NOT EXISTS idx_challenges_status ON challenges(status);
 
 -- ============================================
--- 6. JOURNEY SYSTEM (from journey_schema.sql)
+-- 6. JOURNEY SYSTEM
 -- ============================================
 
 -- Curriculum
-CREATE TABLE curriculum (
+CREATE TABLE IF NOT EXISTS curriculum (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     level user_level NOT NULL,
     name TEXT NOT NULL,
@@ -253,11 +272,11 @@ CREATE TABLE curriculum (
     UNIQUE(level, order_index)
 );
 
-CREATE INDEX idx_curriculum_level ON curriculum(level);
-CREATE INDEX idx_curriculum_order ON curriculum(level, order_index);
+CREATE INDEX IF NOT EXISTS idx_curriculum_level ON curriculum(level);
+CREATE INDEX IF NOT EXISTS idx_curriculum_order ON curriculum(level, order_index);
 
 -- Lessons
-CREATE TABLE lessons (
+CREATE TABLE IF NOT EXISTS lessons (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     curriculum_id UUID REFERENCES curriculum(id) ON DELETE CASCADE,
     title TEXT NOT NULL,
@@ -273,11 +292,11 @@ CREATE TABLE lessons (
     UNIQUE(curriculum_id, order_index)
 );
 
-CREATE INDEX idx_lessons_curriculum ON lessons(curriculum_id);
-CREATE INDEX idx_lessons_order ON lessons(curriculum_id, order_index);
+CREATE INDEX IF NOT EXISTS idx_lessons_curriculum ON lessons(curriculum_id);
+CREATE INDEX IF NOT EXISTS idx_lessons_order ON lessons(curriculum_id, order_index);
 
 -- User Lesson Progress
-CREATE TABLE user_lesson_progress (
+CREATE TABLE IF NOT EXISTS user_lesson_progress (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID REFERENCES users(id) ON DELETE CASCADE,
     lesson_id UUID REFERENCES lessons(id) ON DELETE CASCADE,
@@ -290,12 +309,12 @@ CREATE TABLE user_lesson_progress (
     UNIQUE(user_id, lesson_id)
 );
 
-CREATE INDEX idx_user_progress_user ON user_lesson_progress(user_id);
-CREATE INDEX idx_user_progress_lesson ON user_lesson_progress(lesson_id);
-CREATE INDEX idx_user_progress_completion ON user_lesson_progress(user_id, is_completed);
+CREATE INDEX IF NOT EXISTS idx_user_progress_user ON user_lesson_progress(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_progress_lesson ON user_lesson_progress(lesson_id);
+CREATE INDEX IF NOT EXISTS idx_user_progress_completion ON user_lesson_progress(user_id, is_completed);
 
 -- User Current Level
-CREATE TABLE user_current_level (
+CREATE TABLE IF NOT EXISTS user_current_level (
     user_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
     current_level user_level DEFAULT 'beginner',
     progress_percentage INTEGER DEFAULT 0,
@@ -303,10 +322,10 @@ CREATE TABLE user_current_level (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
-CREATE INDEX idx_user_level ON user_current_level(current_level);
+CREATE INDEX IF NOT EXISTS idx_user_level ON user_current_level(current_level);
 
 -- Exam Schedule
-CREATE TABLE exam_schedule (
+CREATE TABLE IF NOT EXISTS exam_schedule (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     exam_id UUID REFERENCES exams(id) ON DELETE CASCADE,
     exam_type exam_type NOT NULL,
@@ -320,12 +339,12 @@ CREATE TABLE exam_schedule (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
-CREATE INDEX idx_exam_schedule_date ON exam_schedule(scheduled_date);
-CREATE INDEX idx_exam_schedule_type ON exam_schedule(exam_type);
-CREATE INDEX idx_exam_schedule_exam ON exam_schedule(exam_id);
+CREATE INDEX IF NOT EXISTS idx_exam_schedule_date ON exam_schedule(scheduled_date);
+CREATE INDEX IF NOT EXISTS idx_exam_schedule_type ON exam_schedule(exam_type);
+CREATE INDEX IF NOT EXISTS idx_exam_schedule_exam ON exam_schedule(exam_id);
 
 -- Exam Registrations
-CREATE TABLE exam_registrations (
+CREATE TABLE IF NOT EXISTS exam_registrations (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     exam_schedule_id UUID REFERENCES exam_schedule(id) ON DELETE CASCADE,
     student_id UUID REFERENCES users(id) ON DELETE CASCADE,
@@ -334,8 +353,8 @@ CREATE TABLE exam_registrations (
     UNIQUE(exam_schedule_id, student_id)
 );
 
-CREATE INDEX idx_exam_reg_schedule ON exam_registrations(exam_schedule_id);
-CREATE INDEX idx_exam_reg_student ON exam_registrations(student_id);
+CREATE INDEX IF NOT EXISTS idx_exam_reg_schedule ON exam_registrations(exam_schedule_id);
+CREATE INDEX IF NOT EXISTS idx_exam_reg_student ON exam_registrations(student_id);
 
 -- ============================================
 -- RLS POLICIES (Consolidated)
@@ -363,9 +382,18 @@ ALTER TABLE user_current_level ENABLE ROW LEVEL SECURITY;
 ALTER TABLE exam_schedule ENABLE ROW LEVEL SECURITY;
 ALTER TABLE exam_registrations ENABLE ROW LEVEL SECURITY;
 
--- (Note: I'm including a simplified set of policies here to keep the file manageable. 
--- The detailed policies from the individual files should be applied if strict security is needed.
--- For now, I'll include the most critical ones.)
+-- Drop existing policies to avoid errors
+DROP POLICY IF EXISTS "users_read_own" ON users;
+DROP POLICY IF EXISTS "users_update_own" ON users;
+DROP POLICY IF EXISTS "students_view_groups" ON groups;
+DROP POLICY IF EXISTS "students_view_published_exams" ON exams;
+DROP POLICY IF EXISTS "users_read_own_streak" ON user_streaks;
+DROP POLICY IF EXISTS "public_read_achievements" ON achievements;
+DROP POLICY IF EXISTS "users_read_own_achievements" ON user_achievements;
+DROP POLICY IF EXISTS "public_read_leaderboard" ON leaderboard_entries;
+DROP POLICY IF EXISTS "students_view_curriculum" ON curriculum;
+DROP POLICY IF EXISTS "students_view_lessons" ON lessons;
+DROP POLICY IF EXISTS "users_manage_own_progress" ON user_lesson_progress;
 
 -- USERS
 CREATE POLICY "users_read_own" ON users FOR SELECT USING (id = auth.uid());
@@ -405,6 +433,7 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
+DROP TRIGGER IF EXISTS update_users_updated_at ON users;
 CREATE TRIGGER update_users_updated_at BEFORE UPDATE ON users FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- Update Streak Function
@@ -436,6 +465,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS trigger_update_streak ON user_activity;
 CREATE TRIGGER trigger_update_streak AFTER INSERT OR UPDATE ON user_activity FOR EACH ROW EXECUTE FUNCTION update_user_streak();
 
 -- ============================================

@@ -122,8 +122,26 @@ export const AppDataProvider: React.FC<{ children: ReactNode }> = ({ children })
             }
 
             if (leaderboardRes.ok) {
-                const data = await leaderboardRes.json();
-                setLeaderboardData(data);
+                // const data = await leaderboardRes.json();
+                // setLeaderboardData(data);
+                setLeaderboardData({
+                    leaderboard: [
+                        { rank: 1, score: 2850, users: { first_name: 'Sarah', last_name: 'J.' } },
+                        { rank: 2, score: 2720, users: { first_name: 'Mike', last_name: 'T.' } },
+                        { rank: 3, score: 2680, users: { first_name: 'Emma', last_name: 'W.' } },
+                    ],
+                    user_rank: { rank: 42, score: 1250 }
+                });
+            } else {
+                // Fallback mock data if fetch fails (or just always use it for now as requested)
+                setLeaderboardData({
+                    leaderboard: [
+                        { rank: 1, score: 2850, users: { first_name: 'Sarah', last_name: 'J.' } },
+                        { rank: 2, score: 2720, users: { first_name: 'Mike', last_name: 'T.' } },
+                        { rank: 3, score: 2680, users: { first_name: 'Emma', last_name: 'W.' } },
+                    ],
+                    user_rank: { rank: 42, score: 1250 }
+                });
             }
 
             if (achievementsRes.ok) {
