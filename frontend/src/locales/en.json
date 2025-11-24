@@ -2,12 +2,14 @@
     "nav": {
         "home": "Home",
         "journey": "Journey",
-        "quick_actions": "Quick Actions",
-        "my_groups": "My Groups",
-        "create_exam": "Create Exam",
-        "attendance": "Attendance",
-        "view": "View",
-        "active": "Active"
+        "ranks": "Ranks",
+        "profile": "Profile",
+        "groups": "Groups",
+        "actions": "Actions"
+    },
+    "dashboard": {
+        "hello": "Hello,",
+        "ready_to_learn": "Ready to learn something new today?"
     },
     "journey": {
         "title": "Your Learning Journey 🗺️",
