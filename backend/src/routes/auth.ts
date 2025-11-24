@@ -12,7 +12,7 @@ const validateTelegramData = (req: express.Request, res: express.Response, next:
 };
 
 router.post('/login', validateTelegramData, async (req, res) => {
-    const { id, first_name, last_name, username } = req.body;
+    const { id, first_name, last_name, username, language_code } = req.body;
 
     if (!id) {
         return res.status(400).json({ error: 'Missing Telegram ID' });
@@ -27,6 +27,7 @@ router.post('/login', validateTelegramData, async (req, res) => {
                 first_name,
                 last_name,
                 username,
+                language_code,
                 updated_at: new Date().toISOString(),
             }, { onConflict: 'telegram_id' })
             .select()

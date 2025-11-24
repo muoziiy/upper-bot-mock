@@ -124,7 +124,17 @@ export const AppDataProvider: React.FC<{ children: ReactNode }> = ({ children })
 
         try {
             const apiUrl = import.meta.env.VITE_API_URL;
-            const headers = { 'x-user-id': user.id.toString() };
+            const headers = {
+                'x-user-id': user.id.toString(),
+                'Content-Type': 'application/json'
+            };
+
+            // Sync user data (Login)
+            await fetch(`${apiUrl}/auth/login`, {
+                method: 'POST',
+                headers,
+                body: JSON.stringify(user)
+            });
 
             const [dashboardRes, leaderboardRes, achievementsRes, journeyRes] = await Promise.all([
                 fetch(`${apiUrl}/students/dashboard`, { headers }),

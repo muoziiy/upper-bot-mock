@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, ChevronRight, Globe, User, ChevronLeft } from 'lucide-react';
+import { X, ChevronRight, Globe, User } from 'lucide-react';
 import { useTelegram } from '../../context/TelegramContext';
 import { useTranslation } from 'react-i18next';
 
@@ -28,12 +28,6 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
         } else {
             webApp.BackButton.hide();
         }
-    };
-
-    const navigateBack = () => {
-        setDirection(-1);
-        setActivePage('main');
-        webApp.BackButton.hide();
     };
 
     const changeLanguage = (lang: string) => {
@@ -87,11 +81,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
                 {/* Header */}
                 <div className="flex items-center justify-between p-4 border-b border-white/5">
                     <div className="w-8">
-                        {activePage !== 'main' && (
-                            <button onClick={navigateBack} className="text-tg-button">
-                                <ChevronLeft size={24} />
-                            </button>
-                        )}
+                        {/* Native Back Button is used instead */}
                     </div>
                     <h2 className="text-lg font-semibold text-tg-text">
                         {activePage === 'main' ? t('settings.title') :
