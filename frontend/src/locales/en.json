@@ -1,0 +1,45 @@
+{
+    "nav": {
+        "home": "Home",
+        "journey": "Journey",
+        "ranks": "Ranks",
+        "profile": "Profile",
+        "groups": "Groups",
+        "actions": "Actions"
+    },
+    "dashboard": {
+        "welcome": "Welcome back,",
+        "streak": "Streak",
+        "days": "days",
+        "today": "Today's Activity",
+        "minutes": "min",
+        "tests": "tests",
+        "questions": "questions",
+        "upcoming_exams": "Upcoming Exams",
+        "no_exams": "No upcoming exams",
+        "average_score": "Average Score"
+    },
+    "teacher": {
+        "dashboard": "Teacher Dashboard",
+        "students": "Students",
+        "groups": "Groups",
+        "exams": "Exams",
+        "quick_actions": "Quick Actions",
+        "my_groups": "My Groups",
+        "create_exam": "Create Exam",
+        "attendance": "Attendance",
+        "view": "View",
+        "active": "Active"
+    },
+    "settings": {
+        "title": "Settings",
+        "language": "Language",
+        "account": "Account",
+        "support": "Support",
+        "back": "Back"
+    },
+    "common": {
+        "loading": "Loading...",
+        "error": "Error"
+    }
+}

@@ -1,0 +1,45 @@
+{
+    "nav": {
+        "home": "Главная",
+        "journey": "Путь",
+        "ranks": "Рейтинг",
+        "profile": "Профиль",
+        "groups": "Группы",
+        "actions": "Действия"
+    },
+    "dashboard": {
+        "welcome": "С возвращением,",
+        "streak": "Серия",
+        "days": "дн.",
+        "today": "Сегодня",
+        "minutes": "мин",
+        "tests": "тесты",
+        "questions": "вопросы",
+        "upcoming_exams": "Предстоящие экзамены",
+        "no_exams": "Нет экзаменов",
+        "average_score": "Средний балл"
+    },
+    "teacher": {
+        "dashboard": "Панель учителя",
+        "students": "Студенты",
+        "groups": "Группы",
+        "exams": "Экзамены",
+        "quick_actions": "Быстрые действия",
+        "my_groups": "Мои группы",
+        "create_exam": "Создать",
+        "attendance": "Посещ.",
+        "view": "Просмотр",
+        "active": "Активен"
+    },
+    "settings": {
+        "title": "Настройки",
+        "language": "Язык",
+        "account": "Аккаунт",
+        "support": "Поддержка",
+        "back": "Назад"
+    },
+    "common": {
+        "loading": "Загрузка...",
+        "error": "Ошибка"
+    }
+}

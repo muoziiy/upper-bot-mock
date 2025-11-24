@@ -5,34 +5,36 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../lib/utils';
 import { useTelegram } from '../context/TelegramContext';
 import { useAppData } from '../context/AppDataContext';
+import { useTranslation } from 'react-i18next';
 
 const BottomNav: React.FC = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const { webApp } = useTelegram();
     const { dashboardData } = useAppData();
+    const { t } = useTranslation();
 
     const themeColor = webApp.themeParams?.button_color || '#3390ec';
     const role = dashboardData?.user.role || 'student';
 
     const studentTabs = [
-        { name: 'Home', icon: Home, path: '/student' },
-        { name: 'Journey', icon: Map, path: '/student/journey' },
-        { name: 'Ranks', icon: Trophy, path: '/student/leaderboard' },
-        { name: 'Profile', icon: User, path: '/student/profile' },
+        { name: t('nav.home'), icon: Home, path: '/student' },
+        { name: t('nav.journey'), icon: Map, path: '/student/journey' },
+        { name: t('nav.ranks'), icon: Trophy, path: '/student/leaderboard' },
+        { name: t('nav.profile'), icon: User, path: '/student/profile' },
     ];
 
     const teacherTabs = [
-        { name: 'Home', icon: Home, path: '/teacher' },
-        { name: 'Groups', icon: Users, path: '/teacher/groups' },
-        { name: 'Actions', icon: Plus, path: '/teacher/actions' },
-        { name: 'Profile', icon: User, path: '/teacher/profile' },
+        { name: t('nav.home'), icon: Home, path: '/teacher' },
+        { name: t('nav.groups'), icon: Users, path: '/teacher/groups' },
+        { name: t('nav.actions'), icon: Plus, path: '/teacher/actions' },
+        { name: t('nav.profile'), icon: User, path: '/teacher/profile' },
     ];
 
     const adminTabs = [
-        { name: 'Home', icon: Home, path: '/admin' },
-        { name: 'Actions', icon: Settings, path: '/admin/actions' },
-        { name: 'Profile', icon: User, path: '/admin/profile' },
+        { name: t('nav.home'), icon: Home, path: '/admin' },
+        { name: t('nav.actions'), icon: Settings, path: '/admin/actions' },
+        { name: t('nav.profile'), icon: User, path: '/admin/profile' },
     ];
 
     const tabs = role === 'teacher' ? teacherTabs : (role === 'admin' || role === 'super_admin' ? adminTabs : studentTabs);

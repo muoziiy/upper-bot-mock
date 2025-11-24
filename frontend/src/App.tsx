@@ -3,6 +3,7 @@ import { BrowserRouter as Router, useRoutes, Navigate } from 'react-router-dom';
 import { TelegramProvider, useTelegram } from './context/TelegramContext';
 import { AppDataProvider, useAppData } from './context/AppDataContext';
 import BottomNav from './components/BottomNav';
+import './i18n'; // Initialize i18n
 
 // Lazy load pages
 const StudentDashboard = React.lazy(() => import('./pages/StudentDashboard'));

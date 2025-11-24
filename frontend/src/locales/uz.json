@@ -1,0 +1,45 @@
+{
+    "nav": {
+        "home": "Asosiy",
+        "journey": "Sayohat",
+        "ranks": "Reyting",
+        "profile": "Profil",
+        "groups": "Guruhlar",
+        "actions": "Amallar"
+    },
+    "dashboard": {
+        "welcome": "Xush kelibsiz,",
+        "streak": "Seriya",
+        "days": "kun",
+        "today": "Bugungi faollik",
+        "minutes": "daq",
+        "tests": "testlar",
+        "questions": "savollar",
+        "upcoming_exams": "Imtihonlar",
+        "no_exams": "Imtihonlar yo'q",
+        "average_score": "O'rtacha ball"
+    },
+    "teacher": {
+        "dashboard": "O'qituvchi paneli",
+        "students": "O'quvchilar",
+        "groups": "Guruhlar",
+        "exams": "Imtihonlar",
+        "quick_actions": "Tezkor amallar",
+        "my_groups": "Mening guruhlarim",
+        "create_exam": "Yaratish",
+        "attendance": "Davomat",
+        "view": "Ko'rish",
+        "active": "Faol"
+    },
+    "settings": {
+        "title": "Sozlamalar",
+        "language": "Til",
+        "account": "Hisob",
+        "support": "Yordam",
+        "back": "Orqaga"
+    },
+    "common": {
+        "loading": "Yuklanmoqda...",
+        "error": "Xato"
+    }
+}
