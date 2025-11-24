@@ -2,15 +2,24 @@ import React from 'react';
 import { getLevelDisplayName, getLevelColor, type UserCurrentLevel } from '../../types/journey.types';
 import { motion } from 'framer-motion';
 import { TrendingUp, Award } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface LevelCardProps {
     userLevel: UserCurrentLevel;
 }
 
 const LevelCard: React.FC<LevelCardProps> = ({ userLevel }) => {
+    const { t } = useTranslation();
     const levelName = getLevelDisplayName(userLevel.current_level);
     const levelColor = getLevelColor(userLevel.current_level);
     const progress = userLevel.progress_percentage || 0;
+
+    const getMotivationMessage = (prog: number) => {
+        if (prog === 0) return t('dashboard.motivation_start');
+        if (prog < 50) return t('dashboard.motivation_early');
+        if (prog < 80) return t('dashboard.motivation_mid');
+        return t('dashboard.motivation_late');
+    };
 
     return (
         <motion.div
@@ -24,7 +33,7 @@ const LevelCard: React.FC<LevelCardProps> = ({ userLevel }) => {
             <div className="relative z-10">
                 <div className="flex items-center justify-between mb-4">
                     <div>
-                        <p className="text-tg-hint text-sm mb-1">Your Current Level</p>
+                        <p className="text-tg-hint text-sm mb-1">{t('dashboard.current_level')}</p>
                         <h2 className="text-3xl font-bold text-tg-text flex items-center gap-2">
                             <Award size={28} style={{ color: levelColor }} />
                             {levelName}
@@ -43,7 +52,7 @@ const LevelCard: React.FC<LevelCardProps> = ({ userLevel }) => {
                     <div className="flex items-center justify-between text-sm">
                         <span className="text-tg-hint flex items-center gap-1">
                             <TrendingUp size={14} />
-                            Progress to next level
+                            {t('dashboard.progress_next')}
                         </span>
                         <span className="text-tg-text font-medium">{progress}%</span>
                     </div>
@@ -60,13 +69,7 @@ const LevelCard: React.FC<LevelCardProps> = ({ userLevel }) => {
 
                 {progress < 100 && (
                     <p className="text-tg-hint text-sm mt-4">
-                        {progress === 0
-                            ? '🚀 Start learning to unlock your potential!'
-                            : progress < 50
-                                ? '👏 Great start! Keep going!'
-                                : progress < 80
-                                    ? '🔥 You\'re doing amazing!'
-                                    : '🌟 Almost there! You\'re so close!'}
+                        {getMotivationMessage(progress)}
                     </p>
                 )}
             </div>

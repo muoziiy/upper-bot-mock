@@ -12,7 +12,7 @@ const StudentDashboard: React.FC = () => {
     if (loading) {
         return (
             <div className="flex min-h-screen items-center justify-center bg-tg-secondary text-tg-text">
-                <p>Loading...</p>
+                <p>{t('common.loading')}</p>
             </div>
         );
     }
@@ -22,11 +22,13 @@ const StudentDashboard: React.FC = () => {
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="px-4"
+                className="px-4 space-y-6"
             >
-                <header className="mb-6">
-                    <h1 className="text-3xl font-bold">Hello, {dashboardData?.user.first_name} 👋</h1>
-                    <p className="text-tg-hint">Ready to learn something new today?</p>
+                <header>
+                    <h1 className="text-3xl font-bold mb-1">
+                        {t('dashboard.hello')} {dashboardData?.user.first_name} 👋
+                    </h1>
+                    <p className="text-tg-hint">{t('dashboard.ready_to_learn')}</p>
                 </header>
 
                 {journeyData && (
@@ -34,6 +36,8 @@ const StudentDashboard: React.FC = () => {
                         <LevelCard userLevel={journeyData.userLevel} />
                     </Section>
                 )}
+
+                {/* Additional dashboard widgets can go here */}
             </motion.div>
         </div>
     );

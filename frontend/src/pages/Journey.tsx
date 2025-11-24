@@ -62,10 +62,7 @@ const Journey: React.FC = () => {
                             transition={{ duration: 0.2 }}
                         >
                             <Section title={t('journey.curriculum_lessons')}>
-                                <LessonsList
-                                    lessons={journeyData.lessons}
-                                    curriculum={journeyData.curriculum}
-                                />
+                                <LessonsList lessons={journeyData.lessons} />
                             </Section>
                         </motion.div>
                     ) : (
