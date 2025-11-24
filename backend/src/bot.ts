@@ -18,22 +18,41 @@ bot.start(async (ctx) => {
     }
 
     try {
-        // Upsert user into Supabase
-        const { data, error } = await supabase
+        // Check if user exists
+        const { data: existingUser } = await supabase
             .from('users')
-            .upsert({
-                telegram_id: user.id,
-                username: user.username || null,
-                first_name: user.first_name,
-                last_name: user.last_name || null,
-                role: 'student', // Default role
-                updated_at: new Date().toISOString(),
-            }, {
-                onConflict: 'telegram_id',
-                ignoreDuplicates: false
-            })
-            .select()
+            .select('role')
+            .eq('telegram_id', user.id)
             .single();
+
+        let error;
+
+        if (existingUser) {
+            // Update existing user (preserve role)
+            const { error: updateError } = await supabase
+                .from('users')
+                .update({
+                    username: user.username || null,
+                    first_name: user.first_name,
+                    last_name: user.last_name || null,
+                    updated_at: new Date().toISOString(),
+                })
+                .eq('telegram_id', user.id);
+            error = updateError;
+        } else {
+            // Insert new user
+            const { error: insertError } = await supabase
+                .from('users')
+                .insert({
+                    telegram_id: user.id,
+                    username: user.username || null,
+                    first_name: user.first_name,
+                    last_name: user.last_name || null,
+                    role: 'student', // Default role for new users
+                    updated_at: new Date().toISOString(),
+                });
+            error = insertError;
+        }
 
         if (error) {
             console.error('Error upserting user:', error);
