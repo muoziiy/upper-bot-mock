@@ -6,6 +6,8 @@ import ExamsList from '../components/journey/ExamsList';
 import SegmentedControl from '../components/ui/SegmentedControl';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
+import LottieAnimation from '../components/ui/LottieAnimation';
+import loadingAnimation from '../assets/animations/loading.json';
 
 const Journey: React.FC = () => {
     const { t } = useTranslation();
@@ -14,7 +16,11 @@ const Journey: React.FC = () => {
 
     if (loading) {
         return (
-            <div className="flex min-h-screen items-center justify-center bg-tg-secondary text-tg-text">
+            <div className="flex min-h-screen items-center justify-center bg-tg-secondary text-tg-text flex-col">
+                <LottieAnimation
+                    animationData={loadingAnimation}
+                    className="w-24 h-24 mb-4"
+                />
                 <p>{t('journey.loading')}</p>
             </div>
         );

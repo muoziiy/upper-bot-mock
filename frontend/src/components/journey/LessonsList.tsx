@@ -4,6 +4,8 @@ import { BookOpen, Check, Clock, ChevronDown, ChevronUp } from 'lucide-react';
 import type { LessonWithProgress } from '../../types/journey.types';
 import { cn } from '../../lib/utils';
 import { useTranslation } from 'react-i18next';
+import LottieAnimation from '../ui/LottieAnimation';
+import emptyStateAnimation from '../../assets/animations/empty-state.json';
 
 interface LessonsListProps {
     lessons: LessonWithProgress[];
@@ -16,7 +18,10 @@ const LessonsList: React.FC<LessonsListProps> = ({ lessons }) => {
     if (!lessons || lessons.length === 0) {
         return (
             <div className="text-center py-12 text-tg-hint">
-                <BookOpen size={48} className="mx-auto mb-4 opacity-50" />
+                <LottieAnimation
+                    animationData={emptyStateAnimation}
+                    className="w-32 h-32 mx-auto mb-4"
+                />
                 <p>{t('lessons.no_lessons')}</p>
                 <p className="text-sm mt-2">{t('lessons.check_back')}</p>
             </div>
