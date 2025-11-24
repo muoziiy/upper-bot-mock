@@ -9,7 +9,10 @@
     },
     "dashboard": {
         "hello": "Salom,",
-        "ready_to_learn": "Bugun yangi narsalarni o'rganishga tayyormisiz?"
+        "ready_to_learn": "Bugun yangi narsalarni o'rganishga tayyormisiz?",
+        "current_level": "Joriy daraja",
+        "quick_stats": "Tezkor statistika",
+        "next_class": "Keyingi dars"
     },
     "journey": {
         "title": "O'quv sayohatingiz 🗺️",
@@ -62,7 +65,23 @@
         "no_achievements": "Yutuqlar hali ochilmagan",
         "start_learning": "O'qishni boshlash",
         "settings": "Sozlamalar",
-        "account_settings": "Hisob sozlamalari"
+        "account_settings": "Hisob sozlamalari",
+        "my_subjects": "Mening fanlarim",
+        "teacher_info": "O'qituvchi haqida",
+        "view_teacher_profile": "Profil",
+        "group_info": "Guruh haqida",
+        "payment_status": "To'lov holati",
+        "month_paid": "To'langan",
+        "month_unpaid": "To'lanmagan",
+        "payment_details": "To'lov tafsilotlari",
+        "amount": "Summa",
+        "date": "Sana",
+        "status": "Holat",
+        "teacher": "O'qituvchi",
+        "no_teacher": "O'qituvchi tayinlanmagan",
+        "group": "Guruh",
+        "no_group": "Guruhda emas",
+        "select_subject": "Tafsilotlarni ko'rish uchun fanni tanlang"
     },
     "leaderboard": {
         "title": "Reyting",

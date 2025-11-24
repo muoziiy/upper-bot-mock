@@ -9,7 +9,10 @@
     },
     "dashboard": {
         "hello": "Hello,",
-        "ready_to_learn": "Ready to learn something new today?"
+        "ready_to_learn": "Ready to learn something new today?",
+        "current_level": "Current Level",
+        "quick_stats": "Quick Stats",
+        "next_class": "Next Class"
     },
     "journey": {
         "title": "Your Learning Journey 🗺️",
@@ -62,7 +65,23 @@
         "no_achievements": "No achievements unlocked yet",
         "start_learning": "Start Learning",
         "settings": "Settings",
-        "account_settings": "Account Settings"
+        "account_settings": "Account Settings",
+        "my_subjects": "My Subjects",
+        "teacher_info": "Teacher Info",
+        "view_teacher_profile": "View Profile",
+        "group_info": "Group Information",
+        "payment_status": "Payment Status",
+        "month_paid": "Paid",
+        "month_unpaid": "Unpaid",
+        "payment_details": "Payment Details",
+        "amount": "Amount",
+        "date": "Date",
+        "status": "Status",
+        "teacher": "Teacher",
+        "no_teacher": "No teacher assigned",
+        "group": "Group",
+        "no_group": "Not in a group",
+        "select_subject": "Select a subject to view details"
     },
     "leaderboard": {
         "title": "Leaderboard",

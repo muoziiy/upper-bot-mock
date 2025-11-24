@@ -3,172 +3,212 @@ import { useAppData } from '../context/AppDataContext';
 import { useTelegram } from '../context/TelegramContext';
 import { Section } from '../components/ui/Section';
 import { Card } from '../components/ui/Card';
-import { Button } from '../components/ui/Button';
 import { motion } from 'framer-motion';
-import { Trophy, Flame, BookOpen, Award, Settings, ChevronRight, Users, Calendar } from 'lucide-react';
-import PaymentHistory from '../components/profile/PaymentHistory';
+import { useTranslation } from 'react-i18next';
+import { Settings, ChevronRight, ExternalLink, Info } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import PaymentDotsView from '../components/profile/PaymentDotsView';
+import SubjectCard from '../components/profile/SubjectCard';
+import TeacherInfoModal from '../components/profile/TeacherInfoModal';
 import AttendanceHistory from '../components/profile/AttendanceHistory';
 import SettingsModal from '../components/profile/SettingsModal';
 
 const Profile: React.FC = () => {
+    const { t } = useTranslation();
     const { user } = useTelegram();
-    const { dashboardData, achievementsData, paymentHistory, salaryHistory, attendanceHistory, teacherData, loading } = useAppData();
+    const navigate = useNavigate();
+    const { dashboardData, attendanceHistory, loading } = useAppData();
     const [showSettings, setShowSettings] = useState(false);
+    const [selectedSubject, setSelectedSubject] = useState<string | null>(null);
+    const [showTeacherModal, setShowTeacherModal] = useState(false);
 
     if (loading) {
         return (
             <div className="flex min-h-screen items-center justify-center bg-tg-secondary text-tg-text">
-                <p>Loading...</p>
+                <p>{t('common.loading')}</p>
             </div>
         );
     }
 
-    const unlockedBadges = achievementsData?.stats.unlocked || 0;
-    const totalBadges = achievementsData?.stats.total || 0;
-    const totalPoints = achievementsData?.stats.total_points || 0;
+    // Mock data - Replace with actual data from Supabase
+    const subjects = [
+        {
+            id: '1',
+            name: 'English Grammar',
+            teacher_name: 'John Smith',
+            progress: 75,
+            color: '#3b82f6'
+        },
+        {
+            id: '2',
+            name: 'Mathematics',
+            teacher_name: 'Sarah Johnson',
+            progress: 60,
+            color: '#10b981'
+        },
+        {
+            id: '3',
+            name: 'Physics',
+            teacher_name: 'Michael Brown',
+            progress: 45,
+            color: '#f59e0b'
+        }
+    ];
 
-    // Settings modal is now handled by the SettingsModal component
+    const teacherInfo = {
+        id: '1',
+        first_name: 'John',
+        last_name: 'Smith',
+        photo_url: undefined,
+        email: 'john.smith@example.com',
+        phone: '+1 234 567 8900',
+        bio: 'Experienced English teacher with 10+ years of teaching experience. Passionate about helping students achieve their language goals.',
+        subjects: ['English Grammar', 'IELTS Preparation', 'Business English']
+    };
 
+    const groupInfo = {
+        name: 'Advanced English - Group A',
+        student_count: 12,
+        schedule: 'Mon, Wed, Fri - 10:00 AM'
+    };
+
+    const paymentRecords = [
+        { month: 1, year: 2024, amount: 150, paid: true, date: '2024-01-05' },
+        { month: 2, year: 2024, amount: 150, paid: true, date: '2024-02-05' },
+        { month: 3, year: 2024, amount: 150, paid: true, date: '2024-03-05' },
+        { month: 4, year: 2024, amount: 150, paid: false },
+        { month: 5, year: 2024, amount: 150, paid: false },
+    ];
+
+    const currentSubject = subjects.find(s => s.id === selectedSubject) || subjects[0];
 
     return (
         <div className="min-h-screen bg-tg-secondary pb-24 pt-4 text-tg-text">
             <SettingsModal isOpen={showSettings} onClose={() => setShowSettings(false)} />
+            <TeacherInfoModal
+                teacher={teacherInfo}
+                isOpen={showTeacherModal}
+                onClose={() => setShowTeacherModal(false)}
+            />
 
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="px-4"
+                className="px-4 space-y-6"
             >
                 {/* Header */}
-                <header className="mb-6 text-center">
-                    <div className="mx-auto mb-3 flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-tg-button to-tg-accent text-4xl font-bold text-white overflow-hidden">
+                <header className="flex items-center gap-4">
+                    <div className="w-20 h-20 rounded-full bg-gradient-to-br from-tg-button to-tg-accent flex items-center justify-center text-white text-3xl font-bold overflow-hidden flex-shrink-0">
                         {user?.photo_url ? (
-                            <img src={user.photo_url} alt="Profile" className="h-full w-full object-cover" />
+                            <img src={user.photo_url} alt="Profile" className="w-full h-full object-cover" />
                         ) : (
                             <span>{dashboardData?.user.first_name?.[0] || 'U'}</span>
                         )}
                     </div>
-                    <h1 className="text-2xl font-bold">{dashboardData?.user.first_name}</h1>
-                    <p className="text-sm text-tg-hint capitalize">{dashboardData?.user.role}</p>
+                    <div className="flex-1 min-w-0">
+                        <h1 className="text-2xl font-bold">{dashboardData?.user.first_name}</h1>
+                        <p className="text-sm text-tg-hint capitalize">{dashboardData?.user.role}</p>
+                    </div>
                 </header>
 
-                {/* Stats Overview */}
-                <Section title="Overview">
-                    {dashboardData?.user.role === 'teacher' ? (
-                        <div className="grid grid-cols-3 gap-3">
-                            <Card className="flex flex-col items-center p-4">
-                                <Users className="mb-2 h-8 w-8 text-blue-500" />
-                                <span className="text-2xl font-bold">{teacherData?.stats.total_students || 0}</span>
-                                <span className="text-xs text-tg-hint">Students</span>
-                            </Card>
-                            <Card className="flex flex-col items-center p-4">
-                                <BookOpen className="mb-2 h-8 w-8 text-green-500" />
-                                <span className="text-2xl font-bold">{teacherData?.stats.active_groups || 0}</span>
-                                <span className="text-xs text-tg-hint">Groups</span>
-                            </Card>
-                            <Card className="flex flex-col items-center p-4">
-                                <Calendar className="mb-2 h-8 w-8 text-orange-500" />
-                                <span className="text-2xl font-bold">{teacherData?.stats.upcoming_exams_count || 0}</span>
-                                <span className="text-xs text-tg-hint">Exams</span>
-                            </Card>
-                        </div>
-                    ) : (
-                        <div className="grid grid-cols-2 gap-3">
-                            <Card className="flex flex-col items-center p-4">
-                                <Flame className="mb-2 h-8 w-8 text-orange-500" />
-                                <span className="text-2xl font-bold">{dashboardData?.streak.current_streak || 0}</span>
-                                <span className="text-xs text-tg-hint">Day Streak</span>
-                            </Card>
-                            <Card className="flex flex-col items-center p-4">
-                                <Trophy className="mb-2 h-8 w-8 text-yellow-500" />
-                                <span className="text-2xl font-bold">{totalPoints}</span>
-                                <span className="text-xs text-tg-hint">Total Points</span>
-                            </Card>
-                            <Card className="flex flex-col items-center p-4">
-                                <BookOpen className="mb-2 h-8 w-8 text-blue-500" />
-                                <span className="text-2xl font-bold">{dashboardData?.total_stats.total_tests || 0}</span>
-                                <span className="text-xs text-tg-hint">Tests Taken</span>
-                            </Card>
-                            <Card className="flex flex-col items-center p-4">
-                                <Award className="mb-2 h-8 w-8 text-purple-500" />
-                                <span className="text-2xl font-bold">{unlockedBadges}/{totalBadges}</span>
-                                <span className="text-xs text-tg-hint">Achievements</span>
-                            </Card>
-                        </div>
+                {/* My Subjects */}
+                <Section title={t('profile.my_subjects')}>
+                    <div className="space-y-3">
+                        {subjects.map((subject) => (
+                            <SubjectCard
+                                key={subject.id}
+                                subject={subject}
+                                isSelected={selectedSubject === subject.id}
+                                onClick={() => setSelectedSubject(subject.id)}
+                            />
+                        ))}
+                    </div>
+                    {subjects.length === 0 && (
+                        <Card className="py-8 text-center">
+                            <p className="text-tg-hint">{t('profile.select_subject')}</p>
+                        </Card>
                     )}
                 </Section>
 
-                {/* Payment/Salary History */}
-                <Section title={dashboardData?.user.role === 'teacher' ? "Salary History" : "Payment History"}>
-                    <PaymentHistory payments={dashboardData?.user.role === 'teacher' ? (salaryHistory as any) : paymentHistory} />
-                </Section>
-
-                {/* Attendance/Schedule History */}
-                {dashboardData?.user.role === 'teacher' ? (
-                    <Section title="Upcoming Classes">
+                {/* Teacher & Group Info */}
+                {currentSubject && (
+                    <Section title={t('profile.teacher') + ' & ' + t('profile.group')}>
                         <div className="space-y-3">
-                            {teacherData?.groups.map((group) => (
-                                <Card key={group.id} className="p-4 flex items-center justify-between">
-                                    <div>
-                                        <h3 className="font-semibold">{group.name}</h3>
-                                        <p className="text-xs text-tg-hint mt-1">
-                                            {group.student_count} Students
-                                        </p>
+                            {/* Teacher Info Buttons */}
+                            <div className="grid grid-cols-2 gap-3">
+                                <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                                    <Card
+                                        className="p-4 cursor-pointer flex flex-col items-center text-center"
+                                        onClick={() => setShowTeacherModal(true)}
+                                    >
+                                        <div className="w-12 h-12 rounded-full bg-blue-500/20 flex items-center justify-center mb-2">
+                                            <Info size={24} className="text-blue-500" />
+                                        </div>
+                                        <span className="text-sm font-medium">{t('profile.teacher_info')}</span>
+                                    </Card>
+                                </motion.div>
+
+                                <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                                    <Card
+                                        className="p-4 cursor-pointer flex flex-col items-center text-center"
+                                        onClick={() => navigate(`/teacher/${teacherInfo.id}`)}
+                                    >
+                                        <div className="w-12 h-12 rounded-full bg-green-500/20 flex items-center justify-center mb-2">
+                                            <ExternalLink size={24} className="text-green-500" />
+                                        </div>
+                                        <span className="text-sm font-medium">{t('profile.view_teacher_profile')}</span>
+                                    </Card>
+                                </motion.div>
+                            </div>
+
+                            {/* Group Info Card */}
+                            <Card className="p-4">
+                                <h3 className="font-semibold text-tg-text mb-3">{t('profile.group_info')}</h3>
+                                <div className="space-y-2 text-sm">
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-tg-hint">Group Name</span>
+                                        <span className="text-tg-text font-medium">{groupInfo.name}</span>
                                     </div>
-                                    <div className="text-right">
-                                        <span className="text-sm font-medium text-tg-button">{group.next_class}</span>
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-tg-hint">Students</span>
+                                        <span className="text-tg-text font-medium">{groupInfo.student_count}</span>
                                     </div>
-                                </Card>
-                            ))}
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-tg-hint">Schedule</span>
+                                        <span className="text-tg-text font-medium">{groupInfo.schedule}</span>
+                                    </div>
+                                </div>
+                            </Card>
                         </div>
                     </Section>
-                ) : (
-                    <Section title="Attendance History">
-                        <AttendanceHistory attendance={attendanceHistory} />
+                )}
+
+                {/* Payment Status (12-Month Dots) */}
+                {currentSubject && (
+                    <Section title={t('profile.payment_history')}>
+                        <Card className="p-4">
+                            <PaymentDotsView
+                                payments={paymentRecords}
+                                subjectName={currentSubject.name}
+                            />
+                        </Card>
                     </Section>
                 )}
 
-                {/* Achievements Preview (Only for Students) */}
-                {dashboardData?.user.role !== 'teacher' && (
-                    <Section title="Recent Achievements">
-                        {achievementsData && Object.keys(achievementsData.achievements || {}).length > 0 ? (
-                            <div className="grid grid-cols-4 gap-2">
-                                {Object.values(achievementsData.achievements)
-                                    .flat()
-                                    .filter((a: any) => a.unlocked)
-                                    .slice(0, 8)
-                                    .map((achievement: any, index: number) => (
-                                        <div
-                                            key={index}
-                                            className="flex flex-col items-center rounded-lg bg-tg-bg p-2"
-                                        >
-                                            <span className="text-2xl">{achievement.icon}</span>
-                                            <span className="mt-1 text-[10px] text-center text-tg-hint line-clamp-2">
-                                                {achievement.name}
-                                            </span>
-                                        </div>
-                                    ))}
-                            </div>
-                        ) : (
-                            <Card className="py-8 text-center">
-                                <p className="text-tg-hint">No achievements unlocked yet</p>
-                                <Button variant="secondary" className="mt-3" size="sm">
-                                    Start Learning
-                                </Button>
-                            </Card>
-                        )}
-                    </Section>
-                )}
+                {/* Attendance History (Keep Calendar View) */}
+                <Section title={t('profile.attendance_history')}>
+                    <AttendanceHistory attendance={attendanceHistory} />
+                </Section>
 
                 {/* Settings */}
-                <Section title="Settings">
+                <Section title={t('profile.settings')}>
                     <Card
                         className="flex items-center justify-between p-4 cursor-pointer active:scale-95 transition-transform"
                         onClick={() => setShowSettings(true)}
                     >
                         <div className="flex items-center gap-3">
                             <Settings className="h-5 w-5 text-tg-hint" />
-                            <span>Account Settings</span>
+                            <span>{t('profile.account_settings')}</span>
                         </div>
                         <ChevronRight className="h-5 w-5 text-tg-hint" />
                     </Card>
