@@ -11,6 +11,8 @@ const AdminDashboard = React.lazy(() => import('./pages/AdminDashboard'));
 const Leaderboard = React.lazy(() => import('./pages/Leaderboard'));
 const Profile = React.lazy(() => import('./pages/Profile'));
 const Journey = React.lazy(() => import('./pages/Journey'));
+const QuickActions = React.lazy(() => import('./pages/QuickActions'));
+const Groups = React.lazy(() => import('./pages/Groups'));
 
 function App() {
   return (
@@ -26,16 +28,38 @@ function App() {
 
 const AppContent: React.FC = () => {
   const { user } = useTelegram();
-  const { loading } = useAppData();
+  const { loading, dashboardData } = useAppData();
+
+  const role = dashboardData?.user.role || 'student';
+
+  const getHomeRoute = () => {
+    switch (role) {
+      case 'teacher': return '/teacher';
+      case 'admin':
+      case 'super_admin': return '/admin';
+      default: return '/student';
+    }
+  };
 
   const element = useRoutes([
-    { path: "/", element: <Navigate to="/student" replace /> },
+    { path: "/", element: <Navigate to={getHomeRoute()} replace /> },
+
+    // Student Routes
     { path: "/student", element: <StudentDashboard /> },
     { path: "/student/journey", element: <Journey /> },
     { path: "/student/leaderboard", element: <Leaderboard /> },
     { path: "/student/profile", element: <Profile /> },
+
+    // Teacher Routes
     { path: "/teacher", element: <TeacherDashboard /> },
+    { path: "/teacher/groups", element: <Groups /> },
+    { path: "/teacher/actions", element: <QuickActions /> },
+    { path: "/teacher/profile", element: <Profile /> },
+
+    // Admin Routes
     { path: "/admin", element: <AdminDashboard /> },
+    { path: "/admin/actions", element: <QuickActions /> },
+    { path: "/admin/profile", element: <Profile /> },
   ]);
 
   if (!user || loading) {
