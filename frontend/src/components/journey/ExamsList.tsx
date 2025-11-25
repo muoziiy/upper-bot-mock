@@ -1,59 +1,29 @@
-﻿import React, { useState } from 'react';
+﻿import React from 'react';
 import type { ExamSchedule } from '../../types/journey.types';
 import { Card } from '../ui/Card';
 import { Calendar, MapPin, Video, Clock, Users } from 'lucide-react';
-import SegmentedControl from '../ui/SegmentedControl';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 
 interface ExamsListProps {
-    exams: {
-        upcoming: ExamSchedule[];
-        old: ExamSchedule[];
-        current?: ExamSchedule[];
-        overall: ExamSchedule[];
-    };
+    exams: ExamSchedule[];
 }
 
 const ExamsList: React.FC<ExamsListProps> = ({ exams }) => {
     const { t } = useTranslation();
-    const [activeTab, setActiveTab] = useState<'upcoming' | 'current' | 'old'>('upcoming');
-
-    const getExams = () => {
-        switch (activeTab) {
-            case 'upcoming': return exams.upcoming;
-            case 'current': return exams.current || [];
-            case 'old': return exams.old;
-            default: return [];
-        }
-    };
-
-    const currentExams = getExams();
 
     return (
         <div className="space-y-4">
-            <SegmentedControl
-                options={[
-                    { label: t('exams.old'), value: 'old' },
-                    { label: t('exams.current'), value: 'current' },
-                    { label: t('exams.upcoming'), value: 'upcoming' }
-                ]}
-                value={activeTab}
-                onChange={(val) => setActiveTab(val as any)}
-                className="mb-4"
-            />
-
             <AnimatePresence mode="wait">
                 <motion.div
-                    key={activeTab}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -10 }}
                     transition={{ duration: 0.2 }}
                     className="space-y-3"
                 >
-                    {currentExams.length > 0 ? (
-                        currentExams.map((exam) => (
+                    {exams.length > 0 ? (
+                        exams.map((exam) => (
                             <Card key={exam.id} className="p-4">
                                 <div className="flex justify-between items-start mb-2">
                                     <h3 className="font-bold text-lg">{exam.exam?.title}</h3>
@@ -89,7 +59,7 @@ const ExamsList: React.FC<ExamsListProps> = ({ exams }) => {
                                     )}
                                     <div className="flex items-center gap-2 text-tg-text col-span-2">
                                         <Users className="w-4 h-4 text-tg-hint" />
-                                        <span>{exam.current_participants} / {exam.max_participants || 'тИЮ'} {t('exams.participants')}</span>
+                                        <span>{exam.current_participants} / {exam.max_participants || '∞'} {t('exams.participants')}</span>
                                     </div>
                                 </div>
                             </Card>

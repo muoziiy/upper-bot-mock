@@ -147,17 +147,10 @@ const LessonsList: React.FC<LessonsListProps> = ({ lessons }) => {
                                         {lesson.status !== 'coming' && (
                                             <div className="flex gap-2">
                                                 <button
-                                                    className="flex-1 py-2 px-4 rounded-lg font-medium transition-all bg-tg-button/20 text-tg-button hover:bg-tg-button/30"
+                                                    className="flex-1 py-2 px-4 rounded-lg font-medium transition-all bg-tg-button text-white hover:bg-tg-button/90 shadow-sm"
                                                 >
-                                                    {t('lessons.more_info')}
+                                                    {t('lessons.homeworks')}
                                                 </button>
-                                                {lesson.status === 'completed' && (
-                                                    <button
-                                                        className="flex-1 py-2 px-4 rounded-lg font-medium transition-all bg-tg-secondary text-tg-text hover:bg-tg-secondary/80"
-                                                    >
-                                                        {t('lessons.homeworks')}
-                                                    </button>
-                                                )}
                                             </div>
                                         )}
 

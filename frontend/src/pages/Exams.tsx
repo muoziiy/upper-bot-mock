@@ -1,4 +1,5 @@
 ﻿import React, { useState } from 'react';
+import type { ExamSchedule } from '../types/journey.types';
 import { useAppData } from '../context/AppDataContext';
 import { Section } from '../components/ui/Section';
 import ExamsList from '../components/journey/ExamsList';
@@ -6,11 +7,13 @@ import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import LottieAnimation from '../components/ui/LottieAnimation';
 import loadingAnimation from '../assets/animations/loading.json';
+import SegmentedControl from '../components/ui/SegmentedControl';
 
 const Exams: React.FC = () => {
     const { t } = useTranslation();
     const { journeyData, loading } = useAppData();
     const [selectedSubjectId, setSelectedSubjectId] = useState('1');
+    const [activeTab, setActiveTab] = useState<'upcoming' | 'current' | 'old'>('upcoming');
 
     // Mock Subjects Data (Should be consistent with StudentDashboard)
     const subjects = [
@@ -45,6 +48,19 @@ const Exams: React.FC = () => {
         current: [] // Mock empty current exams for now
     };
 
+    const getFilteredExams = () => {
+        let list: ExamSchedule[] = [];
+        switch (activeTab) {
+            case 'upcoming': list = examsData.upcoming; break;
+            case 'current': list = examsData.current || []; break;
+            case 'old': list = examsData.old; break;
+            default: list = [];
+        }
+        // In a real app, we would filter by selectedSubjectId here too.
+        // For now, we just return the list as the mock data isn't structured by subject ID yet.
+        return list;
+    };
+
     return (
         <div className="min-h-screen bg-tg-secondary pb-24 pt-4 text-tg-text">
             <motion.div
@@ -57,7 +73,19 @@ const Exams: React.FC = () => {
                     <p className="text-tg-hint">{t('exams.subtitle')}</p>
                 </header>
 
-                {/* Subject Switcher */}
+                {/* 1. Tabs (Old / Current / Upcoming) */}
+                <SegmentedControl
+                    options={[
+                        { label: t('exams.old'), value: 'old' },
+                        { label: t('exams.current'), value: 'current' },
+                        { label: t('exams.upcoming'), value: 'upcoming' }
+                    ]}
+                    value={activeTab}
+                    onChange={(val) => setActiveTab(val as any)}
+                    className="mb-6"
+                />
+
+                {/* 2. Subject Switcher */}
                 <div className="mb-6">
                     <div className="flex items-center gap-3 overflow-x-auto pb-2 scrollbar-hide">
                         {subjects.map((subject) => (
@@ -78,9 +106,9 @@ const Exams: React.FC = () => {
                     </div>
                 </div>
 
-                {/* Content */}
-                <Section title={t('journey.exams')}>
-                    <ExamsList exams={examsData} />
+                {/* 3. List */}
+                <Section>
+                    <ExamsList exams={getFilteredExams()} />
                 </Section>
             </motion.div>
         </div>
