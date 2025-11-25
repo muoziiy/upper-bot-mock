@@ -1,3 +1,4 @@
+```json
 {
     "nav": {
         "home": "Home",
@@ -6,7 +7,8 @@
         "ranks": "Ranks",
         "profile": "Profile",
         "groups": "Groups",
-        "actions": "Actions"
+        "actions": "Actions",
+        "lessons": "Lessons"
     },
     "dashboard": {
         "hello": "Hello,",
@@ -140,7 +142,22 @@
         "absent": "Absent",
         "save": "Save",
         "lesson_title": "Lesson",
-        "next_class": "Next Class"
+        "next_class": "Next Class",
+        "welcome": "Welcome",
+        "total_students": "Total Students",
+        "active_groups": "Active Groups",
+        "edit_curriculum": "Edit Curriculum",
+        "schedule_class": "Schedule Class",
+        "group": "Group",
+        "topic": "Topic",
+        "time": "Time",
+        "date": "Date",
+        "duration": "Duration",
+        "location": "Location",
+        "room": "Room",
+        "schedule": "Schedule",
+        "details": "Details",
+        "class_scheduled": "Class Scheduled!"
     },
     "leaderboard": {
         "title": "Leaderboard",
@@ -187,6 +204,9 @@
     },
     "teacher_profile": {
         "title": "Teacher Profile",
+        "role_teacher": "Teacher",
+        "id": "ID",
+        "settings": "Settings",
         "account_settings": "Account Settings",
         "payment_history": "Payment History",
         "edit_info": "Edit Teacher Information",
@@ -198,10 +218,17 @@
         "total_students": "Total Students",
         "active_groups": "Active Groups",
         "classes_this_month": "Classes This Month",
+        "students": "Students",
+        "groups": "Groups",
+        "classes": "Classes",
         "salary": "Salary",
         "month": "Month",
         "paid_on": "Paid on",
         "pending": "Pending",
-        "amount_paid": "Amount Paid"
+        "amount_paid": "Amount Paid",
+        "app": "App",
+        "log_out": "Log Out",
+        "version": "Version"
     }
 }
+```
