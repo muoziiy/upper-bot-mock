@@ -8,6 +8,7 @@ import { Settings, ChevronRight, Calendar } from 'lucide-react';
 import TeacherInfoModal from '../components/profile/TeacherInfoModal';
 import AttendanceCalendarModal from '../components/profile/AttendanceCalendarModal';
 import SettingsModal from '../components/profile/SettingsModal';
+import PaymentHistoryModal from '../components/profile/PaymentHistoryModal';
 
 const Profile: React.FC = () => {
     const { t } = useTranslation();
@@ -16,6 +17,7 @@ const Profile: React.FC = () => {
     const [showSettings, setShowSettings] = useState(false);
     const [selectedTeacher, setSelectedTeacher] = useState<any>(null);
     const [selectedSubjectAttendance, setSelectedSubjectAttendance] = useState<any>(null);
+    const [selectedSubjectPayments, setSelectedSubjectPayments] = useState<any>(null);
 
     // Mock random student ID for now
     const studentId = React.useMemo(() => Math.floor(10000 + Math.random() * 90000), []);
@@ -44,8 +46,10 @@ const Profile: React.FC = () => {
                 subjects: ['English', 'Literature']
             },
             payments: [
-                { status: 'paid' }, { status: 'paid' }, { status: 'paid' }, { status: 'paid' }, { status: 'paid' }, { status: 'paid' },
-                { status: 'paid' }, { status: 'paid' }, { status: 'pending' }, { status: 'unpaid' }, { status: 'unpaid' }, { status: 'unpaid' }
+                { status: 'paid', date: '2024-01-05' }, { status: 'paid', date: '2024-02-05' }, { status: 'paid', date: '2024-03-05' },
+                { status: 'paid', date: '2024-04-05' }, { status: 'paid', date: '2024-05-05' }, { status: 'paid', date: '2024-06-05' },
+                { status: 'paid', date: '2024-07-05' }, { status: 'paid', date: '2024-08-05' }, { status: 'pending' },
+                { status: 'unpaid' }, { status: 'unpaid' }, { status: 'unpaid' }
             ],
             attendance: [
                 { date: '2024-11-01', status: 'present' },
@@ -68,7 +72,8 @@ const Profile: React.FC = () => {
                 subjects: ['Math', 'Algebra']
             },
             payments: [
-                { status: 'paid' }, { status: 'paid' }, { status: 'paid' }, { status: 'paid' }, { status: 'unpaid' }, { status: 'unpaid' },
+                { status: 'paid', date: '2024-01-10' }, { status: 'paid', date: '2024-02-10' }, { status: 'paid', date: '2024-03-10' },
+                { status: 'paid', date: '2024-04-10' }, { status: 'unpaid' }, { status: 'unpaid' },
                 { status: 'unpaid' }, { status: 'unpaid' }, { status: 'unpaid' }, { status: 'unpaid' }, { status: 'unpaid' }, { status: 'unpaid' }
             ],
             attendance: [
@@ -93,6 +98,14 @@ const Profile: React.FC = () => {
                     onClose={() => setSelectedSubjectAttendance(null)}
                     subjectName={selectedSubjectAttendance.name}
                     attendance={selectedSubjectAttendance.attendance}
+                />
+            )}
+            {selectedSubjectPayments && (
+                <PaymentHistoryModal
+                    isOpen={!!selectedSubjectPayments}
+                    onClose={() => setSelectedSubjectPayments(null)}
+                    subjectName={selectedSubjectPayments.name}
+                    payments={selectedSubjectPayments.payments}
                 />
             )}
 
@@ -149,8 +162,13 @@ const Profile: React.FC = () => {
                                     </div>
 
                                     {/* Payment Circles */}
-                                    <div className="p-4 flex flex-col items-center">
-                                        <span className="text-xs text-tg-hint uppercase mb-3">{t('profile.payment_history')}</span>
+                                    <button
+                                        onClick={() => setSelectedSubjectPayments(subject)}
+                                        className="w-full p-4 flex flex-col items-center hover:bg-tg-secondary/30 transition-colors active:bg-tg-secondary/50"
+                                    >
+                                        <span className="text-xs text-tg-hint uppercase mb-3 flex items-center gap-1">
+                                            {t('profile.payment_history')} <ChevronRight size={12} />
+                                        </span>
                                         <div className="grid grid-cols-6 gap-3">
                                             {subject.payments.map((payment, idx) => (
                                                 <div
@@ -163,7 +181,7 @@ const Profile: React.FC = () => {
                                                 />
                                             ))}
                                         </div>
-                                    </div>
+                                    </button>
 
                                     {/* Attendance Link */}
                                     <button

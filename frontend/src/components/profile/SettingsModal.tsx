@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, ChevronRight, Globe, User } from 'lucide-react';
+import { ChevronRight, Globe, User } from 'lucide-react';
 import { useTelegram } from '../../context/TelegramContext';
 import { useTranslation } from 'react-i18next';
 
@@ -15,26 +15,39 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
     const [direction, setDirection] = useState(0);
     const { t, i18n } = useTranslation();
 
-    const navigateTo = (page: 'main' | 'language' | 'account') => {
-        setDirection(page === 'main' ? -1 : 1);
-        setActivePage(page);
-        if (page !== 'main') {
+    // Handle native back button
+    React.useEffect(() => {
+        if (isOpen) {
             webApp.BackButton.show();
-            webApp.BackButton.onClick(() => {
-                setDirection(-1);
-                setActivePage('main');
-                webApp.BackButton.hide();
-            });
+
+            const handleBack = () => {
+                if (activePage !== 'main') {
+                    setDirection(-1);
+                    setActivePage('main');
+                } else {
+                    onClose();
+                }
+            };
+
+            webApp.BackButton.onClick(handleBack);
+
+            return () => {
+                webApp.BackButton.offClick(handleBack);
+            };
         } else {
             webApp.BackButton.hide();
         }
+    }, [isOpen, activePage, onClose, webApp]);
+
+    const navigateTo = (page: 'main' | 'language' | 'account') => {
+        setDirection(page === 'main' ? -1 : 1);
+        setActivePage(page);
     };
 
     const changeLanguage = (lang: string) => {
         i18n.changeLanguage(lang);
         setDirection(-1);
         setActivePage('main');
-        webApp.BackButton.hide();
     };
 
     const pageVariants = {
@@ -79,19 +92,11 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
                 onClick={(e) => e.stopPropagation()}
             >
                 {/* Header */}
-                <div className="flex items-center justify-between p-4 border-b border-white/5">
-                    <div className="w-8">
-                        {/* Native Back Button is used instead */}
-                    </div>
+                <div className="flex items-center justify-center p-4 border-b border-white/5 relative">
                     <h2 className="text-lg font-semibold text-tg-text">
                         {activePage === 'main' ? t('settings.title') :
                             activePage === 'language' ? t('settings.language') : t('settings.account')}
                     </h2>
-                    <button onClick={onClose} className="w-8 flex justify-end text-tg-hint">
-                        <div className="bg-tg-button/10 rounded-full p-1">
-                            <X size={20} />
-                        </div>
-                    </button>
                 </div>
 
                 {/* Content */}
