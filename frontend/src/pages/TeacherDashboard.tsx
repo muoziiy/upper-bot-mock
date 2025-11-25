@@ -70,8 +70,6 @@ const TeacherDashboard: React.FC = () => {
                             {t('teacher.welcome')}
                         </h1>
                         <motion.div
-                            animate={{ rotate: [0, 14, -8, 14, -4, 10, 0, 0] }}
-                            transition={{ duration: 2.5, repeat: Infinity, repeatDelay: 1 }}
                             className="text-3xl"
                         >
                             👨‍🏫

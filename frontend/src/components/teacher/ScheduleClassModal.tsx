@@ -4,7 +4,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useTelegram } from '../../context/TelegramContext';
 import { useTranslation } from 'react-i18next';
 import Lottie from 'lottie-react';
-import duckSuccess from '../../assets/animations/duck_success.json';
 
 interface ScheduleClassModalProps {
     isOpen: boolean;
@@ -24,6 +23,22 @@ const ScheduleClassModal: React.FC<ScheduleClassModalProps> = ({ isOpen, onClose
         topic: ''
     });
     const [showSuccess, setShowSuccess] = useState(false);
+    const [doneAnimation, setDoneAnimation] = useState<any>(null);
+
+    // Load the .tgs animation
+    useEffect(() => {
+        fetch('/assets/emojis/done.tgs')
+            .then(response => response.arrayBuffer())
+            .then(buffer => {
+                // Decompress gzip
+                const decompressed = new Blob([buffer]);
+                return decompressed.text();
+            })
+            .then(text => {
+                setDoneAnimation(JSON.parse(text));
+            })
+            .catch(err => console.error('Failed to load done animation:', err));
+    }, []);
 
     useEffect(() => {
         if (isOpen) {
@@ -76,9 +91,11 @@ const ScheduleClassModal: React.FC<ScheduleClassModalProps> = ({ isOpen, onClose
                 >
                     {showSuccess ? (
                         <div className="flex flex-col items-center justify-center h-full bg-tg-bg">
-                            <div className="w-48 h-48">
-                                <Lottie animationData={duckSuccess} loop={false} />
-                            </div>
+                            {doneAnimation && (
+                                <div className="w-48 h-48">
+                                    <Lottie animationData={doneAnimation} loop={true} />
+                                </div>
+                            )}
                             <h2 className="text-xl font-bold mt-4 text-tg-text">{t('teacher.class_scheduled')}</h2>
                         </div>
                     ) : (

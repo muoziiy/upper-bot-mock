@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAppData } from '../context/AppDataContext';
 import { useTelegram } from '../context/TelegramContext';
 import { Section } from '../components/ui/Section';
 import { Card } from '../components/ui/Card';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
+import Lottie from 'lottie-react';
 import LottieAnimation from '../components/ui/LottieAnimation';
 import loadingAnimation from '../assets/animations/loading.json';
 import { getLevelDisplayName, getLevelColor, getLevelOrder } from '../types/journey.types';
@@ -15,6 +16,21 @@ const StudentDashboard: React.FC = () => {
     const { } = useTelegram();
     const { dashboardData, journeyData, loading } = useAppData();
     const [selectedSubjectId, setSelectedSubjectId] = useState('1');
+    const [hiAnimation, setHiAnimation] = useState<any>(null);
+
+    // Load the .tgs hi animation
+    useEffect(() => {
+        fetch('/assets/emojis/hi.tgs')
+            .then(response => response.arrayBuffer())
+            .then(buffer => {
+                const decompressed = new Blob([buffer]);
+                return decompressed.text();
+            })
+            .then(text => {
+                setHiAnimation(JSON.parse(text));
+            })
+            .catch(err => console.error('Failed to load hi animation:', err));
+    }, []);
 
     // Mock Subjects Data
     const subjects = [
@@ -59,13 +75,13 @@ const StudentDashboard: React.FC = () => {
                         <h1 className="text-3xl font-bold bg-gradient-to-r from-tg-button to-tg-accent bg-clip-text text-transparent">
                             {t('dashboard.hello')} {dashboardData?.user.first_name}
                         </h1>
-                        <motion.div
-                            animate={{ rotate: [0, 14, -8, 14, -4, 10, 0, 0] }}
-                            transition={{ duration: 2.5, repeat: Infinity, repeatDelay: 1 }}
-                            className="text-3xl"
-                        >
-                            👋
-                        </motion.div>
+                        {hiAnimation && (
+                            <motion.div
+                                className="w-10 h-10"
+                            >
+                                <Lottie animationData={hiAnimation} loop={true} />
+                            </motion.div>
+                        )}
                     </div>
                     <p className="text-tg-hint text-lg">{t('dashboard.ready_to_learn')}</p>
                 </header>
