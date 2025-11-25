@@ -2,6 +2,7 @@
     "nav": {
         "home": "Home",
         "journey": "Journey",
+        "exams": "Exams",
         "ranks": "Ranks",
         "profile": "Profile",
         "groups": "Groups",
@@ -40,14 +41,17 @@
         "coming_soon": "This lesson is coming soon."
     },
     "exams": {
+        "title": "Exams",
+        "subtitle": "Track your exam schedule and results",
         "upcoming": "Upcoming",
         "old": "Old",
+        "current": "Current",
         "overall": "Overall",
         "online": "Online",
         "offline": "Offline",
-        "no_exams": "No exams found in this category.",
         "join_meeting": "Join Meeting",
-        "participants": "Participants"
+        "participants": "participants",
+        "no_exams": "No exams found in this category"
     },
     "profile": {
         "overview": "Overview",

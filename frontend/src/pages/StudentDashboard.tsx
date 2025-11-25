@@ -1,19 +1,27 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useAppData } from '../context/AppDataContext';
 import { useTelegram } from '../context/TelegramContext';
 import { Section } from '../components/ui/Section';
 import { Card } from '../components/ui/Card';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import LottieAnimation from '../components/ui/LottieAnimation';
 import loadingAnimation from '../assets/animations/loading.json';
-import { Flame, Target, TrendingUp } from 'lucide-react';
 import { getLevelDisplayName, getLevelColor, getLevelOrder } from '../types/journey.types';
+import LessonsList from '../components/journey/LessonsList';
 
 const StudentDashboard: React.FC = () => {
     const { t } = useTranslation();
     const { user } = useTelegram();
     const { dashboardData, journeyData, loading } = useAppData();
+    const [selectedSubjectId, setSelectedSubjectId] = useState('1');
+
+    // Mock Subjects Data
+    const subjects = [
+        { id: '1', name: 'English Language', icon: '🇬🇧' },
+        { id: '2', name: 'Mathematics', icon: '📐' },
+        { id: '3', name: 'Physics', icon: '⚛️' },
+    ];
 
     if (loading) {
         return (
@@ -32,6 +40,10 @@ const StudentDashboard: React.FC = () => {
     const levelName = currentLevel ? getLevelDisplayName(currentLevel.current_level) : 'Beginner';
     const levelOrder = currentLevel ? getLevelOrder(currentLevel.current_level) : 1;
     const progressPercentage = currentLevel?.progress_percentage || 0;
+
+    // Filter lessons based on selected subject (Mocking the filter for now as data doesn't have subject_id)
+    // In a real app, we would filter journeyData.lessons by selectedSubjectId
+    const currentLessons = journeyData?.lessons || [];
 
     return (
         <div className="min-h-screen bg-tg-secondary pb-24 pt-4 text-tg-text">
@@ -56,48 +68,6 @@ const StudentDashboard: React.FC = () => {
                         <p className="text-tg-hint text-sm">{t('dashboard.ready_to_learn')}</p>
                     </div>
                 </header>
-
-                {/* Quick Stats Cards */}
-                <div className="grid grid-cols-3 gap-3">
-                    <motion.div
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                    >
-                        <Card className="p-3 text-center">
-                            <div className="w-10 h-10 rounded-full bg-orange-500/20 flex items-center justify-center mx-auto mb-2">
-                                <Flame size={20} className="text-orange-500" />
-                            </div>
-                            <p className="text-2xl font-bold text-tg-text">{dashboardData?.streak.current_streak || 0}</p>
-                            <p className="text-xs text-tg-hint">Day Streak</p>
-                        </Card>
-                    </motion.div>
-
-                    <motion.div
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                    >
-                        <Card className="p-3 text-center">
-                            <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center mx-auto mb-2">
-                                <Target size={20} className="text-blue-500" />
-                            </div>
-                            <p className="text-2xl font-bold text-tg-text">{dashboardData?.total_stats.total_tests || 0}</p>
-                            <p className="text-xs text-tg-hint">Tests</p>
-                        </Card>
-                    </motion.div>
-
-                    <motion.div
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                    >
-                        <Card className="p-3 text-center">
-                            <div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center mx-auto mb-2">
-                                <TrendingUp size={20} className="text-green-500" />
-                            </div>
-                            <p className="text-2xl font-bold text-tg-text">{dashboardData?.average_score || 0}%</p>
-                            <p className="text-xs text-tg-hint">Avg Score</p>
-                        </Card>
-                    </motion.div>
-                </div>
 
                 {/* Current Level Section */}
                 {currentLevel && (
@@ -149,6 +119,42 @@ const StudentDashboard: React.FC = () => {
                         </Card>
                     </Section>
                 )}
+
+                {/* Subject Switcher */}
+                <div>
+                    <div className="flex items-center gap-3 overflow-x-auto pb-2 scrollbar-hide">
+                        {subjects.map((subject) => (
+                            <button
+                                key={subject.id}
+                                onClick={() => setSelectedSubjectId(subject.id)}
+                                className={`
+                                    flex items-center gap-2 px-4 py-2 rounded-full whitespace-nowrap transition-all
+                                    ${selectedSubjectId === subject.id
+                                        ? 'bg-tg-button text-white shadow-md'
+                                        : 'bg-tg-bg text-tg-text border border-tg-hint/10'}
+                                `}
+                            >
+                                <span className="text-lg">{subject.icon}</span>
+                                <span className="font-medium">{subject.name}</span>
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Lesson Curriculum */}
+                <AnimatePresence mode="wait">
+                    <motion.div
+                        key={selectedSubjectId}
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: -20 }}
+                        transition={{ duration: 0.2 }}
+                    >
+                        <Section title={t('journey.lesson_curriculum')}>
+                            <LessonsList lessons={currentLessons} />
+                        </Section>
+                    </motion.div>
+                </AnimatePresence>
             </motion.div>
         </div>
     );

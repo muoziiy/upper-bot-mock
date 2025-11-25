@@ -10,19 +10,20 @@ interface ExamsListProps {
     exams: {
         upcoming: ExamSchedule[];
         old: ExamSchedule[];
+        current?: ExamSchedule[];
         overall: ExamSchedule[];
     };
 }
 
 const ExamsList: React.FC<ExamsListProps> = ({ exams }) => {
     const { t } = useTranslation();
-    const [activeTab, setActiveTab] = useState<'upcoming' | 'old' | 'overall'>('upcoming');
+    const [activeTab, setActiveTab] = useState<'upcoming' | 'current' | 'old'>('upcoming');
 
     const getExams = () => {
         switch (activeTab) {
             case 'upcoming': return exams.upcoming;
+            case 'current': return exams.current || [];
             case 'old': return exams.old;
-            case 'overall': return exams.overall;
             default: return [];
         }
     };
@@ -33,9 +34,9 @@ const ExamsList: React.FC<ExamsListProps> = ({ exams }) => {
         <div className="space-y-4">
             <SegmentedControl
                 options={[
-                    { label: t('exams.upcoming'), value: 'upcoming' },
                     { label: t('exams.old'), value: 'old' },
-                    { label: t('exams.overall'), value: 'overall' }
+                    { label: t('exams.current'), value: 'current' },
+                    { label: t('exams.upcoming'), value: 'upcoming' }
                 ]}
                 value={activeTab}
                 onChange={(val) => setActiveTab(val as any)}

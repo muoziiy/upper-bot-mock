@@ -74,7 +74,7 @@ const PaymentHistoryModal: React.FC<PaymentHistoryModalProps> = ({
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
-                    className="fixed inset-0 z-50 bg-tg-bg"
+                    className="fixed inset-0 z-[100] bg-tg-bg"
                 >
                     <motion.div
                         initial={{ y: 20, opacity: 0 }}
@@ -123,7 +123,7 @@ const PaymentHistoryModal: React.FC<PaymentHistoryModalProps> = ({
                                             {payment.status === 'paid' ? '$150' : '---'}
                                         </p>
                                         <p className={`text-xs ${payment.status === 'paid' ? 'text-green-500' :
-                                                payment.status === 'unpaid' ? 'text-red-500' : 'text-yellow-500'
+                                            payment.status === 'unpaid' ? 'text-red-500' : 'text-yellow-500'
                                             }`}>
                                             {getStatusText(payment.status)}
                                         </p>

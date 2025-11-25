@@ -19,7 +19,7 @@ const BottomNav: React.FC = () => {
 
     const studentTabs = [
         { name: t('nav.home'), icon: Home, path: '/student' },
-        { name: t('nav.journey'), icon: Map, path: '/student/journey' },
+        { name: t('nav.exams'), icon: Map, path: '/student/exams' },
         { name: t('nav.ranks'), icon: Trophy, path: '/student/leaderboard' },
         { name: t('nav.profile'), icon: User, path: '/student/profile' },
     ];
