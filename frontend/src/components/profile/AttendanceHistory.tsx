@@ -1,6 +1,5 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { Card } from '../ui/Card';
-import { Button } from '../ui/Button';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface AttendanceRecord {
@@ -15,13 +14,14 @@ interface AttendanceHistoryProps {
 }
 
 const AttendanceHistory: React.FC<AttendanceHistoryProps> = ({ attendance }) => {
-    const [selectedSubject, setSelectedSubject] = useState<string>('All');
+    // Internal subject state removed in favor of parent filtering
+    // const [selectedSubject, setSelectedSubject] = useState<string>('All');
     const [currentDate, setCurrentDate] = useState(new Date());
 
-    const subjects = useMemo(() => {
-        const uniqueSubjects = Array.from(new Set(attendance.map(r => r.subject)));
-        return ['All', ...uniqueSubjects];
-    }, [attendance]);
+    // const subjects = useMemo(() => {
+    //     const uniqueSubjects = Array.from(new Set(attendance.map(r => r.subject)));
+    //     return ['All', ...uniqueSubjects];
+    // }, [attendance]);
 
     const getDaysInMonth = (year: number, month: number) => {
         return new Date(year, month + 1, 0).getDate();
@@ -58,10 +58,7 @@ const AttendanceHistory: React.FC<AttendanceHistoryProps> = ({ attendance }) => 
             const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 
             // Find attendance for this day
-            const records = attendance.filter(r =>
-                r.date === dateStr &&
-                (selectedSubject === 'All' || r.subject === selectedSubject)
-            );
+            const records = attendance.filter(r => r.date === dateStr);
 
             let statusColor = 'bg-tg-bg';
             let textColor = 'text-tg-text';
@@ -95,20 +92,7 @@ const AttendanceHistory: React.FC<AttendanceHistoryProps> = ({ attendance }) => 
 
     return (
         <div className="space-y-4">
-            {/* Subject Filter */}
-            <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
-                {subjects.map(subject => (
-                    <Button
-                        key={subject}
-                        variant={selectedSubject === subject ? 'primary' : 'secondary'}
-                        size="sm"
-                        onClick={() => setSelectedSubject(subject)}
-                        className="whitespace-nowrap"
-                    >
-                        {subject}
-                    </Button>
-                ))}
-            </div>
+            {/* Subject Filter Removed - Controlled by Parent */}
 
             {/* Calendar Header */}
             <Card className="p-4">
