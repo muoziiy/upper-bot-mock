@@ -13,7 +13,10 @@
         "ready_to_learn": "Bugun yangi narsalarni o'rganishga tayyormisiz?",
         "current_level": "Joriy daraja",
         "quick_stats": "Tezkor statistika",
-        "next_class": "Keyingi dars"
+        "next_class": "Keyingi dars",
+        "welcome": "Xush kelibsiz,",
+        "keep_learning": "Olg'a borish uchun o'rganishda davom eting!",
+        "progress_to_level": "Keyingi darajaga taraqqiyot"
     },
     "journey": {
         "title": "O'quv sayohatingiz 🗺️",
@@ -138,18 +141,42 @@
     },
     "leaderboard": {
         "title": "Reyting",
+        "subtitle": "Tengdoshlaringiz bilan raqobatlashing",
         "your_rank": "Sizning o'rningiz",
         "top_learners": "Eng yaxshi o'quvchilar",
         "rank": "O'rin",
         "score": "Ball",
-        "you": "Siz"
+        "you": "Siz",
+        "global": "Global",
+        "weekly": "Haftalik",
+        "class": "Sinf"
     },
     "settings": {
         "title": "Sozlamalar",
         "language": "Til",
         "account": "Hisob",
+        "account_info": "Hisob ma'lumotlari",
+        "preferences": "Sozlamalar",
+        "first_name": "Ism",
+        "last_name": "Familiya",
+        "username": "Foydalanuvchi nomi",
+        "edit_profile_note": "Shaxsiy ma'lumotlarni o'zgartirish uchun Telegram profilingizni tahrirlang.",
         "support": "Yordam",
         "back": "Orqaga"
+    },
+    "groups": {
+        "my_groups": "Mening guruhlarim",
+        "manage_classes": "Sinflaringiz va o'quvchilaringizni boshqaring"
+    },
+    "quick_actions": {
+        "title": "Tezkor amallar",
+        "subtitle": "Vazifalaringizni samarali boshqaring",
+        "recent_activity": "So'nggi faoliyat"
+    },
+    "admin": {
+        "dashboard": "Administrator paneli",
+        "welcome": "Xush kelibsiz, {{name}}!",
+        "user_management": "Foydalanuvchilarni boshqarish"
     },
     "common": {
         "loading": "Yuklanmoqda...",

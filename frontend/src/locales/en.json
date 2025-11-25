@@ -14,7 +14,9 @@
         "current_level": "Current Level",
         "quick_stats": "Quick Stats",
         "next_class": "Next Class",
-        "welcome": "Welcome,"
+        "welcome": "Welcome,",
+        "keep_learning": "Keep learning to advance!",
+        "progress_to_level": "Progress to next level"
     },
     "journey": {
         "title": "Your Learning Journey 🗺️",
@@ -142,11 +144,15 @@
     },
     "leaderboard": {
         "title": "Leaderboard",
+        "subtitle": "Compete with your peers",
         "your_rank": "Your Rank",
         "top_learners": "Top Learners",
         "rank": "Rank",
         "score": "Score",
-        "you": "You"
+        "you": "You",
+        "global": "Global",
+        "weekly": "Weekly",
+        "class": "Class"
     },
     "settings": {
         "title": "Settings",
@@ -160,6 +166,20 @@
         "edit_profile_note": "To change your personal details, please edit your Telegram profile.",
         "support": "Support",
         "back": "Back"
+    },
+    "groups": {
+        "my_groups": "My Groups",
+        "manage_classes": "Manage your classes and students"
+    },
+    "quick_actions": {
+        "title": "Quick Actions",
+        "subtitle": "Manage your tasks efficiently",
+        "recent_activity": "Recent Activity"
+    },
+    "admin": {
+        "dashboard": "Admin Dashboard",
+        "welcome": "Welcome, {{name}}!",
+        "user_management": "User Management"
     },
     "common": {
         "loading": "Loading...",
