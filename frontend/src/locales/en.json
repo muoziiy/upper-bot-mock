@@ -152,6 +152,12 @@
         "title": "Settings",
         "language": "Language",
         "account": "Account",
+        "account_info": "Account Information",
+        "preferences": "Preferences",
+        "first_name": "First Name",
+        "last_name": "Last Name",
+        "username": "Username",
+        "edit_profile_note": "To change your personal details, please edit your Telegram profile.",
         "support": "Support",
         "back": "Back"
     },
