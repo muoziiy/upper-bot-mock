@@ -1,5 +1,5 @@
 ﻿import React from 'react';
-import { Home, Trophy, User, Map, Users, Plus, Settings } from 'lucide-react';
+import { Home, Trophy, User, Map, Users, Plus, Settings, Calendar } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../lib/utils';
@@ -26,8 +26,8 @@ const BottomNav: React.FC = () => {
 
     const teacherTabs = [
         { name: t('nav.home'), icon: Home, path: '/teacher' },
+        { name: t('nav.lessons'), icon: Calendar, path: '/teacher/lessons' },
         { name: t('nav.groups'), icon: Users, path: '/teacher/groups' },
-        { name: t('nav.actions'), icon: Plus, path: '/teacher/actions' },
         { name: t('nav.profile'), icon: User, path: '/teacher/profile' },
     ];
 

@@ -1,53 +1,21 @@
 import React, { useState } from 'react';
-import { useTelegram } from '../context/TelegramContext';
 import { useAppData } from '../context/AppDataContext';
-import { Users, BookOpen, Calendar, Plus, CheckSquare, Clock, MapPin } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { Plus, CheckSquare, BookOpen, Calendar as CalendarIcon, Users } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import CreateExamModal from '../components/teacher/CreateExamModal';
 import AttendanceModal from '../components/teacher/AttendanceModal';
+import EditCurriculumModal from '../components/teacher/EditCurriculumModal';
+import ScheduleClassModal from '../components/teacher/ScheduleClassModal';
 
 const TeacherDashboard: React.FC = () => {
-    const { user } = useTelegram();
     const { teacherData, loading } = useAppData();
     const { t } = useTranslation();
-    const [showCreateExam, setShowCreateExam] = useState(false);
-    const [showAttendance, setShowAttendance] = useState(false);
+    const [activeModal, setActiveModal] = useState<string | null>(null);
 
     if (loading) {
-        return <div className="flex min-h-screen items-center justify-center bg-tg-secondary text-tg-text">{t('common.loading')}</div>;
+        return <div className="flex min-h-screen items-center justify-center bg-tg-secondary text-tg-text">Loading...</div>;
     }
-
-    // Mock upcoming lessons data
-    const upcomingLessons = [
-        {
-            id: 'l1',
-            title: 'Advanced Algebra',
-            group: 'Mathematics 101',
-            date: 'Today',
-            time: '14:00',
-            duration: 60,
-            location: 'Room 203'
-        },
-        {
-            id: 'l2',
-            title: 'Quantum Mechanics',
-            group: 'Physics Advanced',
-            date: 'Tomorrow',
-            time: '10:00',
-            duration: 90,
-            location: 'Lab 5'
-        },
-        {
-            id: 'l3',
-            title: 'Triangle Properties',
-            group: 'Geometry Basics',
-            date: 'Wednesday',
-            time: '16:00',
-            duration: 45,
-            location: 'Room 101'
-        }
-    ];
 
     const containerVariants = {
         hidden: { opacity: 0 },
@@ -62,16 +30,32 @@ const TeacherDashboard: React.FC = () => {
         visible: { opacity: 1, y: 0 }
     };
 
+    const actions = [
+        { id: 'create_exam', label: t('teacher.create_exam'), icon: Plus, color: 'bg-blue-500' },
+        { id: 'attendance', label: t('teacher.mark_attendance'), icon: CheckSquare, color: 'bg-green-500' },
+        { id: 'curriculum', label: t('teacher.edit_curriculum'), icon: BookOpen, color: 'bg-orange-500' },
+        { id: 'schedule', label: t('teacher.schedule_class'), icon: CalendarIcon, color: 'bg-purple-500' },
+    ];
+
     return (
         <div className="min-h-screen bg-tg-secondary pb-24 pt-4 text-tg-text px-4">
             <CreateExamModal
-                isOpen={showCreateExam}
-                onClose={() => setShowCreateExam(false)}
+                isOpen={activeModal === 'create_exam'}
+                onClose={() => setActiveModal(null)}
                 groups={teacherData?.groups || []}
             />
             <AttendanceModal
-                isOpen={showAttendance}
-                onClose={() => setShowAttendance(false)}
+                isOpen={activeModal === 'attendance'}
+                onClose={() => setActiveModal(null)}
+                groups={teacherData?.groups || []}
+            />
+            <EditCurriculumModal
+                isOpen={activeModal === 'curriculum'}
+                onClose={() => setActiveModal(null)}
+            />
+            <ScheduleClassModal
+                isOpen={activeModal === 'schedule'}
+                onClose={() => setActiveModal(null)}
                 groups={teacherData?.groups || []}
             />
 
@@ -80,91 +64,52 @@ const TeacherDashboard: React.FC = () => {
                 animate="visible"
                 variants={containerVariants}
             >
-                <header className="mb-6">
-                    <h1 className="text-2xl font-bold">{t('teacher.dashboard')}</h1>
-                    <p className="text-tg-hint">{t('dashboard.welcome')} {user?.first_name}</p>
+                <header className="mb-6 flex items-center justify-between">
+                    <div>
+                        <h1 className="text-2xl font-bold">{t('teacher.welcome')}</h1>
+                        <p className="text-tg-hint">{teacherData?.name}</p>
+                    </div>
+                    <div className="w-10 h-10 rounded-full bg-tg-button text-tg-button-text flex items-center justify-center font-bold text-lg">
+                        {teacherData?.name.charAt(0)}
+                    </div>
                 </header>
 
-                {/* Stats Overview */}
-                <div className="grid grid-cols-3 gap-3 mb-6">
-                    <motion.div variants={itemVariants} className="bg-tg-bg p-3 rounded-xl shadow-sm flex flex-col items-center justify-center text-center">
-                        <Users className="w-6 h-6 text-blue-500 mb-1" />
-                        <span className="text-lg font-bold">{teacherData?.stats.total_students || 0}</span>
-                        <span className="text-[10px] text-tg-hint uppercase">{t('teacher.students')}</span>
-                    </motion.div>
-                    <motion.div variants={itemVariants} className="bg-tg-bg p-3 rounded-xl shadow-sm flex flex-col items-center justify-center text-center">
-                        <BookOpen className="w-6 h-6 text-green-500 mb-1" />
-                        <span className="text-lg font-bold">{teacherData?.stats.active_groups || 0}</span>
-                        <span className="text-[10px] text-tg-hint uppercase">{t('teacher.groups')}</span>
-                    </motion.div>
-                    <motion.div variants={itemVariants} className="bg-tg-bg p-3 rounded-xl shadow-sm flex flex-col items-center justify-center text-center">
-                        <Calendar className="w-6 h-6 text-orange-500 mb-1" />
-                        <span className="text-lg font-bold">{teacherData?.stats.upcoming_exams_count || 0}</span>
-                        <span className="text-[10px] text-tg-hint uppercase">{t('teacher.exams')}</span>
-                    </motion.div>
-                </div>
-
-                {/* Quick Actions */}
-                <div className="mb-6">
-                    <h2 className="text-sm font-medium text-tg-hint uppercase mb-3 px-1">{t('teacher.quick_actions')}</h2>
-                    <div className="grid grid-cols-2 gap-3">
+                {/* Quick Actions Grid */}
+                <div className="grid grid-cols-2 gap-3 mb-6">
+                    {actions.map((action) => (
                         <motion.button
+                            key={action.id}
                             variants={itemVariants}
                             whileTap={{ scale: 0.98 }}
-                            onClick={() => setShowCreateExam(true)}
-                            className="bg-tg-button text-tg-button-text p-4 rounded-xl flex flex-col items-center justify-center gap-2 shadow-sm"
+                            onClick={() => setActiveModal(action.id)}
+                            className="bg-tg-bg p-4 rounded-xl shadow-sm flex flex-col items-start gap-3 border border-tg-hint/10"
                         >
-                            <Plus className="w-6 h-6" />
-                            <span className="text-sm font-medium">{t('teacher.create_exam')}</span>
+                            <div className={`p-2 rounded-lg ${action.color} text-white`}>
+                                <action.icon size={20} />
+                            </div>
+                            <span className="text-sm font-semibold text-left leading-tight">
+                                {action.label}
+                            </span>
                         </motion.button>
-                        <motion.button
-                            variants={itemVariants}
-                            whileTap={{ scale: 0.98 }}
-                            onClick={() => setShowAttendance(true)}
-                            className="bg-tg-bg text-tg-text p-4 rounded-xl flex flex-col items-center justify-center gap-2 shadow-sm border border-tg-button/10"
-                        >
-                            <CheckSquare className="w-6 h-6 text-tg-button" />
-                            <span className="text-sm font-medium">{t('teacher.attendance')}</span>
-                        </motion.button>
-                    </div>
+                    ))}
                 </div>
 
-                {/* Upcoming Lessons */}
-                <div>
-                    <h2 className="text-sm font-medium text-tg-hint uppercase mb-3 px-1">{t('teacher.upcoming_lessons')}</h2>
-                    <div className="space-y-3">
-                        {upcomingLessons.map((lesson) => (
-                            <motion.div
-                                key={lesson.id}
-                                variants={itemVariants}
-                                className="bg-tg-bg p-4 rounded-xl shadow-sm border border-tg-secondary/50"
-                            >
-                                <div className="flex items-start justify-between mb-2">
-                                    <div className="flex-1">
-                                        <h3 className="font-semibold text-tg-text">{lesson.title}</h3>
-                                        <p className="text-xs text-tg-hint mt-0.5">{lesson.group}</p>
-                                    </div>
-                                    <span className="text-xs font-medium text-tg-button bg-tg-button/10 px-2 py-1 rounded-lg">
-                                        {lesson.date}
-                                    </span>
-                                </div>
-                                <div className="flex items-center gap-4 text-xs text-tg-hint mt-3">
-                                    <div className="flex items-center gap-1">
-                                        <Clock size={14} />
-                                        <span>{lesson.time}</span>
-                                    </div>
-                                    <div className="flex items-center gap-1">
-                                        <Calendar size={14} />
-                                        <span>{lesson.duration} min</span>
-                                    </div>
-                                    <div className="flex items-center gap-1">
-                                        <MapPin size={14} />
-                                        <span>{lesson.location}</span>
-                                    </div>
-                                </div>
-                            </motion.div>
-                        ))}
-                    </div>
+                {/* Stats Section */}
+                <div className="grid grid-cols-2 gap-3">
+                    <motion.div variants={itemVariants} className="bg-tg-bg p-4 rounded-xl shadow-sm border border-tg-hint/10">
+                        <div className="flex items-center gap-2 mb-2">
+                            <Users size={16} className="text-tg-hint" />
+                            <p className="text-tg-hint text-xs font-medium uppercase">{t('teacher.total_students')}</p>
+                        </div>
+                        <p className="text-2xl font-bold">{teacherData?.total_students}</p>
+                    </motion.div>
+                    <motion.div variants={itemVariants} className="bg-tg-bg p-4 rounded-xl shadow-sm border border-tg-hint/10">
+                        <div className="flex items-center gap-2 mb-2">
+                            <Users size={16} className="text-tg-hint" />
+                            <p className="text-tg-hint text-xs font-medium uppercase">{t('teacher.active_groups')}</p>
+                        </div>
+                        <p className="text-2xl font-bold">{teacherData?.groups.length}</p>
+                    </motion.div>
                 </div>
             </motion.div>
         </div>

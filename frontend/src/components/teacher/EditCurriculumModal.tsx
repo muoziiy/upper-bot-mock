@@ -61,10 +61,10 @@ const EditCurriculumModal: React.FC<EditCurriculumModalProps> = ({ isOpen, onClo
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
-                    className="fixed inset-0 z-[60] bg-tg-bg"
+                    className="fixed inset-0 z-[60] bg-tg-secondary"
                 >
                     {showSuccess ? (
-                        <div className="flex flex-col items-center justify-center h-full">
+                        <div className="flex flex-col items-center justify-center h-full bg-tg-bg">
                             <div className="w-48 h-48">
                                 <Lottie animationData={duckSuccess} loop={false} />
                             </div>
@@ -78,72 +78,63 @@ const EditCurriculumModal: React.FC<EditCurriculumModalProps> = ({ isOpen, onClo
                             transition={{ type: 'spring', damping: 32, stiffness: 380 }}
                             className="h-full overflow-y-auto"
                         >
-                            <div className="sticky top-0 bg-tg-bg/95 backdrop-blur-xl border-b border-tg-hint/10 px-4 py-4 z-10">
-                                <h1 className="text-xl font-bold text-tg-text">{t('teacher.edit_curriculum')}</h1>
+                            <div className="sticky top-0 bg-tg-bg/95 backdrop-blur-xl border-b border-tg-secondary/50 px-4 py-3 flex items-center justify-center z-10">
+                                <h1 className="text-lg font-bold text-tg-text">{t('teacher.edit_curriculum')}</h1>
                             </div>
 
                             <form onSubmit={handleSubmit} className="p-4 space-y-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-tg-hint mb-2">
-                                        {t('teacher.subject')} <span className="text-red-500">*</span>
-                                    </label>
-                                    <input
-                                        type="text"
-                                        value={formData.subject}
-                                        onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
-                                        className="w-full bg-tg-secondary text-tg-text px-4 py-3 rounded-xl border border-tg-hint/10 focus:border-tg-button focus:outline-none transition-colors"
-                                        placeholder="e.g. Mathematics"
-                                    />
+                                <div className="space-y-2">
+                                    <h3 className="text-xs font-medium text-tg-hint uppercase px-4">{t('teacher.details')}</h3>
+                                    <div className="bg-tg-bg rounded-xl overflow-hidden">
+                                        <div className="flex items-center px-4 py-3 border-b border-tg-secondary/50">
+                                            <label className="w-24 text-tg-text font-medium">{t('teacher.subject')}</label>
+                                            <input
+                                                type="text"
+                                                value={formData.subject}
+                                                onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
+                                                className="flex-1 bg-transparent text-tg-text focus:outline-none text-right placeholder-tg-hint"
+                                                placeholder="Required"
+                                            />
+                                        </div>
+                                        <div className="flex items-center px-4 py-3">
+                                            <label className="w-24 text-tg-text font-medium">{t('teacher.topic')}</label>
+                                            <input
+                                                type="text"
+                                                value={formData.topic}
+                                                onChange={(e) => setFormData({ ...formData, topic: e.target.value })}
+                                                className="flex-1 bg-transparent text-tg-text focus:outline-none text-right placeholder-tg-hint"
+                                                placeholder="Required"
+                                            />
+                                        </div>
+                                    </div>
                                 </div>
 
-                                <div>
-                                    <label className="block text-sm font-medium text-tg-hint mb-2">
-                                        {t('teacher.topic')} <span className="text-red-500">*</span>
-                                    </label>
-                                    <input
-                                        type="text"
-                                        value={formData.topic}
-                                        onChange={(e) => setFormData({ ...formData, topic: e.target.value })}
-                                        className="w-full bg-tg-secondary text-tg-text px-4 py-3 rounded-xl border border-tg-hint/10 focus:border-tg-button focus:outline-none transition-colors"
-                                        placeholder="e.g. Algebra Basics"
-                                    />
+                                <div className="space-y-2">
+                                    <h3 className="text-xs font-medium text-tg-hint uppercase px-4">{t('teacher.description')}</h3>
+                                    <div className="bg-tg-bg rounded-xl p-4">
+                                        <textarea
+                                            value={formData.description}
+                                            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                                            className="w-full bg-transparent text-tg-text focus:outline-none resize-none placeholder-tg-hint"
+                                            placeholder="Enter topic description..."
+                                            rows={4}
+                                        />
+                                    </div>
                                 </div>
 
-                                <div>
-                                    <label className="block text-sm font-medium text-tg-hint mb-2">
-                                        {t('teacher.description')}
-                                    </label>
-                                    <textarea
-                                        value={formData.description}
-                                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                                        className="w-full bg-tg-secondary text-tg-text px-4 py-3 rounded-xl border border-tg-hint/10 focus:border-tg-button focus:outline-none transition-colors h-32 resize-none"
-                                        placeholder="Enter topic description..."
-                                    />
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium text-tg-hint mb-2">
-                                        {t('teacher.materials')}
-                                    </label>
-                                    <div className="border-2 border-dashed border-tg-hint/20 rounded-xl p-6 flex flex-col items-center justify-center text-tg-hint gap-2">
+                                <div className="space-y-2">
+                                    <h3 className="text-xs font-medium text-tg-hint uppercase px-4">{t('teacher.materials')}</h3>
+                                    <div className="bg-tg-bg rounded-xl p-6 flex flex-col items-center justify-center text-tg-hint gap-2 border-2 border-dashed border-tg-secondary/50">
                                         <Upload size={24} />
                                         <span className="text-sm">Tap to upload files</span>
                                     </div>
                                 </div>
 
-                                <div className="flex gap-3 pt-4">
-                                    <motion.button
-                                        type="button"
-                                        whileTap={{ scale: 0.98 }}
-                                        onClick={onClose}
-                                        className="flex-1 bg-tg-secondary text-tg-text py-3 rounded-xl font-medium"
-                                    >
-                                        {t('teacher.cancel')}
-                                    </motion.button>
+                                <div className="pt-4">
                                     <motion.button
                                         type="submit"
                                         whileTap={{ scale: 0.98 }}
-                                        className="flex-1 bg-tg-button text-tg-button-text py-3 rounded-xl font-medium"
+                                        className="w-full bg-tg-button text-tg-button-text py-3 rounded-xl font-bold text-lg shadow-sm"
                                     >
                                         {t('teacher.save')}
                                     </motion.button>

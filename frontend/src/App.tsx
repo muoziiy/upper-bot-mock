@@ -12,7 +12,7 @@ const AdminDashboard = React.lazy(() => import('./pages/AdminDashboard'));
 const Leaderboard = React.lazy(() => import('./pages/Leaderboard'));
 const Profile = React.lazy(() => import('./pages/Profile'));
 const Exams = React.lazy(() => import('./pages/Exams'));
-const QuickActions = React.lazy(() => import('./pages/QuickActions'));
+const Lessons = React.lazy(() => import('./pages/Lessons'));
 const Groups = React.lazy(() => import('./pages/Groups'));
 const TeacherProfile = React.lazy(() => import('./pages/TeacherProfile'));
 
@@ -55,12 +55,12 @@ const AppContent: React.FC = () => {
     // Teacher Routes
     { path: "/teacher", element: <TeacherDashboard /> },
     { path: "/teacher/groups", element: <Groups /> },
-    { path: "/teacher/actions", element: <QuickActions /> },
+    { path: "/teacher/lessons", element: <Lessons /> },
     { path: "/teacher/profile", element: <TeacherProfile /> },
 
     // Admin Routes
     { path: "/admin", element: <AdminDashboard /> },
-    { path: "/admin/actions", element: <QuickActions /> },
+    // { path: "/admin/actions", element: <QuickActions /> },
     { path: "/admin/profile", element: <Profile /> },
   ]);
 
