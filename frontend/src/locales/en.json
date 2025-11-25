@@ -184,5 +184,24 @@
     "common": {
         "loading": "Loading...",
         "error": "Error"
+    },
+    "teacher_profile": {
+        "title": "Teacher Profile",
+        "account_settings": "Account Settings",
+        "payment_history": "Payment History",
+        "edit_info": "Edit Teacher Information",
+        "email": "Email",
+        "phone": "Phone",
+        "bio": "Bio",
+        "subjects": "Subjects",
+        "save_changes": "Save Changes",
+        "total_students": "Total Students",
+        "active_groups": "Active Groups",
+        "classes_this_month": "Classes This Month",
+        "salary": "Salary",
+        "month": "Month",
+        "paid_on": "Paid on",
+        "pending": "Pending",
+        "amount_paid": "Amount Paid"
     }
 }

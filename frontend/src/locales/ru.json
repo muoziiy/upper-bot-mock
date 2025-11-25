@@ -181,5 +181,24 @@
     "common": {
         "loading": "Загрузка...",
         "error": "Ошибка"
+    },
+    "teacher_profile": {
+        "title": "Профиль учителя",
+        "account_settings": "Настройки аккаунта",
+        "payment_history": "История выплат",
+        "edit_info": "Редактировать информацию",
+        "email": "Email",
+        "phone": "Телефон",
+        "bio": "О себе",
+        "subjects": "Предметы",
+        "save_changes": "Сохранить изменения",
+        "total_students": "Всего студентов",
+        "active_groups": "Активных групп",
+        "classes_this_month": "Занятий в этом месяце",
+        "salary": "Зарплата",
+        "month": "Месяц",
+        "paid_on": "Оплачено",
+        "pending": "Ожидается",
+        "amount_paid": "Выплаченная сумма"
     }
 }
