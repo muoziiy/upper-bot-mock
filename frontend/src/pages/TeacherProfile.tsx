@@ -62,12 +62,7 @@ const TeacherProfile: React.FC = () => {
                     {t('teacher_profile.id')}: {teacherId}
                 </p>
 
-                {/* Username */}
-                {user?.username && (
-                    <p className="text-sm text-tg-hint mt-1">
-                        @{user.username}
-                    </p>
-                )}
+
             </div>
 
             {/* Stats Overview */}
@@ -146,9 +141,6 @@ const TeacherProfile: React.FC = () => {
                         </div>
                     </button>
                 </div>
-                <p className="text-center text-xs text-tg-hint py-4">
-                    {t('teacher_profile.version')} 1.0.0
-                </p>
             </div>
 
             {/* Modals */}

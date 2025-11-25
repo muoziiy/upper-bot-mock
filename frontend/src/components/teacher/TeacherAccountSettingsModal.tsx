@@ -72,7 +72,7 @@ const TeacherAccountSettingsModal: React.FC<TeacherAccountSettingsModalProps> = 
                                 <div className="bg-tg-bg rounded-xl overflow-hidden">
                                     {/* First Name */}
                                     <div className="flex items-center px-4 py-3 border-b border-tg-secondary/50">
-                                        <label className="w-24 text-tg-text font-medium">{t('teacher.first_name')}</label>
+                                        <label className="w-24 text-tg-text font-medium">{t('settings.first_name')}</label>
                                         <input
                                             type="text"
                                             value={teacherInfo.first_name}
@@ -83,7 +83,7 @@ const TeacherAccountSettingsModal: React.FC<TeacherAccountSettingsModalProps> = 
 
                                     {/* Last Name */}
                                     <div className="flex items-center px-4 py-3 border-b border-tg-secondary/50">
-                                        <label className="w-24 text-tg-text font-medium">{t('teacher.last_name')}</label>
+                                        <label className="w-24 text-tg-text font-medium">{t('settings.last_name')}</label>
                                         <input
                                             type="text"
                                             value={teacherInfo.last_name}
@@ -94,7 +94,7 @@ const TeacherAccountSettingsModal: React.FC<TeacherAccountSettingsModalProps> = 
 
                                     {/* Email */}
                                     <div className="flex items-center px-4 py-3 border-b border-tg-secondary/50">
-                                        <label className="w-24 text-tg-text font-medium">{t('teacher.email')}</label>
+                                        <label className="w-24 text-tg-text font-medium">{t('teacher_profile.email')}</label>
                                         <input
                                             type="email"
                                             value={teacherInfo.email}
@@ -105,7 +105,7 @@ const TeacherAccountSettingsModal: React.FC<TeacherAccountSettingsModalProps> = 
 
                                     {/* Phone */}
                                     <div className="flex items-center px-4 py-3">
-                                        <label className="w-24 text-tg-text font-medium">{t('teacher.phone')}</label>
+                                        <label className="w-24 text-tg-text font-medium">{t('teacher_profile.phone')}</label>
                                         <input
                                             type="tel"
                                             value={teacherInfo.phone}
@@ -118,7 +118,7 @@ const TeacherAccountSettingsModal: React.FC<TeacherAccountSettingsModalProps> = 
 
                             {/* Bio Section */}
                             <div className="space-y-2">
-                                <h3 className="text-xs font-medium text-tg-hint uppercase px-4">{t('teacher.bio')}</h3>
+                                <h3 className="text-xs font-medium text-tg-hint uppercase px-4">{t('teacher_profile.bio')}</h3>
                                 <div className="bg-tg-bg rounded-xl p-4">
                                     <textarea
                                         value={teacherInfo.bio}
@@ -131,7 +131,7 @@ const TeacherAccountSettingsModal: React.FC<TeacherAccountSettingsModalProps> = 
 
                             {/* Subjects Section */}
                             <div className="space-y-2">
-                                <h3 className="text-xs font-medium text-tg-hint uppercase px-4">{t('teacher.subjects')}</h3>
+                                <h3 className="text-xs font-medium text-tg-hint uppercase px-4">{t('teacher_profile.subjects')}</h3>
                                 <div className="bg-tg-bg rounded-xl p-4 flex flex-wrap gap-2">
                                     {teacherInfo.subjects.map((subject, index) => (
                                         <span
@@ -151,7 +151,7 @@ const TeacherAccountSettingsModal: React.FC<TeacherAccountSettingsModalProps> = 
                                     whileTap={{ scale: 0.98 }}
                                     className="w-full bg-tg-button text-tg-button-text py-3 rounded-xl font-bold text-lg shadow-sm"
                                 >
-                                    {t('teacher.save_changes')}
+                                    {t('teacher_profile.save_changes')}
                                 </motion.button>
                             </div>
                         </div>
