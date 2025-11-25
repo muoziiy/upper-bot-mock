@@ -7,8 +7,35 @@ const Leaderboard: React.FC = () => {
     const { leaderboardData, loading } = useAppData();
     const [category, setCategory] = useState('global');
 
-    const leaderboard = leaderboardData?.leaderboard || [];
-    const userRank = leaderboardData?.user_rank;
+
+    // Mock leaderboard data with 20 users
+    const mockLeaderboard = [
+        { rank: 1, users: { first_name: 'Alice Johnson' }, score: 2850 },
+        { rank: 2, users: { first_name: 'Bob Smith' }, score: 2720 },
+        { rank: 3, users: { first_name: 'Charlie Brown' }, score: 2680 },
+        { rank: 4, users: { first_name: 'Diana Prince' }, score: 2550 },
+        { rank: 5, users: { first_name: 'Ethan Hunt' }, score: 2480 },
+        { rank: 6, users: { first_name: 'Fiona Green' }, score: 2420 },
+        { rank: 7, users: { first_name: 'George Wilson' }, score: 2350 },
+        { rank: 8, users: { first_name: 'Hannah Lee' }, score: 2290 },
+        { rank: 9, users: { first_name: 'Ian Carter' }, score: 2220 },
+        { rank: 10, users: { first_name: 'Julia Roberts' }, score: 2150 },
+        { rank: 11, users: { first_name: 'Kevin Hart' }, score: 2080 },
+        { rank: 12, users: { first_name: 'Luna Martinez' }, score: 2010 },
+        { rank: 13, users: { first_name: 'Mike Johnson' }, score: 1940 },
+        { rank: 14, users: { first_name: 'Nina Patel' }, score: 1870 },
+        { rank: 15, users: { first_name: 'Oscar Wilde' }, score: 1800 },
+        { rank: 16, users: { first_name: 'Paula Dean' }, score: 1730 },
+        { rank: 17, users: { first_name: 'Quinn Taylor' }, score: 1660 },
+        { rank: 18, users: { first_name: 'Rachel Green' }, score: 1590 },
+        { rank: 19, users: { first_name: 'Sam Wilson' }, score: 1520 },
+        { rank: 20, users: { first_name: 'Tara Singh' }, score: 1450 },
+    ];
+
+    const leaderboard = (leaderboardData?.leaderboard && leaderboardData.leaderboard.length > 0)
+        ? leaderboardData.leaderboard
+        : mockLeaderboard;
+    const userRank = leaderboardData?.user_rank || { rank: 12, score: 2010 };
 
     const topThree = leaderboard.slice(0, 3);
     const restOfList = leaderboard.slice(3);

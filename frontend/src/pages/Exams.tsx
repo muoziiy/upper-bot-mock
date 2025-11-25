@@ -56,9 +56,15 @@ const Exams: React.FC = () => {
             case 'old': list = examsData.old; break;
             default: list = [];
         }
-        // In a real app, we would filter by selectedSubjectId here too.
-        // For now, we just return the list as the mock data isn't structured by subject ID yet.
-        return list;
+
+        // Filter by selected subject
+        // For demo purposes, we'll filter based on exam index modulo 3 to simulate subject assignment
+        // In a real app, each exam would have a subject_id field
+        return list.filter((exam) => {
+            // Mock subject assignment: exam index % 3 determines subject
+            const examSubjectId = ((list.indexOf(exam)) % 3 + 1).toString();
+            return examSubjectId === selectedSubjectId;
+        });
     };
 
     return (
