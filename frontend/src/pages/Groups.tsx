@@ -1,10 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useAppData } from '../context/AppDataContext';
 import { motion } from 'framer-motion';
 import { Users, ChevronRight, Clock } from 'lucide-react';
+import GroupDetailsModal from '../components/teacher/GroupDetailsModal';
 
 const Groups: React.FC = () => {
     const { teacherData, loading } = useAppData();
+    const [selectedGroup, setSelectedGroup] = useState<any>(null);
 
     if (loading) {
         return <div className="flex min-h-screen items-center justify-center bg-tg-secondary text-tg-text">Loading...</div>;
@@ -25,6 +27,12 @@ const Groups: React.FC = () => {
 
     return (
         <div className="min-h-screen bg-tg-secondary pb-24 pt-4 text-tg-text px-4">
+            <GroupDetailsModal
+                isOpen={!!selectedGroup}
+                onClose={() => setSelectedGroup(null)}
+                group={selectedGroup}
+            />
+
             <motion.div
                 initial="hidden"
                 animate="visible"
@@ -63,7 +71,10 @@ const Groups: React.FC = () => {
                                 </div>
                             </div>
 
-                            <button className="w-full bg-tg-secondary hover:bg-tg-secondary/80 text-tg-button font-medium py-2 rounded-lg flex items-center justify-center gap-2 transition-colors">
+                            <button
+                                onClick={() => setSelectedGroup(group)}
+                                className="w-full bg-tg-secondary hover:bg-tg-secondary/80 text-tg-button font-medium py-2 rounded-lg flex items-center justify-center gap-2 transition-colors"
+                            >
                                 View Details
                                 <ChevronRight className="w-4 h-4" />
                             </button>

@@ -14,6 +14,7 @@ const Profile = React.lazy(() => import('./pages/Profile'));
 const Exams = React.lazy(() => import('./pages/Exams'));
 const QuickActions = React.lazy(() => import('./pages/QuickActions'));
 const Groups = React.lazy(() => import('./pages/Groups'));
+const TeacherProfile = React.lazy(() => import('./pages/TeacherProfile'));
 
 function App() {
   return (
@@ -55,7 +56,7 @@ const AppContent: React.FC = () => {
     { path: "/teacher", element: <TeacherDashboard /> },
     { path: "/teacher/groups", element: <Groups /> },
     { path: "/teacher/actions", element: <QuickActions /> },
-    { path: "/teacher/profile", element: <Profile /> },
+    { path: "/teacher/profile", element: <TeacherProfile /> },
 
     // Admin Routes
     { path: "/admin", element: <AdminDashboard /> },

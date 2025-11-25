@@ -1,5 +1,4 @@
-import React from 'react';
-
+import React, { useState } from 'react';
 import { useAppData } from '../context/AppDataContext';
 import { motion } from 'framer-motion';
 import {
@@ -12,11 +11,16 @@ import {
     CheckSquare,
     BookOpen
 } from 'lucide-react';
+import CreateExamModal from '../components/teacher/CreateExamModal';
+import AttendanceModal from '../components/teacher/AttendanceModal';
+import EditCurriculumModal from '../components/teacher/EditCurriculumModal';
+import ScheduleClassModal from '../components/teacher/ScheduleClassModal';
 
 const QuickActions: React.FC = () => {
-    // const { user } = useTelegram(); // user is unused
-    const { dashboardData } = useAppData();
+    const { dashboardData, teacherData } = useAppData();
     const role = dashboardData?.user.role || 'student';
+
+    const [activeModal, setActiveModal] = useState<string | null>(null);
 
     const containerVariants = {
         hidden: { opacity: 0 },
@@ -47,8 +51,32 @@ const QuickActions: React.FC = () => {
 
     const actions = role === 'admin' || role === 'super_admin' ? adminActions : teacherActions;
 
+    const handleActionClick = (id: string) => {
+        setActiveModal(id);
+    };
+
     return (
         <div className="min-h-screen bg-tg-secondary pb-24 pt-4 text-tg-text px-4">
+            <CreateExamModal
+                isOpen={activeModal === 'create_exam'}
+                onClose={() => setActiveModal(null)}
+                groups={teacherData?.groups || []}
+            />
+            <AttendanceModal
+                isOpen={activeModal === 'attendance'}
+                onClose={() => setActiveModal(null)}
+                groups={teacherData?.groups || []}
+            />
+            <EditCurriculumModal
+                isOpen={activeModal === 'curriculum'}
+                onClose={() => setActiveModal(null)}
+            />
+            <ScheduleClassModal
+                isOpen={activeModal === 'schedule'}
+                onClose={() => setActiveModal(null)}
+                groups={teacherData?.groups || []}
+            />
+
             <motion.div
                 initial="hidden"
                 animate="visible"
@@ -65,6 +93,7 @@ const QuickActions: React.FC = () => {
                             key={action.id}
                             variants={itemVariants}
                             whileTap={{ scale: 0.98 }}
+                            onClick={() => handleActionClick(action.id)}
                             className="bg-tg-bg p-4 rounded-xl shadow-sm flex flex-col items-center justify-center gap-3 border border-tg-secondary/50 aspect-square"
                         >
                             <div className={`p-3 rounded-full ${action.bg}`}>
