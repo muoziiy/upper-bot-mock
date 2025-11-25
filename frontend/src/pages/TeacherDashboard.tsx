@@ -9,7 +9,7 @@ import EditCurriculumModal from '../components/teacher/EditCurriculumModal';
 import ScheduleClassModal from '../components/teacher/ScheduleClassModal';
 
 const TeacherDashboard: React.FC = () => {
-    const { teacherData, loading } = useAppData();
+    const { teacherData, dashboardData, loading } = useAppData();
     const { t } = useTranslation();
     const [activeModal, setActiveModal] = useState<string | null>(null);
 
@@ -67,10 +67,10 @@ const TeacherDashboard: React.FC = () => {
                 <header className="mb-6 flex items-center justify-between">
                     <div>
                         <h1 className="text-2xl font-bold">{t('teacher.welcome')}</h1>
-                        <p className="text-tg-hint">{teacherData?.name}</p>
+                        <p className="text-tg-hint">{dashboardData?.user.first_name} {dashboardData?.user.last_name}</p>
                     </div>
                     <div className="w-10 h-10 rounded-full bg-tg-button text-tg-button-text flex items-center justify-center font-bold text-lg">
-                        {teacherData?.name.charAt(0)}
+                        {dashboardData?.user.first_name?.charAt(0)}
                     </div>
                 </header>
 
@@ -101,7 +101,7 @@ const TeacherDashboard: React.FC = () => {
                             <Users size={16} className="text-tg-hint" />
                             <p className="text-tg-hint text-xs font-medium uppercase">{t('teacher.total_students')}</p>
                         </div>
-                        <p className="text-2xl font-bold">{teacherData?.total_students}</p>
+                        <p className="text-2xl font-bold">{teacherData?.stats.total_students}</p>
                     </motion.div>
                     <motion.div variants={itemVariants} className="bg-tg-bg p-4 rounded-xl shadow-sm border border-tg-hint/10">
                         <div className="flex items-center gap-2 mb-2">

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Calendar, Clock, Users, MapPin } from 'lucide-react';
+// Removed unused imports
 import { useTelegram } from '../../context/TelegramContext';
 import { useTranslation } from 'react-i18next';
 import Lottie from 'lottie-react';

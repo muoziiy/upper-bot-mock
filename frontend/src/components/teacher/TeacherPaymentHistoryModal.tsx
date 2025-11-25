@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useTelegram } from '../../context/TelegramContext';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Check, Clock, DollarSign, X as XIcon } from 'lucide-react';
+import { Check, Clock, X as XIcon } from 'lucide-react';
 
 interface TeacherPaymentHistoryModalProps {
     isOpen: boolean;

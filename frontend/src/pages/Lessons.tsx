@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { ChevronLeft, ChevronRight, Clock, MapPin, Users } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Clock, MapPin } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 const Lessons: React.FC = () => {

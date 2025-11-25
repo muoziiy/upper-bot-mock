@@ -1,5 +1,5 @@
 ﻿import React from 'react';
-import { Home, Trophy, User, Map, Users, Plus, Settings, Calendar } from 'lucide-react';
+import { Home, Trophy, User, Map, Users, Settings, Calendar } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../lib/utils';
