@@ -1,32 +1,23 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
+import { useAppData } from '../context/AppDataContext';
 import { ChevronLeft, ChevronRight, Clock, MapPin } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 const Lessons: React.FC = () => {
     const { t } = useTranslation();
+    const { teacherData, loading } = useAppData();
     const [currentDate, setCurrentDate] = useState(new Date());
     const [selectedDate, setSelectedDate] = useState(new Date());
 
-    // Mock data for lessons
-    const lessons = [
-        {
-            id: 1,
-            title: 'Mathematics - Algebra',
-            group: 'Group A',
-            time: '09:00 - 10:30',
-            location: 'Room 101',
-            date: new Date() // Today
-        },
-        {
-            id: 2,
-            title: 'Physics - Mechanics',
-            group: 'Group B',
-            time: '11:00 - 12:30',
-            location: 'Lab 2',
-            date: new Date() // Today
-        }
-    ];
+    if (loading) {
+        return <div className="flex min-h-screen items-center justify-center bg-tg-secondary text-tg-text">Loading...</div>;
+    }
+
+    // Filter lessons for the selected date
+    const lessons = teacherData?.schedule?.filter(lesson =>
+        new Date(lesson.date).toDateString() === selectedDate.toDateString()
+    ) || [];
 
     const daysInMonth = (date: Date) => {
         return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
@@ -52,6 +43,11 @@ const Lessons: React.FC = () => {
             const isSelected = date.toDateString() === selectedDate.toDateString();
             const isToday = date.toDateString() === new Date().toDateString();
 
+            // Check if there are lessons on this day
+            const hasLessons = teacherData?.schedule?.some(lesson =>
+                new Date(lesson.date).toDateString() === date.toDateString()
+            );
+
             days.push(
                 <motion.button
                     key={i}
@@ -63,8 +59,8 @@ const Lessons: React.FC = () => {
                     `}
                 >
                     {i}
-                    {/* Dot indicator for days with lessons (mock logic) */}
-                    {i % 3 === 0 && (
+                    {/* Dot indicator for days with lessons */}
+                    {hasLessons && (
                         <div className={`absolute bottom-1 w-1 h-1 rounded-full ${isSelected ? 'bg-white' : 'bg-tg-button'}`} />
                     )}
                 </motion.button>

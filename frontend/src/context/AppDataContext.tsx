@@ -35,6 +35,24 @@ interface TeacherData {
         active_groups: number;
         upcoming_exams_count: number;
     };
+    schedule: {
+        id: string;
+        title: string;
+        group: string;
+        time: string;
+        location: string;
+        date: Date;
+    }[];
+    messages: {
+        group_id: string;
+        messages: {
+            id: string;
+            sender: string;
+            text: string;
+            time: string;
+            is_me: boolean;
+        }[];
+    }[];
 }
 
 interface LeaderboardData {
@@ -175,7 +193,42 @@ export const AppDataProvider: React.FC<{ children: ReactNode }> = ({ children })
                     total_students: 72,
                     active_groups: 3,
                     upcoming_exams_count: 2,
-                }
+                },
+                schedule: [
+                    {
+                        id: 's1',
+                        title: 'Mathematics - Algebra',
+                        group: 'Mathematics 101',
+                        time: '09:00 - 10:30',
+                        location: 'Room 101',
+                        date: new Date() // Today
+                    },
+                    {
+                        id: 's2',
+                        title: 'Physics - Mechanics',
+                        group: 'Physics Advanced',
+                        time: '11:00 - 12:30',
+                        location: 'Lab 2',
+                        date: new Date() // Today
+                    },
+                    {
+                        id: 's3',
+                        title: 'Geometry - Triangles',
+                        group: 'Geometry Basics',
+                        time: '14:00 - 15:30',
+                        location: 'Room 305',
+                        date: new Date(new Date().setDate(new Date().getDate() + 1)) // Tomorrow
+                    }
+                ],
+                messages: [
+                    {
+                        group_id: 'g1',
+                        messages: [
+                            { id: 'm1', sender: 'Student 1', text: 'Teacher, when is the exam?', time: '10:00', is_me: false },
+                            { id: 'm2', sender: 'You', text: 'Next Monday!', time: '10:05', is_me: true },
+                        ]
+                    }
+                ]
             });
 
             if (leaderboardRes.ok) {

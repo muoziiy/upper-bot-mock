@@ -12,7 +12,7 @@ import LessonsList from '../components/journey/LessonsList';
 
 const StudentDashboard: React.FC = () => {
     const { t } = useTranslation();
-    const { user } = useTelegram();
+    const { } = useTelegram();
     const { dashboardData, journeyData, loading } = useAppData();
     const [selectedSubjectId, setSelectedSubjectId] = useState('1');
 
@@ -53,20 +53,21 @@ const StudentDashboard: React.FC = () => {
                 className="px-4 space-y-6"
             >
                 {/* Personalized Greeting */}
-                <header className="flex items-center gap-4">
-                    <div className="w-16 h-16 rounded-full bg-gradient-to-br from-tg-button to-tg-accent flex items-center justify-center text-white text-2xl font-bold overflow-hidden flex-shrink-0">
-                        {user?.photo_url ? (
-                            <img src={user.photo_url} alt="Profile" className="w-full h-full object-cover" />
-                        ) : (
-                            <span>{dashboardData?.user.first_name?.[0] || 'U'}</span>
-                        )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                        <h1 className="text-2xl font-bold mb-0.5">
-                            {t('dashboard.hello')} {dashboardData?.user.first_name} 👋
+                {/* Personalized Greeting */}
+                <header className="flex flex-col gap-1 mb-2">
+                    <div className="flex items-center gap-2">
+                        <h1 className="text-3xl font-bold bg-gradient-to-r from-tg-button to-tg-accent bg-clip-text text-transparent">
+                            {t('dashboard.hello')} {dashboardData?.user.first_name}
                         </h1>
-                        <p className="text-tg-hint text-sm">{t('dashboard.ready_to_learn')}</p>
+                        <motion.div
+                            animate={{ rotate: [0, 14, -8, 14, -4, 10, 0, 0] }}
+                            transition={{ duration: 2.5, repeat: Infinity, repeatDelay: 1 }}
+                            className="text-3xl"
+                        >
+                            👋
+                        </motion.div>
                     </div>
+                    <p className="text-tg-hint text-lg">{t('dashboard.ready_to_learn')}</p>
                 </header>
 
                 {/* Current Level Section */}

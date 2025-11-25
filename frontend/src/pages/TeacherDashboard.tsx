@@ -64,14 +64,22 @@ const TeacherDashboard: React.FC = () => {
                 animate="visible"
                 variants={containerVariants}
             >
-                <header className="mb-6 flex items-center justify-between">
-                    <div>
-                        <h1 className="text-2xl font-bold">{t('teacher.welcome')}</h1>
-                        <p className="text-tg-hint">{dashboardData?.user.first_name} {dashboardData?.user.last_name}</p>
+                <header className="mb-6">
+                    <div className="flex items-center gap-2">
+                        <h1 className="text-3xl font-bold bg-gradient-to-r from-tg-button to-tg-accent bg-clip-text text-transparent">
+                            {t('teacher.welcome')}
+                        </h1>
+                        <motion.div
+                            animate={{ rotate: [0, 14, -8, 14, -4, 10, 0, 0] }}
+                            transition={{ duration: 2.5, repeat: Infinity, repeatDelay: 1 }}
+                            className="text-3xl"
+                        >
+                            👨‍🏫
+                        </motion.div>
                     </div>
-                    <div className="w-10 h-10 rounded-full bg-tg-button text-tg-button-text flex items-center justify-center font-bold text-lg">
-                        {dashboardData?.user.first_name?.charAt(0)}
-                    </div>
+                    <p className="text-tg-hint text-lg">
+                        {dashboardData?.user.first_name} {dashboardData?.user.last_name}
+                    </p>
                 </header>
 
                 {/* Quick Actions Grid */}
