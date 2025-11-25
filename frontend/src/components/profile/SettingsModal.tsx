@@ -16,17 +16,30 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
     const { t, i18n } = useTranslation();
 
     // Handle native back button
+    // Handle native back button visibility
+    useEffect(() => {
+        if (isOpen) {
+            webApp.BackButton.show();
+        } else {
+            webApp.BackButton.hide();
+        }
+
+        return () => {
+            if (!isOpen) {
+                webApp.BackButton.hide();
+            }
+        };
+    }, [isOpen, webApp]);
+
+    // Handle native back button click
     useEffect(() => {
         if (!isOpen) return;
-
-        webApp.BackButton.show();
 
         const handleBack = () => {
             if (activePage !== 'main') {
                 setDirection(-1);
                 setActivePage('main');
             } else {
-                webApp.BackButton.hide();
                 onClose();
             }
         };
@@ -35,7 +48,6 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
 
         return () => {
             webApp.BackButton.offClick(handleBack);
-            webApp.BackButton.hide();
         };
     }, [isOpen, activePage, onClose, webApp]);
 

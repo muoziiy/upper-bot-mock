@@ -82,8 +82,8 @@ const GroupChatView: React.FC<GroupChatViewProps> = ({ group, onBack, messages: 
                     >
                         <div
                             className={`max-w-[80%] p-3 rounded-2xl ${msg.is_me
-                                    ? 'bg-tg-button text-tg-button-text rounded-tr-none'
-                                    : 'bg-tg-secondary text-tg-text rounded-tl-none'
+                                ? 'bg-tg-button text-tg-button-text rounded-tr-none'
+                                : 'bg-tg-secondary text-tg-text rounded-tl-none'
                                 }`}
                         >
                             {!msg.is_me && (
@@ -100,22 +100,29 @@ const GroupChatView: React.FC<GroupChatViewProps> = ({ group, onBack, messages: 
             </div>
 
             {/* Input Area */}
-            <div className="p-4 bg-tg-secondary border-t border-tg-hint/10">
-                <div className="flex items-center gap-2">
-                    <input
-                        type="text"
-                        value={newMessage}
-                        onChange={(e) => setNewMessage(e.target.value)}
-                        onKeyPress={(e) => e.key === 'Enter' && handleSend()}
-                        placeholder="Type a message..."
-                        className="flex-1 bg-tg-bg text-tg-text px-4 py-2.5 rounded-full focus:outline-none focus:ring-2 focus:ring-tg-button/50 placeholder-tg-hint"
-                    />
-                    <button
-                        onClick={handleSend}
-                        className="w-10 h-10 rounded-full bg-tg-button text-tg-button-text flex items-center justify-center hover:opacity-90 transition-opacity"
-                    >
-                        <Send size={20} />
-                    </button>
+            <div className="bg-tg-secondary border-t border-tg-hint/10">
+                <div className="px-4 py-2 bg-yellow-500/10 border-b border-yellow-500/10">
+                    <p className="text-[10px] text-yellow-600 text-center leading-tight">
+                        ⚠️ Note: Messages are sent via Telegram bot to all group members and cannot be undone.
+                    </p>
+                </div>
+                <div className="p-4">
+                    <div className="flex items-center gap-2">
+                        <input
+                            type="text"
+                            value={newMessage}
+                            onChange={(e) => setNewMessage(e.target.value)}
+                            onKeyPress={(e) => e.key === 'Enter' && handleSend()}
+                            placeholder="Type a message..."
+                            className="flex-1 bg-tg-bg text-tg-text px-4 py-2.5 rounded-full focus:outline-none focus:ring-2 focus:ring-tg-button/50 placeholder-tg-hint"
+                        />
+                        <button
+                            onClick={handleSend}
+                            className="w-10 h-10 rounded-full bg-tg-button text-tg-button-text flex items-center justify-center hover:opacity-90 transition-opacity"
+                        >
+                            <Send size={20} />
+                        </button>
+                    </div>
                 </div>
             </div>
         </motion.div>

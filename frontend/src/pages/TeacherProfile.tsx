@@ -46,23 +46,14 @@ const TeacherProfile: React.FC = () => {
                 </div>
 
                 {/* Name */}
-                <h2 className="text-2xl font-bold text-center mb-1">
-                    {user?.first_name || 'Teacher'} {user?.last_name || ''}
-                </h2>
-
-                {/* Role */}
-                <div className="flex items-center gap-2 mb-1">
-                    <span className="text-sm font-medium text-tg-button bg-tg-button/10 px-3 py-1 rounded-full">
-                        {t('teacher_profile.role_teacher')}
-                    </span>
+                <div className="text-center">
+                    <h1 className="text-2xl font-bold">{user?.first_name || 'Teacher'} {user?.last_name || ''}</h1>
+                    <div className="flex items-center justify-center gap-2 text-sm text-tg-hint mt-1">
+                        <span className="capitalize">{t('teacher_profile.role_teacher')}</span>
+                        <span>•</span>
+                        <span>ID: #{teacherId}</span>
+                    </div>
                 </div>
-
-                {/* ID */}
-                <p className="text-sm text-tg-hint">
-                    {t('teacher_profile.id')}: {teacherId}
-                </p>
-
-
             </div>
 
             {/* Stats Overview */}
