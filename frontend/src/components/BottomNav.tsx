@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { Home, Trophy, User, Map, Users, Plus, Settings } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -18,9 +18,9 @@ const BottomNav: React.FC = () => {
     const role = dashboardData?.user.role || 'student';
 
     const studentTabs = [
+        { name: t('nav.home'), icon: Home, path: '/student' },
         { name: t('nav.journey'), icon: Map, path: '/student/journey' },
-        { name: t('nav.achievements'), icon: Trophy, path: '/student/achievements' },
-        { name: t('nav.ranks'), icon: Users, path: '/student/leaderboard' },
+        { name: t('nav.ranks'), icon: Trophy, path: '/student/leaderboard' },
         { name: t('nav.profile'), icon: User, path: '/student/profile' },
     ];
 
