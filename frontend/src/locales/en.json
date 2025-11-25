@@ -156,7 +156,8 @@
         "room": "Room",
         "schedule": "Schedule",
         "details": "Details",
-        "class_scheduled": "Class Scheduled!"
+        "class_scheduled": "Class Scheduled!",
+        "class_scheduled_success": "Your class has been successfully scheduled."
     },
     "leaderboard": {
         "title": "Leaderboard",
