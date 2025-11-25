@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronRight, Globe, User } from 'lucide-react';
 import { useTelegram } from '../../context/TelegramContext';
@@ -16,28 +16,35 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
     const { t, i18n } = useTranslation();
 
     // Handle native back button
-    React.useEffect(() => {
-        if (isOpen) {
-            webApp.BackButton.show();
+    useEffect(() => {
+        if (!isOpen) return;
 
-            const handleBack = () => {
-                if (activePage !== 'main') {
-                    setDirection(-1);
-                    setActivePage('main');
-                } else {
-                    onClose();
-                }
-            };
+        webApp.BackButton.show();
 
-            webApp.BackButton.onClick(handleBack);
+        const handleBack = () => {
+            if (activePage !== 'main') {
+                setDirection(-1);
+                setActivePage('main');
+            } else {
+                webApp.BackButton.hide();
+                onClose();
+            }
+        };
 
-            return () => {
-                webApp.BackButton.offClick(handleBack);
-            };
-        } else {
+        webApp.BackButton.onClick(handleBack);
+
+        return () => {
+            webApp.BackButton.offClick(handleBack);
             webApp.BackButton.hide();
-        }
+        };
     }, [isOpen, activePage, onClose, webApp]);
+
+    // Reset to main page when modal opens
+    useEffect(() => {
+        if (isOpen) {
+            setActivePage('main');
+        }
+    }, [isOpen]);
 
     const navigateTo = (page: 'main' | 'language' | 'account') => {
         setDirection(page === 'main' ? -1 : 1);
@@ -52,23 +59,25 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
 
     const pageVariants = {
         initial: (direction: number) => ({
-            x: direction > 0 ? 100 : -100,
+            x: direction > 0 ? '100%' : '-100%',
             opacity: 0
         }),
         animate: {
             x: 0,
             opacity: 1,
             transition: {
-                x: { type: "spring" as const, stiffness: 300, damping: 30 },
-                opacity: { duration: 0.2 }
+                type: 'spring' as const,
+                stiffness: 300,
+                damping: 30
             }
         },
         exit: (direction: number) => ({
-            x: direction < 0 ? 100 : -100,
+            x: direction < 0 ? '100%' : '-100%',
             opacity: 0,
             transition: {
-                x: { type: "spring" as const, stiffness: 300, damping: 30 },
-                opacity: { duration: 0.2 }
+                type: 'spring' as const,
+                stiffness: 300,
+                damping: 30
             }
         })
     };
@@ -76,153 +85,171 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
     if (!isOpen) return null;
 
     return (
-        <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm"
-            onClick={onClose}
-        >
+        <AnimatePresence>
             <motion.div
-                initial={{ y: '100%' }}
-                animate={{ y: 0 }}
-                exit={{ y: '100%' }}
-                transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                className="absolute bottom-0 left-0 right-0 h-[90vh] bg-tg-secondary rounded-t-[20px] overflow-hidden flex flex-col"
-                onClick={(e) => e.stopPropagation()}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 z-50 bg-black/30"
+                onClick={onClose}
             >
-                {/* Header */}
-                <div className="flex items-center justify-center p-4 border-b border-white/5 relative">
-                    <h2 className="text-lg font-semibold text-tg-text">
-                        {activePage === 'main' ? t('settings.title') :
-                            activePage === 'language' ? t('settings.language') : t('settings.account')}
-                    </h2>
-                </div>
+                <motion.div
+                    initial={{ y: '100%' }}
+                    animate={{ y: 0 }}
+                    exit={{ y: '100%' }}
+                    transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+                    className="absolute inset-0 bg-tg-secondary flex flex-col"
+                    onClick={(e) => e.stopPropagation()}
+                >
+                    {/* Header */}
+                    <div className="flex items-center justify-center p-4 border-b border-tg-secondary/50 bg-tg-bg/50">
+                        <h2 className="text-lg font-semibold text-tg-text">
+                            {activePage === 'main' ? t('settings.title') :
+                                activePage === 'language' ? t('settings.language') : t('settings.account')}
+                        </h2>
+                    </div>
 
-                {/* Content */}
-                <div className="flex-1 overflow-y-auto relative">
-                    <AnimatePresence initial={false} custom={direction} mode="popLayout">
-                        {activePage === 'main' && (
-                            <motion.div
-                                key="main"
-                                custom={direction}
-                                variants={pageVariants}
-                                initial="initial"
-                                animate="animate"
-                                exit="exit"
-                                className="space-y-6 absolute w-full left-0 px-4 py-4"
-                            >
-                                {/* Language Section */}
-                                <div className="bg-tg-bg rounded-xl overflow-hidden">
-                                    <button
-                                        onClick={() => navigateTo('language')}
-                                        className="w-full flex items-center justify-between p-4 hover:bg-white/5 transition-colors"
-                                    >
-                                        <div className="flex items-center gap-3">
-                                            <div className="bg-orange-500/10 p-2 rounded-lg text-orange-500">
-                                                <Globe size={20} />
+                    {/* Content */}
+                    <div className="flex-1 overflow-hidden relative">
+                        <AnimatePresence initial={false} custom={direction} mode="popLayout">
+                            {activePage === 'main' && (
+                                <motion.div
+                                    key="main"
+                                    custom={direction}
+                                    variants={pageVariants}
+                                    initial="initial"
+                                    animate="animate"
+                                    exit="exit"
+                                    className="absolute inset-0 overflow-y-auto px-4 py-6 space-y-4"
+                                >
+                                    {/* Language Section */}
+                                    <div>
+                                        <p className="text-xs text-tg-hint uppercase font-medium mb-2 px-4">
+                                            {t('settings.preferences')}
+                                        </p>
+                                        <div className="bg-tg-bg rounded-xl overflow-hidden shadow-sm">
+                                            <button
+                                                onClick={() => navigateTo('language')}
+                                                className="w-full flex items-center justify-between p-4 hover:bg-tg-secondary/30 active:bg-tg-secondary/50 transition-colors"
+                                            >
+                                                <div className="flex items-center gap-3">
+                                                    <div className="bg-tg-button/10 p-2 rounded-lg">
+                                                        <Globe size={20} className="text-tg-button" />
+                                                    </div>
+                                                    <span className="text-tg-text font-medium">{t('settings.language')}</span>
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-tg-hint text-sm uppercase">{i18n.language}</span>
+                                                    <ChevronRight size={20} className="text-tg-hint" />
+                                                </div>
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {/* Account Section */}
+                                    <div>
+                                        <p className="text-xs text-tg-hint uppercase font-medium mb-2 px-4">
+                                            {t('settings.account')}
+                                        </p>
+                                        <div className="bg-tg-bg rounded-xl overflow-hidden shadow-sm">
+                                            <button
+                                                onClick={() => navigateTo('account')}
+                                                className="w-full flex items-center justify-between p-4 hover:bg-tg-secondary/30 active:bg-tg-secondary/50 transition-colors"
+                                            >
+                                                <div className="flex items-center gap-3">
+                                                    <div className="bg-tg-accent/10 p-2 rounded-lg">
+                                                        <User size={20} className="text-tg-accent" />
+                                                    </div>
+                                                    <span className="text-tg-text font-medium">{t('settings.account_info')}</span>
+                                                </div>
+                                                <ChevronRight size={20} className="text-tg-hint" />
+                                            </button>
+                                        </div>
+                                    </div>
+                                </motion.div>
+                            )}
+
+                            {activePage === 'language' && (
+                                <motion.div
+                                    key="language"
+                                    custom={direction}
+                                    variants={pageVariants}
+                                    initial="initial"
+                                    animate="animate"
+                                    exit="exit"
+                                    className="absolute inset-0 overflow-y-auto px-4 py-6 space-y-2"
+                                >
+                                    {[
+                                        { code: 'en', name: 'English', flag: '🇬🇧' },
+                                        { code: 'ru', name: 'Русский', flag: '🇷🇺' },
+                                        { code: 'uz', name: 'O\'zbek', flag: '🇺🇿' }
+                                    ].map((lang) => (
+                                        <button
+                                            key={lang.code}
+                                            onClick={() => changeLanguage(lang.code)}
+                                            className={`w-full flex items-center justify-between p-4 rounded-xl transition-all shadow-sm ${i18n.language === lang.code
+                                                ? 'bg-tg-button text-tg-button-text'
+                                                : 'bg-tg-bg text-tg-text hover:bg-tg-secondary/30 active:bg-tg-secondary/50'
+                                                }`}
+                                        >
+                                            <span className="font-medium flex items-center gap-3">
+                                                <span className="text-2xl">{lang.flag}</span>
+                                                <span>{lang.name}</span>
+                                            </span>
+                                            {i18n.language === lang.code && (
+                                                <div className="w-2 h-2 rounded-full bg-tg-button-text" />
+                                            )}
+                                        </button>
+                                    ))}
+                                </motion.div>
+                            )}
+
+                            {activePage === 'account' && (
+                                <motion.div
+                                    key="account"
+                                    custom={direction}
+                                    variants={pageVariants}
+                                    initial="initial"
+                                    animate="animate"
+                                    exit="exit"
+                                    className="absolute inset-0 overflow-y-auto px-4 py-6"
+                                >
+                                    <div className="space-y-4">
+                                        <div className="space-y-2">
+                                            <label className="text-xs text-tg-hint ml-4 uppercase font-medium">
+                                                {t('settings.first_name')}
+                                            </label>
+                                            <div className="bg-tg-bg p-4 rounded-xl text-tg-text shadow-sm">
+                                                {user?.first_name || 'User'}
                                             </div>
-                                            <span className="text-tg-text">{t('settings.language')}</span>
                                         </div>
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-tg-hint text-sm uppercase">{i18n.language}</span>
-                                            <ChevronRight size={20} className="text-tg-hint/50" />
-                                        </div>
-                                    </button>
-                                </div>
-
-                                {/* Account Section */}
-                                <div className="bg-tg-bg rounded-xl overflow-hidden">
-                                    <button
-                                        onClick={() => navigateTo('account')}
-                                        className="w-full flex items-center justify-between p-4 border-b border-tg-secondary/50 hover:bg-white/5 transition-colors"
-                                    >
-                                        <div className="flex items-center gap-3">
-                                            <div className="bg-blue-500/10 p-2 rounded-lg text-blue-500">
-                                                <User size={20} />
+                                        <div className="space-y-2">
+                                            <label className="text-xs text-tg-hint ml-4 uppercase font-medium">
+                                                {t('settings.last_name')}
+                                            </label>
+                                            <div className="bg-tg-bg p-4 rounded-xl text-tg-text shadow-sm">
+                                                {user?.last_name || 'Not set'}
                                             </div>
-                                            <span className="text-tg-text">{t('settings.account')}</span>
                                         </div>
-                                        <ChevronRight size={20} className="text-tg-hint/50" />
-                                    </button>
-                                </div>
-                            </motion.div>
-                        )}
-
-                        {activePage === 'language' && (
-                            <motion.div
-                                key="language"
-                                custom={direction}
-                                variants={pageVariants}
-                                initial="initial"
-                                animate="animate"
-                                exit="exit"
-                                className="space-y-2 absolute w-full left-0 px-4 py-4"
-                            >
-                                {[
-                                    { code: 'en', name: 'English', flag: '🇬🇧' },
-                                    { code: 'ru', name: 'Русский', flag: '🇷🇺' },
-                                    { code: 'uz', name: 'O\'zbek', flag: '🇺🇿' }
-                                ].map((lang) => (
-                                    <button
-                                        key={lang.code}
-                                        onClick={() => changeLanguage(lang.code)}
-                                        className={`w-full flex items-center justify-between p-4 rounded-xl transition-all ${i18n.language === lang.code
-                                            ? 'bg-tg-button text-tg-button-text shadow-md'
-                                            : 'bg-tg-bg text-tg-text hover:bg-white/5'
-                                            }`}
-                                    >
-                                        <span className="font-medium flex items-center gap-3">
-                                            <span className="text-xl">{lang.flag}</span>
-                                            {lang.name}
-                                        </span>
-                                        {i18n.language === lang.code && (
-                                            <div className="w-2 h-2 rounded-full bg-white shadow-sm" />
-                                        )}
-                                    </button>
-                                ))}
-                            </motion.div>
-                        )}
-
-                        {activePage === 'account' && (
-                            <motion.div
-                                key="account"
-                                custom={direction}
-                                variants={pageVariants}
-                                initial="initial"
-                                animate="animate"
-                                exit="exit"
-                                className="space-y-4 absolute w-full left-0 px-4 py-4"
-                            >
-                                <div className="space-y-3">
-                                    <div className="space-y-1">
-                                        <label className="text-xs text-tg-hint ml-4 uppercase">First Name</label>
-                                        <div className="bg-tg-bg p-3 rounded-xl text-tg-text">
-                                            {user?.first_name || 'User'}
+                                        <div className="space-y-2">
+                                            <label className="text-xs text-tg-hint ml-4 uppercase font-medium">
+                                                {t('settings.username')}
+                                            </label>
+                                            <div className="bg-tg-bg p-4 rounded-xl text-tg-text shadow-sm">
+                                                @{user?.username || 'username'}
+                                            </div>
                                         </div>
                                     </div>
-                                    <div className="space-y-1">
-                                        <label className="text-xs text-tg-hint ml-4 uppercase">Last Name</label>
-                                        <div className="bg-tg-bg p-3 rounded-xl text-tg-text">
-                                            {user?.last_name || 'Not set'}
-                                        </div>
-                                    </div>
-                                    <div className="space-y-1">
-                                        <label className="text-xs text-tg-hint ml-4 uppercase">Username</label>
-                                        <div className="bg-tg-bg p-3 rounded-xl text-tg-text">
-                                            @{user?.username || 'username'}
-                                        </div>
-                                    </div>
-                                </div>
-                                <p className="text-xs text-tg-hint px-6 text-center mt-4">
-                                    To change your personal details, please edit your Telegram profile.
-                                </p>
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
-                </div>
+                                    <p className="text-xs text-tg-hint text-center mt-6 px-4 leading-relaxed">
+                                        {t('settings.edit_profile_note')}
+                                    </p>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                    </div>
+                </motion.div>
             </motion.div>
-        </motion.div>
+        </AnimatePresence>
     );
 };
 

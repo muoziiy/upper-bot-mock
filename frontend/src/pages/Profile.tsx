@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
 import { useAppData } from '../context/AppDataContext';
 import { useTelegram } from '../context/TelegramContext';
-import { ListGroup } from '../components/ui/ListGroup';
-import { ListItem } from '../components/ui/ListItem';
 import { useTranslation } from 'react-i18next';
 import { Settings, ChevronRight, Calendar } from 'lucide-react';
 import TeacherInfoModal from '../components/profile/TeacherInfoModal';
@@ -129,6 +127,20 @@ const Profile: React.FC = () => {
                     </div>
                 </div>
 
+                {/* Settings Button */}
+                <button
+                    onClick={() => setShowSettings(true)}
+                    className="w-full bg-tg-bg rounded-xl p-4 flex items-center justify-between hover:bg-tg-bg/80 active:bg-tg-bg/60 transition-colors shadow-sm"
+                >
+                    <div className="flex items-center gap-3">
+                        <div className="bg-tg-button/10 p-2 rounded-lg">
+                            <Settings size={20} className="text-tg-button" />
+                        </div>
+                        <span className="text-tg-text font-medium">{t('profile.account_settings')}</span>
+                    </div>
+                    <ChevronRight size={20} className="text-tg-hint" />
+                </button>
+
                 {/* My Subjects */}
                 <div>
                     <div className="px-4 pb-2 text-xs font-medium uppercase text-tg-hint">
@@ -196,16 +208,6 @@ const Profile: React.FC = () => {
                         ))}
                     </div>
                 </div>
-
-                {/* Settings */}
-                <ListGroup header={t('profile.settings')}>
-                    <ListItem
-                        icon={<Settings size={20} />}
-                        title={t('profile.account_settings')}
-                        onClick={() => setShowSettings(true)}
-                        showChevron
-                    />
-                </ListGroup>
             </div>
         </div>
     );
