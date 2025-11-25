@@ -81,7 +81,28 @@
         "no_teacher": "O'qituvchi tayinlanmagan",
         "group": "Guruh",
         "no_group": "Guruhda emas",
-        "select_subject": "Tafsilotlarni ko'rish uchun fanni tanlang"
+        "select_subject": "Tafsilotlarni ko'rish uchun fanni tanlang",
+        "view_attendance": "Davomatni ko'rish",
+        "attendance": "Davomat"
+    },
+    "months": {
+        "january": "Yanvar",
+        "february": "Fevral",
+        "march": "Mart",
+        "april": "Aprel",
+        "may": "May",
+        "june": "Iyun",
+        "july": "Iyul",
+        "august": "Avgust",
+        "september": "Sentabr",
+        "october": "Oktabr",
+        "november": "Noyabr",
+        "december": "Dekabr"
+    },
+    "status": {
+        "present": "Kelgan",
+        "absent": "Kelmagan",
+        "late": "Kechikkan"
     },
     "leaderboard": {
         "title": "Reyting",

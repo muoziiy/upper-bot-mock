@@ -85,7 +85,28 @@
         "no_teacher": "No teacher assigned",
         "group": "Group",
         "no_group": "Not in a group",
-        "select_subject": "Select a subject to view details"
+        "select_subject": "Select a subject to view details",
+        "view_attendance": "View Attendance",
+        "attendance": "Attendance"
+    },
+    "months": {
+        "january": "January",
+        "february": "February",
+        "march": "March",
+        "april": "April",
+        "may": "May",
+        "june": "June",
+        "july": "July",
+        "august": "August",
+        "september": "September",
+        "october": "October",
+        "november": "November",
+        "december": "December"
+    },
+    "status": {
+        "present": "Present",
+        "absent": "Absent",
+        "late": "Late"
     },
     "teacher": {
         "dashboard": "Teacher Dashboard",

@@ -81,7 +81,28 @@
         "no_teacher": "Преподаватель не назначен",
         "group": "Группа",
         "no_group": "Не в группе",
-        "select_subject": "Выберите предмет для просмотра"
+        "select_subject": "Выберите предмет для просмотра",
+        "view_attendance": "Просмотр посещаемости",
+        "attendance": "Посещаемость"
+    },
+    "months": {
+        "january": "Январь",
+        "february": "Февраль",
+        "march": "Март",
+        "april": "Апрель",
+        "may": "Май",
+        "june": "Июнь",
+        "july": "Июль",
+        "august": "Август",
+        "september": "Сентябрь",
+        "october": "Октябрь",
+        "november": "Ноябрь",
+        "december": "Декабрь"
+    },
+    "status": {
+        "present": "Присутствовал",
+        "absent": "Отсутствовал",
+        "late": "Опоздал"
     },
     "leaderboard": {
         "title": "Рейтинг",
