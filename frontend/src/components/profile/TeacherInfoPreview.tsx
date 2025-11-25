@@ -1,6 +1,7 @@
 import React from 'react';
 import { Card } from '../ui/Card';
-import { User } from 'lucide-react';
+import { User, Star } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 interface TeacherInfoPreviewProps {
     teacher: {
@@ -11,19 +12,37 @@ interface TeacherInfoPreviewProps {
         subjects?: string[];
     };
     subjectName?: string;
+    subjectColor?: string;
 }
 
-const TeacherInfoPreview: React.FC<TeacherInfoPreviewProps> = ({ teacher, subjectName }) => {
+const TeacherInfoPreview: React.FC<TeacherInfoPreviewProps> = ({
+    teacher,
+    subjectName,
+    subjectColor = '#3390EC'
+}) => {
     const fullName = `${teacher.first_name} ${teacher.last_name || ''}`.trim();
-    const shortBio = teacher.bio ? 
-        (teacher.bio.length > 120 ? teacher.bio.substring(0, 117) + '...' : teacher.bio) 
+    const shortBio = teacher.bio ?
+        (teacher.bio.length > 100 ? teacher.bio.substring(0, 97) + '...' : teacher.bio)
         : '';
 
+    // Mock rating - in real app this would come from data
+    const rating = 4.8;
+
     return (
-        <Card className="p-4">
-            <div className="flex items-start gap-3">
+        <Card className="p-4 relative overflow-hidden">
+            {/* Background decoration */}
+            <div
+                className="absolute top-0 right-0 w-32 h-32 rounded-full blur-3xl opacity-5"
+                style={{ backgroundColor: subjectColor }}
+            />
+
+            <div className="flex items-start gap-3 relative z-10">
                 {/* Teacher Avatar */}
-                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-tg-button to-tg-accent flex items-center justify-center text-white text-lg font-bold overflow-hidden flex-shrink-0">
+                <motion.div
+                    className="w-16 h-16 rounded-2xl bg-gradient-to-br from-tg-button to-tg-accent flex items-center justify-center text-white text-xl font-bold overflow-hidden flex-shrink-0 shadow-lg"
+                    whileHover={{ scale: 1.05 }}
+                    transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                >
                     {teacher.photo_url ? (
                         <img
                             src={teacher.photo_url}
@@ -31,20 +50,46 @@ const TeacherInfoPreview: React.FC<TeacherInfoPreviewProps> = ({ teacher, subjec
                             className="w-full h-full object-cover"
                         />
                     ) : (
-                        <User size={20} />
+                        <User size={28} />
                     )}
-                </div>
+                </motion.div>
 
                 {/* Teacher Info */}
                 <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-tg-text mb-0.5">{fullName}</h3>
+                    <div className="flex items-start justify-between gap-2 mb-1">
+                        <h3 className="font-bold text-base text-tg-text">
+                            {fullName}
+                        </h3>
+                        {/* Rating */}
+                        <div className="flex items-center gap-1 flex-shrink-0 bg-amber-500/10 px-2 py-0.5 rounded-full">
+                            <Star size={12} className="text-amber-500 fill-amber-500" />
+                            <span className="text-xs font-semibold text-amber-600 dark:text-amber-400">
+                                {rating}
+                            </span>
+                        </div>
+                    </div>
+
                     {subjectName && (
-                        <p className="text-xs text-tg-hint mb-2">{subjectName}</p>
+                        <p
+                            className="text-xs font-medium mb-2"
+                            style={{ color: subjectColor }}
+                        >
+                            {subjectName} Teacher
+                        </p>
                     )}
+
                     {shortBio && (
-                        <p className="text-sm text-tg-text/80 leading-relaxed line-clamp-2">
+                        <p className="text-xs text-tg-hint leading-relaxed">
                             {shortBio}
                         </p>
+                    )}
+
+                    {teacher.subjects && teacher.subjects.length > 1 && (
+                        <div className="flex items-center gap-1 mt-2">
+                            <span className="text-[10px] text-tg-hint">
+                                +{teacher.subjects.length - 1} more subject{teacher.subjects.length > 2 ? 's' : ''}
+                            </span>
+                        </div>
                     )}
                 </div>
             </div>

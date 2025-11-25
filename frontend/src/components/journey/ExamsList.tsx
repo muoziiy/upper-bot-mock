@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import type { ExamSchedule } from '../../types/journey.types';
 import { Card } from '../ui/Card';
-import { Calendar, MapPin, Video, Clock, Users } from 'lucide-react';
+import { Calendar, MapPin, Video, Clock, Users, Timer } from 'lucide-react';
 import SegmentedControl from '../ui/SegmentedControl';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
@@ -16,26 +16,66 @@ interface ExamsListProps {
 
 const ExamsList: React.FC<ExamsListProps> = ({ exams }) => {
     const { t } = useTranslation();
-    const [activeTab, setActiveTab] = useState<'upcoming' | 'old' | 'overall'>('upcoming');
+    const [activeTab, setActiveTab] = useState<'old' | 'current' | 'upcoming'>('current');
+
+    // Calculate current exams (today + next 3 days)
+    const categorizedExams = useMemo(() => {
+        const now = new Date();
+        const threeDaysFromNow = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
+
+        const currentExams: ExamSchedule[] = [];
+        const upcomingExams: ExamSchedule[] = [];
+        const oldExams: ExamSchedule[] = [];
+
+        exams.overall.forEach(exam => {
+            const examDate = new Date(exam.scheduled_date);
+
+            if (examDate < now) {
+                oldExams.push(exam);
+            } else if (examDate <= threeDaysFromNow) {
+                currentExams.push(exam);
+            } else {
+                upcomingExams.push(exam);
+            }
+        });
+
+        return {
+            old: oldExams.sort((a, b) => new Date(b.scheduled_date).getTime() - new Date(a.scheduled_date).getTime()),
+            current: currentExams.sort((a, b) => new Date(a.scheduled_date).getTime() - new Date(b.scheduled_date).getTime()),
+            upcoming: upcomingExams.sort((a, b) => new Date(a.scheduled_date).getTime() - new Date(b.scheduled_date).getTime())
+        };
+    }, [exams]);
 
     const getExams = () => {
-        switch (activeTab) {
-            case 'upcoming': return exams.upcoming;
-            case 'old': return exams.old;
-            case 'overall': return exams.overall;
-            default: return [];
-        }
+        return categorizedExams[activeTab];
     };
 
     const currentExams = getExams();
+
+    // Calculate countdown for current exams
+    const getCountdown = (scheduledDate: string) => {
+        const now = new Date();
+        const examDate = new Date(scheduledDate);
+        const diff = examDate.getTime() - now.getTime();
+
+        if (diff < 0) return 'Now';
+
+        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+
+        if (days > 0) return `${days}d ${hours}h`;
+        if (hours > 0) return `${hours}h ${minutes}m`;
+        return `${minutes}m`;
+    };
 
     return (
         <div className="space-y-4">
             <SegmentedControl
                 options={[
-                    { label: t('exams.upcoming'), value: 'upcoming' },
                     { label: t('exams.old'), value: 'old' },
-                    { label: t('exams.overall'), value: 'overall' }
+                    { label: t('exams.current'), value: 'current' },
+                    { label: t('exams.upcoming'), value: 'upcoming' }
                 ]}
                 value={activeTab}
                 onChange={(val) => setActiveTab(val as any)}
@@ -53,13 +93,29 @@ const ExamsList: React.FC<ExamsListProps> = ({ exams }) => {
                 >
                     {currentExams.length > 0 ? (
                         currentExams.map((exam) => (
-                            <Card key={exam.id} className="p-4">
+                            <Card key={exam.id} className="p-4 relative overflow-hidden">
+                                {/* Current exam highlight */}
+                                {activeTab === 'current' && (
+                                    <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 to-purple-500" />
+                                )}
+
                                 <div className="flex justify-between items-start mb-2">
-                                    <h3 className="font-bold text-lg">{exam.exam?.title}</h3>
-                                    <span className={`px-2 py-1 rounded text-xs font-medium ${exam.exam_type === 'online' ? 'bg-blue-100 text-blue-700' : 'bg-orange-100 text-orange-700'
-                                        }`}>
-                                        {exam.exam_type === 'online' ? t('exams.online') : t('exams.offline')}
-                                    </span>
+                                    <h3 className="font-bold text-lg flex-1">{exam.exam?.title}</h3>
+                                    <div className="flex items-center gap-2">
+                                        <span className={`px-2 py-1 rounded text-xs font-medium ${exam.exam_type === 'online'
+                                                ? 'bg-blue-100 text-blue-700'
+                                                : 'bg-orange-100 text-orange-700'
+                                            }`}>
+                                            {exam.exam_type === 'online' ? t('exams.online') : t('exams.offline')}
+                                        </span>
+                                        {/* Countdown for current exams */}
+                                        {activeTab === 'current' && (
+                                            <span className="flex items-center gap-1 px-2 py-1 bg-purple-100 text-purple-700 rounded text-xs font-bold">
+                                                <Timer size={12} />
+                                                {getCountdown(exam.scheduled_date)}
+                                            </span>
+                                        )}
+                                    </div>
                                 </div>
                                 <p className="text-sm text-tg-hint mb-3">{exam.exam?.description}</p>
 
@@ -95,7 +151,12 @@ const ExamsList: React.FC<ExamsListProps> = ({ exams }) => {
                         ))
                     ) : (
                         <div className="text-center py-8 text-tg-hint">
-                            {t('exams.no_exams')}
+                            <p className="text-lg font-medium mb-1">
+                                {activeTab === 'current' && t('exams.no_current')}
+                                {activeTab === 'upcoming' && t('exams.no_upcoming')}
+                                {activeTab === 'old' && t('exams.no_old')}
+                            </p>
+                            <p className="text-sm">{t('exams.check_later')}</p>
                         </div>
                     )}
                 </motion.div>

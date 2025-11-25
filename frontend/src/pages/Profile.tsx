@@ -3,11 +3,12 @@ import { useAppData } from '../context/AppDataContext';
 import { useTelegram } from '../context/TelegramContext';
 import { Section } from '../components/ui/Section';
 import { Card } from '../components/ui/Card';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { Settings, ChevronRight, Info, Send } from 'lucide-react';
 import PaymentDotsView from '../components/profile/PaymentDotsView';
-import SubjectCard from '../components/profile/SubjectCard';
+import SubjectSwitcher from '../components/profile/SubjectSwitcher';
+import SubjectStats from '../components/profile/SubjectStats';
 import TeacherInfoModal from '../components/profile/TeacherInfoModal';
 import TeacherInfoPreview from '../components/profile/TeacherInfoPreview';
 import AttendanceHistory from '../components/profile/AttendanceHistory';
@@ -20,6 +21,7 @@ const Profile: React.FC = () => {
     const [showSettings, setShowSettings] = useState(false);
     const [selectedSubject, setSelectedSubject] = useState<string | null>(null);
     const [showTeacherModal, setShowTeacherModal] = useState(false);
+    const [direction, setDirection] = useState(0);
 
     if (loading) {
         return (
@@ -37,7 +39,13 @@ const Profile: React.FC = () => {
             teacher_name: 'Sarah Johnson',
             progress: 75,
             color: '#3390EC',
-            telegram_username: 'sarahjohnson'
+            telegram_username: 'sarahjohnson',
+            stats: {
+                attendancePercentage: 92,
+                averageScore: 85,
+                lessonsCompleted: 18,
+                totalLessons: 24
+            }
         },
         {
             id: '2',
@@ -45,7 +53,13 @@ const Profile: React.FC = () => {
             teacher_name: 'Michael Brown',
             progress: 60,
             color: '#10b981',
-            telegram_username: 'michaelbrown'
+            telegram_username: 'michaelbrown',
+            stats: {
+                attendancePercentage: 88,
+                averageScore: 78,
+                lessonsCompleted: 14,
+                totalLessons: 24
+            }
         },
         {
             id: '3',
@@ -53,7 +67,13 @@ const Profile: React.FC = () => {
             teacher_name: 'John Smith',
             progress: 85,
             color: '#f59e0b',
-            telegram_username: 'johnsmith'
+            telegram_username: 'johnsmith',
+            stats: {
+                attendancePercentage: 95,
+                averageScore: 92,
+                lessonsCompleted: 20,
+                totalLessons: 24
+            }
         }
     ];
 
@@ -82,6 +102,11 @@ const Profile: React.FC = () => {
         { month: 5, year: 2024, amount: 150, paid: false },
     ];
 
+    // Initialize selected subject
+    if (!selectedSubject && subjects.length > 0) {
+        setSelectedSubject(subjects[0].id);
+    }
+
     const currentSubject = subjects.find(s => s.id === selectedSubject) || subjects[0];
     const hasMultipleSubjects = subjects.length > 1;
 
@@ -90,6 +115,30 @@ const Profile: React.FC = () => {
         if (username) {
             window.open(`https://t.me/${username}`, '_blank');
         }
+    };
+
+    // Handler for subject change with direction tracking for animations
+    const handleSubjectChange = (newSubjectId: string) => {
+        const currentIndex = subjects.findIndex(s => s.id === selectedSubject);
+        const newIndex = subjects.findIndex(s => s.id === newSubjectId);
+        setDirection(newIndex > currentIndex ? 1 : -1);
+        setSelectedSubject(newSubjectId);
+    };
+
+    // Animation variants for subject content
+    const slideVariants = {
+        enter: (direction: number) => ({
+            x: direction > 0 ? 300 : -300,
+            opacity: 0
+        }),
+        center: {
+            x: 0,
+            opacity: 1
+        },
+        exit: (direction: number) => ({
+            x: direction < 0 ? 300 : -300,
+            opacity: 0
+        })
     };
 
     return (
@@ -108,7 +157,7 @@ const Profile: React.FC = () => {
             >
                 {/* Header */}
                 <header className="flex items-center gap-4">
-                    <div className="w-20 h-20 rounded-full bg-gradient-to-br from-tg-button to-tg-accent flex items-center justify-center text-white text-3xl font-bold overflow-hidden flex-shrink-0">
+                    <div className="w-20 h-20 rounded-full bg-gradient-to-br from-tg-button to-tg-accent flex items-center justify-center text-white text-3xl font-bold overflow-hidden flex-shrink-0 shadow-lg">
                         {user?.photo_url ? (
                             <img src={user.photo_url} alt="Profile" className="w-full h-full object-cover" />
                         ) : (
@@ -124,29 +173,136 @@ const Profile: React.FC = () => {
                 {/* Conditional Layout: Multi-Subject vs Single-Subject */}
                 {hasMultipleSubjects ? (
                     <>
-                        {/* Multi-Subject View: Show Subject List */}
+                        {/* Multi-Subject View: Horizontal Subject Switcher */}
                         <Section title={t('profile.my_subjects')}>
-                            <div className="space-y-3">
-                                {subjects.map((subject) => (
-                                    <SubjectCard
-                                        key={subject.id}
-                                        subject={subject}
-                                        isSelected={selectedSubject === subject.id}
-                                        onClick={() => setSelectedSubject(subject.id)}
-                                    />
-                                ))}
-                            </div>
+                            <SubjectSwitcher
+                                subjects={subjects}
+                                selectedSubjectId={selectedSubject}
+                                onSubjectChange={handleSubjectChange}
+                            />
                         </Section>
 
-                        {/* Show selected subject details */}
+                        {/* Subject-Specific Content with Slide Animation */}
+                        <AnimatePresence mode="wait" custom={direction}>
+                            {currentSubject && (
+                                <motion.div
+                                    key={selectedSubject}
+                                    custom={direction}
+                                    variants={slideVariants}
+                                    initial="enter"
+                                    animate="center"
+                                    exit="exit"
+                                    transition={{
+                                        x: { type: "spring", stiffness: 300, damping: 30 },
+                                        opacity: { duration: 0.2 }
+                                    }}
+                                    className="space-y-6"
+                                >
+                                    {/* Subject Statistics */}
+                                    <Section title={t('profile.statistics')}>
+                                        <SubjectStats
+                                            subjectColor={currentSubject.color}
+                                            stats={currentSubject.stats}
+                                        />
+                                    </Section>
+
+                                    {/* Teacher Info Preview */}
+                                    <Section title={t('profile.teacher')}>
+                                        <div className="space-y-3">
+                                            <TeacherInfoPreview
+                                                teacher={teacherInfo}
+                                                subjectName={currentSubject.name}
+                                                subjectColor={currentSubject.color}
+                                            />
+
+                                            {/* Action Buttons */}
+                                            <div className="grid grid-cols-2 gap-3">
+                                                <motion.div whileTap={{ scale: 0.98 }}>
+                                                    <Card
+                                                        className="p-4 cursor-pointer flex flex-col items-center text-center gap-2"
+                                                        onClick={() => setShowTeacherModal(true)}
+                                                    >
+                                                        <div
+                                                            className="w-12 h-12 rounded-full flex items-center justify-center"
+                                                            style={{ backgroundColor: `${currentSubject.color}15` }}
+                                                        >
+                                                            <Info size={24} style={{ color: currentSubject.color }} />
+                                                        </div>
+                                                        <span className="text-sm font-medium text-tg-text">{t('profile.teacher_info')}</span>
+                                                    </Card>
+                                                </motion.div>
+
+                                                <motion.div whileTap={{ scale: 0.98 }}>
+                                                    <Card
+                                                        className="p-4 cursor-pointer flex flex-col items-center text-center gap-2"
+                                                        onClick={() => handleContactTeacher(currentSubject.telegram_username || '')}
+                                                    >
+                                                        <div
+                                                            className="w-12 h-12 rounded-full flex items-center justify-center"
+                                                            style={{ backgroundColor: currentSubject.color }}
+                                                        >
+                                                            <Send size={24} className="text-white" />
+                                                        </div>
+                                                        <span className="text-sm font-medium text-tg-text">{t('profile.contact_teacher')}</span>
+                                                    </Card>
+                                                </motion.div>
+                                            </div>
+                                        </div>
+                                    </Section>
+
+                                    {/* Group Info */}
+                                    <Section title={t('profile.group_info')}>
+                                        <Card className="p-4">
+                                            <div className="space-y-3 text-sm">
+                                                <div className="flex items-center justify-between pb-3 border-b border-tg-hint/10">
+                                                    <span className="text-tg-hint">{t('profile.group_name')}</span>
+                                                    <span className="text-tg-text font-medium text-right max-w-[60%]">{groupInfo.name}</span>
+                                                </div>
+                                                <div className="flex items-center justify-between pb-3 border-b border-tg-hint/10">
+                                                    <span className="text-tg-hint">{t('profile.students')}</span>
+                                                    <span className="text-tg-text font-medium">{groupInfo.student_count}</span>
+                                                </div>
+                                                <div className="flex items-center justify-between">
+                                                    <span className="text-tg-hint">{t('profile.schedule')}</span>
+                                                    <span className="text-tg-text font-medium text-right max-w-[60%]">{groupInfo.schedule}</span>
+                                                </div>
+                                            </div>
+                                        </Card>
+                                    </Section>
+
+                                    {/* Payment Status */}
+                                    <Section title={t('profile.payment_history')}>
+                                        <Card className="p-4">
+                                            <PaymentDotsView
+                                                payments={paymentRecords}
+                                                subjectName={currentSubject.name}
+                                            />
+                                        </Card>
+                                    </Section>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                    </>
+                ) : (
+                    <>
+                        {/* Single-Subject View: Show Details Directly */}
                         {currentSubject && (
                             <>
+                                {/* Subject Statistics */}
+                                <Section title={currentSubject.name}>
+                                    <SubjectStats
+                                        subjectColor={currentSubject.color}
+                                        stats={currentSubject.stats}
+                                    />
+                                </Section>
+
                                 {/* Teacher Info Preview */}
                                 <Section title={t('profile.teacher')}>
                                     <div className="space-y-3">
                                         <TeacherInfoPreview
                                             teacher={teacherInfo}
                                             subjectName={currentSubject.name}
+                                            subjectColor={currentSubject.color}
                                         />
 
                                         {/* Action Buttons */}
@@ -156,8 +312,11 @@ const Profile: React.FC = () => {
                                                     className="p-4 cursor-pointer flex flex-col items-center text-center gap-2"
                                                     onClick={() => setShowTeacherModal(true)}
                                                 >
-                                                    <div className="w-12 h-12 rounded-full bg-tg-button/10 flex items-center justify-center">
-                                                        <Info size={24} className="text-tg-button" />
+                                                    <div
+                                                        className="w-12 h-12 rounded-full flex items-center justify-center"
+                                                        style={{ backgroundColor: `${currentSubject.color}15` }}
+                                                    >
+                                                        <Info size={24} style={{ color: currentSubject.color }} />
                                                     </div>
                                                     <span className="text-sm font-medium text-tg-text">{t('profile.teacher_info')}</span>
                                                 </Card>
@@ -168,7 +327,10 @@ const Profile: React.FC = () => {
                                                     className="p-4 cursor-pointer flex flex-col items-center text-center gap-2"
                                                     onClick={() => handleContactTeacher(currentSubject.telegram_username || '')}
                                                 >
-                                                    <div className="w-12 h-12 rounded-full bg-tg-button flex items-center justify-center">
+                                                    <div
+                                                        className="w-12 h-12 rounded-full flex items-center justify-center"
+                                                        style={{ backgroundColor: currentSubject.color }}
+                                                    >
                                                         <Send size={24} className="text-white" />
                                                     </div>
                                                     <span className="text-sm font-medium text-tg-text">{t('profile.contact_teacher')}</span>
@@ -181,92 +343,18 @@ const Profile: React.FC = () => {
                                 {/* Group Info */}
                                 <Section title={t('profile.group_info')}>
                                     <Card className="p-4">
-                                        <div className="space-y-2 text-sm">
-                                            <div className="flex items-center justify-between">
+                                        <div className="space-y-3 text-sm">
+                                            <div className="flex items-center justify-between pb-3 border-b border-tg-hint/10">
                                                 <span className="text-tg-hint">{t('profile.group_name')}</span>
-                                                <span className="text-tg-text font-medium">{groupInfo.name}</span>
+                                                <span className="text-tg-text font-medium text-right max-w-[60%]">{groupInfo.name}</span>
                                             </div>
-                                            <div className="flex items-center justify-between">
+                                            <div className="flex items-center justify-between pb-3 border-b border-tg-hint/10">
                                                 <span className="text-tg-hint">{t('profile.students')}</span>
                                                 <span className="text-tg-text font-medium">{groupInfo.student_count}</span>
                                             </div>
                                             <div className="flex items-center justify-between">
                                                 <span className="text-tg-hint">{t('profile.schedule')}</span>
-                                                <span className="text-tg-text font-medium">{groupInfo.schedule}</span>
-                                            </div>
-                                        </div>
-                                    </Card>
-                                </Section>
-
-                                {/* Payment Status */}
-                                <Section title={t('profile.payment_history')}>
-                                    <Card className="p-4">
-                                        <PaymentDotsView
-                                            payments={paymentRecords}
-                                            subjectName={currentSubject.name}
-                                        />
-                                    </Card>
-                                </Section>
-                            </>
-                        )}
-                    </>
-                ) : (
-                    <>
-                        {/* Single-Subject View: Show Details Directly (No Subject Selector) */}
-                        {currentSubject && (
-                            <>
-                                {/* Teacher Info Preview */}
-                                <Section title={currentSubject.name}>
-                                    <div className="space-y-3">
-                                        <TeacherInfoPreview
-                                            teacher={teacherInfo}
-                                            subjectName={currentSubject.name}
-                                        />
-
-                                        {/* Action Buttons */}
-                                        <div className="grid grid-cols-2 gap-3">
-                                            <motion.div whileTap={{ scale: 0.98 }}>
-                                                <Card
-                                                    className="p-4 cursor-pointer flex flex-col items-center text-center gap-2"
-                                                    onClick={() => setShowTeacherModal(true)}
-                                                >
-                                                    <div className="w-12 h-12 rounded-full bg-tg-button/10 flex items-center justify-center">
-                                                        <Info size={24} className="text-tg-button" />
-                                                    </div>
-                                                    <span className="text-sm font-medium text-tg-text">{t('profile.teacher_info')}</span>
-                                                </Card>
-                                            </motion.div>
-
-                                            <motion.div whileTap={{ scale: 0.98 }}>
-                                                <Card
-                                                    className="p-4 cursor-pointer flex flex-col items-center text-center gap-2"
-                                                    onClick={() => handleContactTeacher(currentSubject.telegram_username || '')}
-                                                >
-                                                    <div className="w-12 h-12 rounded-full bg-tg-button flex items-center justify-center">
-                                                        <Send size={24} className="text-white" />
-                                                    </div>
-                                                    <span className="text-sm font-medium text-tg-text">{t('profile.contact_teacher')}</span>
-                                                </Card>
-                                            </motion.div>
-                                        </div>
-                                    </div>
-                                </Section>
-
-                                {/* Group Info */}
-                                <Section title={t('profile.group_info')}>
-                                    <Card className="p-4">
-                                        <div className="space-y-2 text-sm">
-                                            <div className="flex items-center justify-between">
-                                                <span className="text-tg-hint">{t('profile.group_name')}</span>
-                                                <span className="text-tg-text font-medium">{groupInfo.name}</span>
-                                            </div>
-                                            <div className="flex items-center justify-between">
-                                                <span className="text-tg-hint">{t('profile.students')}</span>
-                                                <span className="text-tg-text font-medium">{groupInfo.student_count}</span>
-                                            </div>
-                                            <div className="flex items-center justify-between">
-                                                <span className="text-tg-hint">{t('profile.schedule')}</span>
-                                                <span className="text-tg-text font-medium">{groupInfo.schedule}</span>
+                                                <span className="text-tg-text font-medium text-right max-w-[60%]">{groupInfo.schedule}</span>
                                             </div>
                                         </div>
                                     </Card>

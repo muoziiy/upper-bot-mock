@@ -6,12 +6,12 @@ import BottomNav from './components/BottomNav';
 import './i18n'; // Initialize i18n
 
 // Lazy load pages
-const StudentDashboard = React.lazy(() => import('./pages/StudentDashboard'));
 const TeacherDashboard = React.lazy(() => import('./pages/TeacherDashboard'));
 const AdminDashboard = React.lazy(() => import('./pages/AdminDashboard'));
 const Leaderboard = React.lazy(() => import('./pages/Leaderboard'));
 const Profile = React.lazy(() => import('./pages/Profile'));
 const Journey = React.lazy(() => import('./pages/Journey'));
+const Achievements = React.lazy(() => import('./pages/Achievements'));
 const QuickActions = React.lazy(() => import('./pages/QuickActions'));
 const Groups = React.lazy(() => import('./pages/Groups'));
 
@@ -38,7 +38,7 @@ const AppContent: React.FC = () => {
       case 'teacher': return '/teacher';
       case 'admin':
       case 'super_admin': return '/admin';
-      default: return '/student';
+      default: return '/student/journey'; // Students start at journey
     }
   };
 
@@ -46,8 +46,9 @@ const AppContent: React.FC = () => {
     { path: "/", element: <Navigate to={getHomeRoute()} replace /> },
 
     // Student Routes
-    { path: "/student", element: <StudentDashboard /> },
+    { path: "/student", element: <Navigate to="/student/journey" replace /> },
     { path: "/student/journey", element: <Journey /> },
+    { path: "/student/achievements", element: <Achievements /> },
     { path: "/student/leaderboard", element: <Leaderboard /> },
     { path: "/student/profile", element: <Profile /> },
 
