@@ -73,6 +73,8 @@ const Onboarding: React.FC = () => {
                 body: JSON.stringify(body)
             });
 
+            const data = await res.json();
+
             if (res.ok) {
                 await refreshData(); // Refresh to get new role
                 if (type === 'student') {
@@ -84,11 +86,26 @@ const Onboarding: React.FC = () => {
                     navigate('/waiting');
                 }
             } else {
-                alert('Failed to submit. Please try again.');
+                // Log detailed error to console (visible to developers only)
+                console.error('[Onboarding Error]', {
+                    endpoint,
+                    status: res.status,
+                    error: data,
+                    timestamp: new Date().toISOString()
+                });
+
+                // Show user-friendly message
+                webApp?.showAlert('Registration failed. Please check all fields and try again.');
             }
         } catch (e) {
-            console.error('Submission error', e);
-            alert('An error occurred.');
+            // Log detailed error to console (visible to developers only)
+            console.error('[Onboarding Error]', {
+                error: e,
+                timestamp: new Date().toISOString()
+            });
+
+            // Show user-friendly message
+            webApp?.showAlert('An error occurred. Please check your connection and try again.');
         } finally {
             setLoading(false);
         }

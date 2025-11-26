@@ -5,6 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const supabase_1 = require("../supabase");
+const logger_1 = require("../logger");
 const router = express_1.default.Router();
 // Middleware to validate Telegram WebApp data
 // This is a placeholder. Real implementation needs to verify the hash.
@@ -16,6 +17,10 @@ const validateTelegramData = (req, res, next) => {
 router.post('/login', validateTelegramData, async (req, res) => {
     const { id, first_name, last_name, username, language_code } = req.body;
     if (!id) {
+        (0, logger_1.logError)(new Error('Missing Telegram ID in login request'), {
+            ...(0, logger_1.getRequestInfo)(req),
+            action: 'login'
+        });
         return res.status(400).json({ error: 'Missing Telegram ID' });
     }
     try {
@@ -35,10 +40,19 @@ router.post('/login', validateTelegramData, async (req, res) => {
         if (error) {
             throw error;
         }
+        (0, logger_1.logInfo)('User login successful', {
+            ...(0, logger_1.getRequestInfo)(req),
+            action: 'login',
+            userId: id
+        });
         res.json({ message: 'Login successful', user: data });
     }
     catch (error) {
-        console.error('Error syncing user:', error);
+        (0, logger_1.logError)(error, {
+            ...(0, logger_1.getRequestInfo)(req),
+            action: 'login',
+            userId: id
+        });
         res.status(500).json({ error: 'Internal server error' });
     }
 });

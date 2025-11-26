@@ -1,6 +1,7 @@
 import express from 'express';
 import { supabase } from '../supabase';
 import bot from '../bot';
+import { logError, logWarning, logInfo, getRequestInfo } from '../logger';
 
 const router = express.Router();
 
@@ -66,14 +67,31 @@ router.post('/student', async (req, res) => {
 
         if (error) throw error;
 
+        logInfo('Student onboarding submitted', {
+            ...getRequestInfo(req),
+            action: 'student_onboarding',
+            userId: userId
+        });
+
         // Notify Admins (Non-blocking)
         const message = `🆕 **New Student Request**\n\n👤 **Name:** ${name} ${surname}\n🎂 **Age:** ${age}\n⚧ **Sex:** ${sex}`;
         // Do not await to prevent blocking response if telegram fails
-        notifyAdmins(message, { type: 'student', userId }).catch(e => console.error('Failed to notify admins:', e));
+        notifyAdmins(message, { type: 'student', userId }).catch(e => {
+            logWarning('Failed to notify admins', {
+                action: 'notify_admins',
+                userId: userId,
+                additionalInfo: { error: e?.message }
+            });
+        });
 
         res.json({ success: true, message: 'Student onboarding submitted' });
     } catch (error) {
-        console.error('Error in student onboarding:', error);
+        logError(error, {
+            ...getRequestInfo(req),
+            action: 'student_onboarding',
+            userId: userId,
+            additionalInfo: { name, surname, age, sex }
+        });
         res.status(500).json({ error: 'Internal server error' });
     }
 });
@@ -114,8 +132,20 @@ router.post('/staff', async (req, res) => {
                 .from('teacher_subjects')
                 .insert(teacherSubjects);
 
-            if (subjectsError) console.error('Error adding teacher subjects', subjectsError);
+            if (subjectsError) {
+                logWarning('Error adding teacher subjects', {
+                    action: 'staff_onboarding_subjects',
+                    userId: userId,
+                    additionalInfo: { error: subjectsError?.message }
+                });
+            }
         }
+
+        logInfo('Staff onboarding submitted', {
+            ...getRequestInfo(req),
+            action: 'staff_onboarding',
+            userId: userId
+        });
 
         // Notify Admins
         const message = `👨‍🏫 **New Staff Request**\n\n👤 **Name:** ${name} ${surname}\n🎂 **Age:** ${age}\n⚧ **Sex:** ${sex}\n📚 **Subjects:** ${subjects.length} selected\n📝 **Bio:** ${bio || 'N/A'}`;
@@ -123,7 +153,12 @@ router.post('/staff', async (req, res) => {
 
         res.json({ success: true, message: 'Staff onboarding submitted' });
     } catch (error) {
-        console.error('Error in staff onboarding:', error);
+        logError(error, {
+            ...getRequestInfo(req),
+            action: 'staff_onboarding',
+            userId: userId,
+            additionalInfo: { name, surname, age, sex, subjectsCount: subjects?.length }
+        });
         res.status(500).json({ error: 'Internal server error' });
     }
 });
