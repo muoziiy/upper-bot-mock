@@ -66,9 +66,10 @@ router.post('/student', async (req, res) => {
 
         if (error) throw error;
 
-        // Notify Admins
-        const message = `🆕 **New Student Request**\n\n👤 **Name:** ${name} ${surname}\n🎂 **Age:** ${age}\n⚧ **Sex:** ${sex}\n📱 **Phone:** ${phoneNumber}`;
-        await notifyAdmins(message, { type: 'student', userId });
+        // Notify Admins (Non-blocking)
+        const message = `🆕 **New Student Request**\n\n👤 **Name:** ${name} ${surname}\n🎂 **Age:** ${age}\n⚧ **Sex:** ${sex}`;
+        // Do not await to prevent blocking response if telegram fails
+        notifyAdmins(message, { type: 'student', userId }).catch(e => console.error('Failed to notify admins:', e));
 
         res.json({ success: true, message: 'Student onboarding submitted' });
     } catch (error) {

@@ -80,4 +80,71 @@ router.get('/requests', async (req, res) => {
     }
 });
 
+// Get pending student/staff requests (for Admin panel)
+router.get('/pending-requests', async (req, res) => {
+    try {
+        const { data, error } = await supabase
+            .from('users')
+            .select('id, first_name, surname, age, sex, role, created_at')
+            .in('role', ['guest', 'waiting_staff'])
+            .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        res.json(data);
+    } catch (error) {
+        console.error('Error fetching pending requests:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Approve student/staff request
+router.post('/approve-request', async (req, res) => {
+    const { userId, type } = req.body; // type: 'student' or 'staff'
+
+    if (!userId || !type) {
+        return res.status(400).json({ error: 'Missing userId or type' });
+    }
+
+    try {
+        const newRole = type === 'student' ? 'student' : 'teacher';
+
+        const { error } = await supabase
+            .from('users')
+            .update({ role: newRole, updated_at: new Date().toISOString() })
+            .eq('id', userId);
+
+        if (error) throw error;
+
+        res.json({ success: true, message: 'Request approved' });
+    } catch (error) {
+        console.error('Error approving request:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Decline student/staff request
+router.post('/decline-request', async (req, res) => {
+    const { userId } = req.body;
+
+    if (!userId) {
+        return res.status(400).json({ error: 'Missing userId' });
+    }
+
+    try {
+        // Set role back to new_user
+        const { error } = await supabase
+            .from('users')
+            .update({ role: 'new_user', updated_at: new Date().toISOString() })
+            .eq('id', userId);
+
+        if (error) throw error;
+
+        res.json({ success: true, message: 'Request declined' });
+    } catch (error) {
+        console.error('Error declining request:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
 export default router;
