@@ -41,7 +41,7 @@ function App() {
 }
 
 const AppContent: React.FC = () => {
-  const { user } = useTelegram();
+  const { } = useTelegram();
   const { loading, dashboardData } = useAppData();
   const location = useLocation();
 
