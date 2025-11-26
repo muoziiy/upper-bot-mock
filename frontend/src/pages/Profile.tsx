@@ -17,8 +17,8 @@ const Profile: React.FC = () => {
     const [selectedSubjectAttendance, setSelectedSubjectAttendance] = useState<any>(null);
     const [selectedSubjectPayments, setSelectedSubjectPayments] = useState<any>(null);
 
-    // Mock random student ID for now
-    const studentId = React.useMemo(() => Math.floor(10000 + Math.random() * 90000), []);
+    // Use real student ID from DB, fallback to '---' if not set
+    const studentId = dashboardData?.user.student_id || '---';
 
     if (loading) {
         return (

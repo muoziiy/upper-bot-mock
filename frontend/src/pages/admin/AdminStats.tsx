@@ -27,7 +27,10 @@ const AdminStats: React.FC = () => {
                         <ListItem title="Total Students" value="1,234" icon="👨‍🎓" />
                         <ListItem title="Total Teachers" value="42" icon="👩‍🏫" />
                         <ListItem title="Active Groups" value="156" icon="👥" />
-                        <ListItem title="Total Courses" value="12" icon="📚" isLast />
+                        <ListItem title="Total Courses" value="12" icon="📚" />
+                        <ListItem title="Server Status" value={<span className="text-green-500">Online</span>} icon="🖥️" />
+                        <ListItem title="Database Size" value="45 MB" icon="💾" />
+                        <ListItem title="Last Backup" value="2h ago" icon="🔄" isLast />
                     </Section>
 
                     <Section title="Growth (This Month)">

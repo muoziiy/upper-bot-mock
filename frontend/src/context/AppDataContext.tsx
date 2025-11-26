@@ -8,6 +8,7 @@ interface DashboardData {
         first_name: string;
         last_name?: string;
         role: string;
+        student_id?: string;
     };
     streak: {
         current_streak: number;
@@ -102,6 +103,19 @@ interface ParentData {
     children: any[];
 }
 
+interface AdminRequest {
+    id: string;
+    user_id: string;
+    status: 'pending' | 'approved' | 'declined';
+    created_at: string;
+    users?: {
+        first_name: string;
+        last_name?: string;
+        username?: string;
+        telegram_id?: string;
+    };
+}
+
 interface AppDataContextType {
     dashboardData: DashboardData | null;
     teacherData: TeacherData | null;
@@ -112,6 +126,7 @@ interface AppDataContextType {
     paymentHistory: PaymentRecord[];
     salaryHistory: SalaryRecord[];
     attendanceHistory: AttendanceRecord[];
+    adminRequests: AdminRequest[];
     loading: boolean;
     error: string | null;
     refreshData: () => Promise<void>;
@@ -135,6 +150,7 @@ export const AppDataProvider: React.FC<{ children: ReactNode }> = ({ children })
     const [leaderboardData, setLeaderboardData] = useState<LeaderboardData | null>(null);
     const [achievementsData, setAchievementsData] = useState<AchievementsData | null>(null);
     const [journeyData, setJourneyData] = useState<JourneyData | null>(null);
+    const [adminRequests, setAdminRequests] = useState<AdminRequest[]>([]);
 
     // Mock Data for History
     const [paymentHistory] = useState<PaymentRecord[]>([
@@ -191,6 +207,20 @@ export const AppDataProvider: React.FC<{ children: ReactNode }> = ({ children })
             if (dashboardRes.ok) {
                 const data = await dashboardRes.json();
                 setDashboardData(data);
+
+                // If user is super_admin, fetch admin requests
+                if (data.user?.role === 'super_admin') {
+                    try {
+                        // Assuming we will create this endpoint or it will be handled
+                        const requestsRes = await fetch(`${apiUrl}/admin/requests`, { headers });
+                        if (requestsRes.ok) {
+                            const requests = await requestsRes.json();
+                            setAdminRequests(requests);
+                        }
+                    } catch (e) {
+                        console.error('Failed to fetch admin requests', e);
+                    }
+                }
             }
 
             // Mock Teacher Data (Injecting it always for now to support development)
@@ -543,6 +573,7 @@ export const AppDataProvider: React.FC<{ children: ReactNode }> = ({ children })
         paymentHistory,
         salaryHistory,
         attendanceHistory,
+        adminRequests,
         loading,
         error,
         refreshData: fetchAllData,

@@ -1,4 +1,4 @@
-import { Telegraf } from 'telegraf';
+import { Telegraf, Markup } from 'telegraf';
 import { supabase } from './supabase';
 import { config } from './config';
 
@@ -7,9 +7,6 @@ const bot = new Telegraf(config.botToken);
 // Handle /start command
 bot.start(async (ctx) => {
     const user = ctx.from;
-    // Extract start payload (e.g., /start ref123 -> ref123)
-    // ctx.message is not always present in all updates, but for 'start' command it usually is.
-    // We can use ctx.payload if available (Telegraf 4.x doesn't have it by default on Context type without middleware, but we can parse text)
     const text = 'text' in ctx.message ? ctx.message.text : '';
     const startPayload = text.split(' ')[1] || '';
 
@@ -18,7 +15,6 @@ bot.start(async (ctx) => {
     }
 
     try {
-        // Check if user exists
         const { data: existingUser } = await supabase
             .from('users')
             .select('role')
@@ -28,7 +24,6 @@ bot.start(async (ctx) => {
         let error;
 
         if (existingUser) {
-            // Update existing user (preserve role)
             const { error: updateError } = await supabase
                 .from('users')
                 .update({
@@ -40,7 +35,6 @@ bot.start(async (ctx) => {
                 .eq('telegram_id', user.id);
             error = updateError;
         } else {
-            // Insert new user
             const { error: insertError } = await supabase
                 .from('users')
                 .insert({
@@ -48,7 +42,7 @@ bot.start(async (ctx) => {
                     username: user.username || null,
                     first_name: user.first_name,
                     last_name: user.last_name || null,
-                    role: 'student', // Default role for new users
+                    role: 'student',
                     updated_at: new Date().toISOString(),
                 });
             error = insertError;
@@ -59,14 +53,12 @@ bot.start(async (ctx) => {
             return ctx.reply('Something went wrong. Please try again.');
         }
 
-        // Construct Web App URL with start param if present
         let webAppUrl = config.miniAppUrl;
         if (startPayload) {
             const separator = webAppUrl.includes('?') ? '&' : '?';
             webAppUrl = `${webAppUrl}${separator}start_param=${startPayload}`;
         }
 
-        // Send welcome message with Mini App button
         await ctx.reply(
             `Welcome, ${user.first_name}! 🎓\n\nClick the button below to open the Education Center app.`,
             {
@@ -85,6 +77,163 @@ bot.start(async (ctx) => {
     } catch (error) {
         console.error('Error in /start handler:', error);
         ctx.reply('An error occurred. Please try again later.');
+    }
+});
+
+// Handle /addadmin command
+bot.command('addadmin', async (ctx) => {
+    const user = ctx.from;
+    if (!user) return;
+
+    try {
+        // 1. Check if user exists and get their DB ID
+        const { data: userData, error: userError } = await supabase
+            .from('users')
+            .select('id, role, first_name, last_name, username')
+            .eq('telegram_id', user.id)
+            .single();
+
+        if (userError || !userData) {
+            return ctx.reply('You are not registered. Please start the bot first with /start.');
+        }
+
+        if (userData.role === 'admin' || userData.role === 'super_admin') {
+            return ctx.reply('You are already an admin!');
+        }
+
+        // 2. Check for existing pending request
+        const { data: existingRequest } = await supabase
+            .from('admin_requests')
+            .select('status')
+            .eq('user_id', userData.id)
+            .eq('status', 'pending')
+            .single();
+
+        if (existingRequest) {
+            return ctx.reply('You already have a pending request.');
+        }
+
+        // 3. Create request
+        const { data: request, error: requestError } = await supabase
+            .from('admin_requests')
+            .insert({ user_id: userData.id, status: 'pending' })
+            .select()
+            .single();
+
+        if (requestError) {
+            console.error('Error creating admin request:', requestError);
+            return ctx.reply('Failed to submit request. Please try again.');
+        }
+
+        await ctx.reply('Your request to become an admin has been submitted for approval.');
+
+        // 4. Notify Super Admins
+        const { data: superAdmins } = await supabase
+            .from('users')
+            .select('telegram_id')
+            .eq('role', 'super_admin');
+
+        if (superAdmins && superAdmins.length > 0) {
+            const requesterName = `${userData.first_name} ${userData.last_name || ''}`.trim();
+            const username = userData.username ? `@${userData.username}` : 'No username';
+
+            for (const admin of superAdmins) {
+                try {
+                    await ctx.telegram.sendMessage(
+                        Number(admin.telegram_id),
+                        `🔔 **New Admin Request**\n\nUser: ${requesterName}\nUsername: ${username}\nID: ${userData.id}`,
+                        {
+                            parse_mode: 'Markdown',
+                            ...Markup.inlineKeyboard([
+                                Markup.button.callback('✅ Approve', `approve_admin:${request.id}`),
+                                Markup.button.callback('❌ Decline', `decline_admin:${request.id}`)
+                            ])
+                        }
+                    );
+                } catch (e) {
+                    console.error(`Failed to notify super admin ${admin.telegram_id}:`, e);
+                }
+            }
+        }
+
+    } catch (error) {
+        console.error('Error in /addadmin:', error);
+        ctx.reply('An error occurred.');
+    }
+});
+
+// Handle Admin Approval/Decline Actions
+bot.action(/^(approve|decline)_admin:(.+)$/, async (ctx) => {
+    const action = ctx.match[1]; // 'approve' or 'decline'
+    const requestId = ctx.match[2];
+    const adminTelegramId = ctx.from?.id;
+
+    if (!adminTelegramId) return;
+
+    try {
+        // Verify the clicker is a Super Admin
+        const { data: adminUser } = await supabase
+            .from('users')
+            .select('role')
+            .eq('telegram_id', adminTelegramId)
+            .single();
+
+        if (!adminUser || adminUser.role !== 'super_admin') {
+            return ctx.answerCbQuery('You are not authorized to perform this action.');
+        }
+
+        // Get request details
+        const { data: request } = await supabase
+            .from('admin_requests')
+            .select('*, users(telegram_id, first_name)')
+            .eq('id', requestId)
+            .single();
+
+        if (!request) {
+            return ctx.answerCbQuery('Request not found.');
+        }
+
+        if (request.status !== 'pending') {
+            return ctx.editMessageText(`Request already ${request.status}.`);
+        }
+
+        if (action === 'approve') {
+            // Update request status
+            await supabase
+                .from('admin_requests')
+                .update({ status: 'approved', updated_at: new Date().toISOString() })
+                .eq('id', requestId);
+
+            // Update user role
+            await supabase
+                .from('users')
+                .update({ role: 'admin' })
+                .eq('id', request.user_id);
+
+            await ctx.editMessageText(`✅ Request approved by you.`);
+
+            // Notify user
+            if (request.users?.telegram_id) {
+                await ctx.telegram.sendMessage(Number(request.users.telegram_id), '🎉 Your request to become an admin has been approved!');
+            }
+        } else {
+            // Decline
+            await supabase
+                .from('admin_requests')
+                .update({ status: 'declined', updated_at: new Date().toISOString() })
+                .eq('id', requestId);
+
+            await ctx.editMessageText(`❌ Request declined by you.`);
+
+            // Notify user
+            if (request.users?.telegram_id) {
+                await ctx.telegram.sendMessage(Number(request.users.telegram_id), 'Your request to become an admin has been declined.');
+            }
+        }
+
+    } catch (error) {
+        console.error('Error handling admin action:', error);
+        ctx.answerCbQuery('An error occurred.');
     }
 });
 

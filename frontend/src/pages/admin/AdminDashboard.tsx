@@ -29,10 +29,10 @@ const AdminDashboard: React.FC = () => {
                     showChevron
                 />
                 <ListItem
-                    icon="👨‍🏫"
-                    title="Teachers"
-                    subtitle="Manage Teachers"
-                    onClick={() => navigate('/admin/teachers')}
+                    icon="🛡️"
+                    title="Admins"
+                    subtitle="Manage Admins & Requests"
+                    onClick={() => navigate('/admin/admins')}
                     showChevron
                 />
                 <ListItem
