@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import type { ExamSchedule } from '../types/journey.types';
 import { useAppData } from '../context/AppDataContext';
 import { Section } from '../components/ui/Section';
 import { Card } from '../components/ui/Card';
@@ -8,7 +7,6 @@ import { useTranslation } from 'react-i18next';
 import LottieAnimation from '../components/ui/LottieAnimation';
 import loadingAnimation from '../assets/animations/loading.json';
 import SegmentedControl from '../components/ui/SegmentedControl';
-import { ChevronDown, Trophy } from 'lucide-react';
 
 const ParentExams: React.FC = () => {
     const { t } = useTranslation();
@@ -191,8 +189,8 @@ const ParentExams: React.FC = () => {
                                                 {activeTab !== 'old' && (
                                                     <div className="mt-2">
                                                         <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${activeTab === 'current'
-                                                                ? 'bg-green-500/10 text-green-500'
-                                                                : 'bg-blue-500/10 text-blue-500'
+                                                            ? 'bg-green-500/10 text-green-500'
+                                                            : 'bg-blue-500/10 text-blue-500'
                                                             }`}>
                                                             {activeTab === 'current' ? t('exams.current') : t('exams.upcoming')}
                                                         </span>

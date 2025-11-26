@@ -31,8 +31,8 @@ const ParentProfile: React.FC = () => {
             title: t('parent.report_problem'),
             message: t('parent.report_problem_message'),
             buttons: [
-                { text: t('common.cancel'), type: 'cancel' },
-                { text: t('common.send'), type: 'default' }
+                { type: 'cancel' },
+                { type: 'ok', id: 'send' }
             ]
         });
     };

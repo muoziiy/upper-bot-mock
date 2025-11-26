@@ -93,9 +93,19 @@ interface AttendanceRecord {
     subject: string;
 }
 
+interface ParentData {
+    parent: {
+        id: string;
+        first_name: string;
+        last_name?: string;
+    };
+    children: any[];
+}
+
 interface AppDataContextType {
     dashboardData: DashboardData | null;
     teacherData: TeacherData | null;
+    parentData: ParentData | null;
     leaderboardData: LeaderboardData | null;
     achievementsData: AchievementsData | null;
     journeyData: JourneyData | null;
@@ -121,6 +131,7 @@ export const AppDataProvider: React.FC<{ children: ReactNode }> = ({ children })
     const { user } = useTelegram();
     const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
     const [teacherData, setTeacherData] = useState<TeacherData | null>(null);
+    const [parentData] = useState<ParentData | null>(null);
     const [leaderboardData, setLeaderboardData] = useState<LeaderboardData | null>(null);
     const [achievementsData, setAchievementsData] = useState<AchievementsData | null>(null);
     const [journeyData, setJourneyData] = useState<JourneyData | null>(null);
@@ -431,6 +442,7 @@ export const AppDataProvider: React.FC<{ children: ReactNode }> = ({ children })
     const value: AppDataContextType = {
         dashboardData,
         teacherData,
+        parentData,
         leaderboardData,
         achievementsData,
         journeyData,

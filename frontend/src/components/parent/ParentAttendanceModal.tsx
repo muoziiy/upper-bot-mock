@@ -87,7 +87,6 @@ const ParentAttendanceModal: React.FC<ParentAttendanceModalProps> = ({ isOpen, o
     };
 
     // Calculate stats
-    const totalDays = Object.keys(mockAttendance).length;
     const presentDays = Object.values(mockAttendance).filter(s => s === 'present').length;
     const absentDays = Object.values(mockAttendance).filter(s => s === 'absent').length;
     const lateDays = Object.values(mockAttendance).filter(s => s === 'late').length;

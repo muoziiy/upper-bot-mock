@@ -40,8 +40,8 @@ const ParentAccountSettingsModal: React.FC<ParentAccountSettingsModalProps> = ({
             title: t('parent.logout_confirm'),
             message: t('parent.logout_message'),
             buttons: [
-                { text: t('common.cancel'), type: 'cancel' },
-                { text: t('parent.logout'), type: 'destructive' }
+                { type: 'cancel' },
+                { type: 'destructive', id: 'logout', text: t('parent.logout') }
             ]
         });
     };
@@ -90,8 +90,8 @@ const ParentAccountSettingsModal: React.FC<ParentAccountSettingsModalProps> = ({
                                             key={lang.code}
                                             onClick={() => handleLanguageChange(lang.code)}
                                             className={`w-full p-4 rounded-xl flex items-center justify-between transition-colors ${i18n.language === lang.code
-                                                    ? 'bg-tg-button/10 border-2 border-tg-button'
-                                                    : 'bg-tg-secondary/50 border-2 border-transparent hover:bg-tg-secondary'
+                                                ? 'bg-tg-button/10 border-2 border-tg-button'
+                                                : 'bg-tg-secondary/50 border-2 border-transparent hover:bg-tg-secondary'
                                                 }`}
                                         >
                                             <div className="flex items-center gap-3">

@@ -113,9 +113,9 @@ const ParentDashboard: React.FC = () => {
                                     <p className="text-xs text-tg-hint">{t('parent.selected_child')}</p>
                                 </div>
                             </div>
-                            <ChevronDown 
-                                size={20} 
-                                className={`text-tg-hint transition-transform ${showChildSelector ? 'rotate-180' : ''}`} 
+                            <ChevronDown
+                                size={20}
+                                className={`text-tg-hint transition-transform ${showChildSelector ? 'rotate-180' : ''}`}
                             />
                         </button>
 
@@ -135,11 +135,10 @@ const ParentDashboard: React.FC = () => {
                                                 setSelectedChildId(child.id);
                                                 setShowChildSelector(false);
                                             }}
-                                            className={`w-full p-4 flex items-center gap-3 transition-colors ${
-                                                selectedChildId === child.id
+                                            className={`w-full p-4 flex items-center gap-3 transition-colors ${selectedChildId === child.id
                                                     ? 'bg-tg-button/10'
                                                     : 'hover:bg-tg-secondary/50'
-                                            }`}
+                                                }`}
                                         >
                                             <div className="w-10 h-10 rounded-full bg-gradient-to-br from-tg-button to-tg-accent flex items-center justify-center text-white text-lg font-bold">
                                                 {child.first_name?.[0] || '?'}
