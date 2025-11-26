@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useAppData } from '../context/AppDataContext';
 import { useTelegram } from '../context/TelegramContext';
 import { LogOut, RefreshCw } from 'lucide-react';
@@ -9,8 +8,6 @@ const GuestDashboard: React.FC = () => {
     const { user } = useTelegram();
     const { refreshData } = useAppData();
     const [loading, setLoading] = useState(false);
-
-    const navigate = useNavigate();
 
     const handleExit = async () => {
         if (!confirm('You will exit Guest Mode and return to Onboarding. Continue?')) return;
@@ -24,8 +21,8 @@ const GuestDashboard: React.FC = () => {
             });
 
             if (res.ok) {
-                await refreshData();
-                navigate('/');
+                // Force a reload to ensure fresh state and role
+                window.location.reload();
             } else {
                 alert('Failed to exit. Please try again.');
             }
