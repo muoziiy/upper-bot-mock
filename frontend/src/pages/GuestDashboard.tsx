@@ -7,7 +7,7 @@ import StudentDashboard from './StudentDashboard';
 
 const GuestDashboard: React.FC = () => {
     const { user } = useTelegram();
-    const { refreshData, dashboardData, loading: appLoading } = useAppData();
+    const { dashboardData, loading: appLoading } = useAppData();
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
 
