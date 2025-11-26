@@ -74,7 +74,7 @@ router.post('/student', async (req, res) => {
         });
 
         // Notify Admins (Non-blocking)
-        const message = `🆕 **New Student Request**\n\n👤 **Name:** ${name} ${surname}\n🎂 **Age:** ${age}\n⚧ **Sex:** ${sex}`;
+        const message = `🆕 **New Student Request**\n\n👤 **Name:** ${name} ${surname}\n🎂 **Age:** ${age}\n🚻 **Sex:** ${sex}`;
         // Do not await to prevent blocking response if telegram fails
         notifyAdmins(message, { type: 'student', userId }).catch(e => {
             logWarning('Failed to notify admins', {
