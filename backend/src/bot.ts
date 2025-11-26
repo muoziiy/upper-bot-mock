@@ -59,24 +59,35 @@ bot.start(async (ctx) => {
             webAppUrl = `${webAppUrl}${separator}start_param=${startPayload}`;
         }
 
-        await ctx.reply(
-            `Welcome, ${user.first_name}! 🎓\n\nClick the button below to open the Education Center app.`,
-            {
-                reply_markup: {
-                    inline_keyboard: [
-                        [
-                            {
-                                text: '📚 Open Education Center',
-                                web_app: { url: webAppUrl }
-                            }
+        try {
+            await ctx.reply(
+                `Welcome, ${user.first_name}! 🎓\n\nClick the button below to open the Education Center app.`,
+                {
+                    reply_markup: {
+                        inline_keyboard: [
+                            [
+                                {
+                                    text: '📚 Open Education Center',
+                                    web_app: { url: webAppUrl }
+                                }
+                            ]
                         ]
-                    ]
+                    }
                 }
-            }
-        );
+            );
+        } catch (replyError) {
+            console.error('Failed to send welcome message (likely network timeout):', replyError);
+            // User is registered in DB, but we couldn't send the message
+            // This is acceptable - they can still access the app
+        }
     } catch (error) {
         console.error('Error in /start handler:', error);
-        ctx.reply('An error occurred. Please try again later.');
+        // Don't reply if we're already in an error state
+        try {
+            await ctx.reply('An error occurred. Please try again later.');
+        } catch (e) {
+            console.error('Failed to send error message:', e);
+        }
     }
 });
 
