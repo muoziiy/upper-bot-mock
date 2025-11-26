@@ -2,15 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTelegram } from '../context/TelegramContext';
 import { useAppData } from '../context/AppDataContext';
-import { User, GraduationCap, Users, ChevronRight, ArrowLeft } from 'lucide-react';
+import { User, GraduationCap, Users, ChevronRight, Copy, Check } from 'lucide-react';
 
 const Onboarding: React.FC = () => {
-    const { user } = useTelegram();
+    const { user, webApp } = useTelegram();
     const { refreshData } = useAppData();
     const navigate = useNavigate();
     const [step, setStep] = useState<'selection' | 'student_form' | 'staff_form' | 'existing_info'>('selection');
     const [loading, setLoading] = useState(false);
     const [subjects, setSubjects] = useState<any[]>([]);
+    const [copied, setCopied] = useState(false);
 
     // Form States
     const [formData, setFormData] = useState({
@@ -22,6 +23,21 @@ const Onboarding: React.FC = () => {
         bio: '',
         selectedSubjects: [] as string[]
     });
+
+    // Handle Native Back Button
+    useEffect(() => {
+        if (step !== 'selection') {
+            webApp?.BackButton.show();
+            const handleBack = () => setStep('selection');
+            webApp?.BackButton.onClick(handleBack);
+            return () => {
+                webApp?.BackButton.offClick(handleBack);
+                webApp?.BackButton.hide();
+            };
+        } else {
+            webApp?.BackButton.hide();
+        }
+    }, [step, webApp]);
 
     useEffect(() => {
         if (step === 'staff_form') {
@@ -59,7 +75,14 @@ const Onboarding: React.FC = () => {
 
             if (res.ok) {
                 await refreshData(); // Refresh to get new role
-                navigate('/');
+                if (type === 'student') {
+                    navigate('/guest');
+                } else if (type === 'existing') {
+                    window.location.reload(); // Full reload as requested
+                } else {
+                    // Staff or others might go to waiting page
+                    navigate('/waiting');
+                }
             } else {
                 alert('Failed to submit. Please try again.');
             }
@@ -68,6 +91,14 @@ const Onboarding: React.FC = () => {
             alert('An error occurred.');
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleCopyId = () => {
+        if (user?.id) {
+            navigator.clipboard.writeText(user.id.toString());
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
         }
     };
 
@@ -127,10 +158,6 @@ const Onboarding: React.FC = () => {
 
     const renderForm = (type: 'student' | 'staff') => (
         <div className="px-4 pt-4 pb-20">
-            <button onClick={() => setStep('selection')} className="mb-6 text-tg-hint flex items-center gap-1">
-                <ArrowLeft size={18} /> Back
-            </button>
-
             <h2 className="text-xl font-bold mb-6 text-tg-text">
                 {type === 'student' ? 'Student Registration' : 'Staff Registration'}
             </h2>
@@ -167,16 +194,30 @@ const Onboarding: React.FC = () => {
                             placeholder="Age"
                         />
                     </div>
-                    <div className="flex-1">
-                        <label className="block text-sm text-tg-hint mb-1">Sex</label>
-                        <select
-                            value={formData.sex}
-                            onChange={e => setFormData({ ...formData, sex: e.target.value })}
-                            className="w-full bg-tg-bg border border-tg-hint/20 rounded-lg p-3 text-tg-text focus:border-tg-button outline-none"
+                </div>
+
+                {/* Custom Gender Selection */}
+                <div>
+                    <label className="block text-sm text-tg-hint mb-2">Sex</label>
+                    <div className="flex gap-3">
+                        <button
+                            onClick={() => setFormData({ ...formData, sex: 'male' })}
+                            className={`flex-1 py-3 rounded-xl border transition-all ${formData.sex === 'male'
+                                    ? 'bg-blue-500/10 border-blue-500 text-blue-500 font-medium'
+                                    : 'bg-tg-bg border-tg-hint/20 text-tg-hint'
+                                }`}
                         >
-                            <option value="male">Male</option>
-                            <option value="female">Female</option>
-                        </select>
+                            Male
+                        </button>
+                        <button
+                            onClick={() => setFormData({ ...formData, sex: 'female' })}
+                            className={`flex-1 py-3 rounded-xl border transition-all ${formData.sex === 'female'
+                                    ? 'bg-pink-500/10 border-pink-500 text-pink-500 font-medium'
+                                    : 'bg-tg-bg border-tg-hint/20 text-tg-hint'
+                                }`}
+                        >
+                            Female
+                        </button>
                     </div>
                 </div>
 
@@ -208,8 +249,8 @@ const Onboarding: React.FC = () => {
                                             setFormData({ ...formData, selectedSubjects: selected });
                                         }}
                                         className={`p-2 rounded-lg text-sm border transition-colors ${formData.selectedSubjects.includes(sub.id)
-                                            ? 'bg-tg-button text-white border-tg-button'
-                                            : 'bg-tg-bg border-tg-hint/20 text-tg-text'
+                                                ? 'bg-tg-button text-white border-tg-button'
+                                                : 'bg-tg-bg border-tg-hint/20 text-tg-text'
                                             }`}
                                     >
                                         {sub.name}
@@ -242,20 +283,24 @@ const Onboarding: React.FC = () => {
 
     const renderExistingInfo = () => (
         <div className="px-4 pt-4 text-center">
-            <button onClick={() => setStep('selection')} className="mb-6 text-tg-hint flex items-center gap-1">
-                <ArrowLeft size={18} /> Back
-            </button>
-
             <div className="bg-tg-bg rounded-xl p-6 shadow-sm mb-6">
                 <h2 className="text-xl font-bold mb-2 text-tg-text">Account Recovery</h2>
                 <p className="text-tg-hint mb-6">
                     Please show this ID to an administrator to recover your account access.
                 </p>
 
-                <div className="bg-tg-secondary p-4 rounded-lg mb-4">
-                    <p className="text-xs text-tg-hint uppercase mb-1">Your Telegram ID</p>
-                    <p className="text-2xl font-mono font-bold text-tg-text">{user?.id}</p>
-                </div>
+                <button
+                    onClick={handleCopyId}
+                    className="bg-tg-secondary p-4 rounded-lg mb-4 w-full flex items-center justify-between active:scale-95 transition-transform"
+                >
+                    <div className="text-left">
+                        <p className="text-xs text-tg-hint uppercase mb-1">Your Telegram ID</p>
+                        <p className="text-2xl font-mono font-bold text-tg-text">{user?.id}</p>
+                    </div>
+                    <div className="text-tg-button">
+                        {copied ? <Check size={24} /> : <Copy size={24} />}
+                    </div>
+                </button>
 
                 <button
                     onClick={() => handleSubmit('existing')}

@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useAppData } from '../context/AppDataContext';
 import { useTelegram } from '../context/TelegramContext';
-import { LogOut } from 'lucide-react';
+import { LogOut, RefreshCw } from 'lucide-react';
+import StudentDashboard from './StudentDashboard';
 
 const GuestDashboard: React.FC = () => {
     const { user } = useTelegram();
@@ -9,7 +10,7 @@ const GuestDashboard: React.FC = () => {
     const [loading, setLoading] = useState(false);
 
     const handleExit = async () => {
-        if (!confirm('Are you sure you want to exit Guest Mode? You will need to register again.')) return;
+        if (!confirm('You will exit Guest Mode and return to Onboarding. Continue?')) return;
 
         setLoading(true);
         try {
@@ -21,6 +22,7 @@ const GuestDashboard: React.FC = () => {
 
             if (res.ok) {
                 await refreshData();
+                // App.tsx will redirect to /onboarding
             } else {
                 alert('Failed to exit. Please try again.');
             }
@@ -31,33 +33,62 @@ const GuestDashboard: React.FC = () => {
         }
     };
 
-    return (
-        <div className="min-h-screen bg-tg-secondary relative flex flex-col items-center justify-center p-4">
-            {/* Persistent Popup */}
-            <div className="bg-tg-bg rounded-2xl p-6 shadow-lg max-w-sm w-full text-center z-10">
-                <div className="w-16 h-16 bg-yellow-500/10 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl">
-                    ⏳
-                </div>
-                <h2 className="text-xl font-bold mb-2 text-tg-text">Waiting for Approval</h2>
-                <p className="text-tg-hint mb-6">
-                    Please wait while an administrator reviews your registration. You will be notified once approved.
-                </p>
+    const handleRefresh = async () => {
+        setLoading(true);
+        await refreshData();
+        setLoading(false);
+    };
 
-                <button
-                    onClick={handleExit}
-                    disabled={loading}
-                    className="flex items-center justify-center gap-2 text-red-500 hover:bg-red-500/10 px-4 py-2 rounded-lg transition-colors mx-auto"
-                >
-                    <LogOut size={18} />
-                    <span>{loading ? 'Exiting...' : 'Exit Guest Mode'}</span>
-                </button>
+    return (
+        <div className="relative min-h-screen">
+            {/* Guest Mode Banner */}
+            <div className="sticky top-0 z-50 bg-yellow-500 text-white px-4 py-2 text-sm font-medium text-center shadow-md flex items-center justify-between">
+                <span>👀 Guest Mode: Waiting for Approval</span>
+                <div className="flex gap-2">
+                    <button onClick={handleRefresh} disabled={loading} className="p-1 hover:bg-white/20 rounded">
+                        <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
+                    </button>
+                    <button onClick={handleExit} disabled={loading} className="p-1 hover:bg-white/20 rounded">
+                        <LogOut size={16} />
+                    </button>
+                </div>
             </div>
 
-            {/* Blurred Background Content (Simulated) */}
-            <div className="absolute inset-0 opacity-20 pointer-events-none flex flex-col gap-4 p-4 overflow-hidden">
-                <div className="h-32 bg-tg-bg rounded-xl w-full"></div>
-                <div className="h-20 bg-tg-bg rounded-xl w-full"></div>
-                <div className="h-40 bg-tg-bg rounded-xl w-full"></div>
+            {/* Render Student Dashboard as background/preview */}
+            <div className="pointer-events-none opacity-60 filter blur-[1px] select-none h-[calc(100vh-40px)] overflow-hidden">
+                <StudentDashboard />
+            </div>
+
+            {/* Overlay Content */}
+            <div className="absolute inset-0 top-10 flex items-center justify-center p-6 z-40 pointer-events-none">
+                <div className="bg-tg-bg/90 backdrop-blur-md rounded-2xl p-6 shadow-xl max-w-sm w-full text-center pointer-events-auto border border-tg-hint/10">
+                    <div className="w-16 h-16 bg-yellow-500/20 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl">
+                        ⏳
+                    </div>
+                    <h2 className="text-xl font-bold mb-2 text-tg-text">Approval Pending</h2>
+                    <p className="text-tg-hint mb-6 text-sm">
+                        You are currently in Guest Mode. An administrator has been notified and will review your request shortly.
+                    </p>
+
+                    <div className="flex flex-col gap-3">
+                        <button
+                            onClick={handleRefresh}
+                            disabled={loading}
+                            className="w-full bg-tg-button text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2"
+                        >
+                            <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
+                            Check Status
+                        </button>
+                        <button
+                            onClick={handleExit}
+                            disabled={loading}
+                            className="w-full bg-red-500/10 text-red-500 font-bold py-3 rounded-xl flex items-center justify-center gap-2 hover:bg-red-500/20 transition-colors"
+                        >
+                            <LogOut size={18} />
+                            Exit Guest Mode
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     );

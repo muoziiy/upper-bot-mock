@@ -1,5 +1,5 @@
 ﻿import React, { Suspense } from 'react';
-import { BrowserRouter as Router, useRoutes, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, useRoutes, Navigate, useLocation } from 'react-router-dom';
 import { TelegramProvider, useTelegram } from './context/TelegramContext';
 import { AppDataProvider, useAppData } from './context/AppDataContext';
 import BottomNav from './components/BottomNav';
@@ -43,8 +43,13 @@ function App() {
 const AppContent: React.FC = () => {
   const { user } = useTelegram();
   const { loading, dashboardData } = useAppData();
+  const location = useLocation();
 
   const role = dashboardData?.user.role || 'new_user'; // Default to new_user if not set
+
+  // Routes where BottomNav should be hidden
+  const hideNavRoutes = ['/onboarding', '/guest', '/waiting'];
+  const shouldShowNav = !hideNavRoutes.includes(location.pathname);
 
   const getHomeRoute = () => {
     switch (role) {
@@ -96,16 +101,16 @@ const AppContent: React.FC = () => {
     { path: "/admin/profile", element: <Profile /> },
   ]);
 
-  if (!user || loading) {
-    return <div className="flex min-h-screen items-center justify-center bg-tg-secondary text-tg-text">Loading...</div>;
+  if (loading) {
+    return <div className="flex h-screen items-center justify-center bg-tg-secondary text-tg-text">Loading...</div>;
   }
 
   return (
-    <div className="w-full">
-      <Suspense fallback={<div className="flex min-h-screen items-center justify-center bg-tg-secondary text-tg-text">Loading...</div>}>
+    <div className="min-h-screen bg-tg-secondary text-tg-text">
+      <Suspense fallback={<div className="flex h-screen items-center justify-center">Loading...</div>}>
         {element}
       </Suspense>
-      <BottomNav />
+      {shouldShowNav && <BottomNav />}
     </div>
   );
 };
