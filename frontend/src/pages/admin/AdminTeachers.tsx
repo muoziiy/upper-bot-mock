@@ -1,23 +1,8 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useTelegram } from '../../context/TelegramContext';
 import { Section } from '../../components/ui/Section';
 import { ListItem } from '../../components/ui/ListItem';
 
 const AdminTeachers: React.FC = () => {
-    const { webApp } = useTelegram();
-    const backButton = webApp.BackButton;
-    const navigate = useNavigate();
-
-    React.useEffect(() => {
-        backButton.show();
-        const handleBack = () => navigate(-1);
-        backButton.onClick(handleBack);
-        return () => {
-            backButton.offClick(handleBack);
-            backButton.hide();
-        };
-    }, [backButton, navigate]);
 
     return (
         <div className="page-content pt-4">
