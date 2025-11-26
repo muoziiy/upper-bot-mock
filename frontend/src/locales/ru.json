@@ -212,7 +212,9 @@
     },
     "common": {
         "loading": "Загрузка...",
-        "error": "Ошибка"
+        "error": "Ошибка",
+        "cancel": "Отмена",
+        "send": "Отправить"
     },
     "teacher_profile": {
         "title": "Профиль учителя",
@@ -241,5 +243,31 @@
         "app": "Приложение",
         "log_out": "Выйти",
         "version": "Версия"
+    },
+    "parent": {
+        "hello": "Привет,",
+        "track_children_progress": "Отслеживайте прогресс ваших детей",
+        "current_level": "Текущий уровень",
+        "child_progress": "Прогресс обучения ребёнка",
+        "progress_to_next": "Прогресс до следующего уровня",
+        "lesson_curriculum": "Программа уроков",
+        "selected_child": "Выбранный ребёнок",
+        "my_children": "Мои дети",
+        "groups": "Группы",
+        "exams_title": "Экзамены и успеваемость",
+        "exams_subtitle": "Отслеживайте успеваемость вашего ребёнка",
+        "score": "Балл",
+        "rank": "Ранг",
+        "average": "Средний балл",
+        "pending": "Ожидается",
+        "subject": "Предмет",
+        "report_problem": "Сообщить о проблеме",
+        "report_problem_message": "Пожалуйста, опишите проблему",
+        "logout_confirm": "Выход",
+        "logout_message": "Вы уверены, что хотите выйти?",
+        "logout": "Выйти",
+        "app": "Приложение",
+        "version": "Версия",
+        "log_out": "Выйти"
     }
 }

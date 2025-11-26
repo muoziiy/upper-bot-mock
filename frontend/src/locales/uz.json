@@ -212,7 +212,9 @@
     },
     "common": {
         "loading": "Yuklanmoqda...",
-        "error": "Xato"
+        "error": "Xato",
+        "cancel": "Bekor qilish",
+        "send": "Yuborish"
     },
     "teacher_profile": {
         "title": "O'qituvchi profili",
@@ -241,5 +243,31 @@
         "app": "Ilova",
         "log_out": "Chiqish",
         "version": "Versiya"
+    },
+    "parent": {
+        "hello": "Salom,",
+        "track_children_progress": "Farzandlaringiz muvaffaqiyatini kuzatib boring",
+        "current_level": "Joriy daraja",
+        "child_progress": "Bolaning o'qish jarayoni",
+        "progress_to_next": "Keyingi darajaga o'tish",
+        "lesson_curriculum": "Dars dasturi",
+        "selected_child": "Tanlangan farzand",
+        "my_children": "Mening farzandlarim",
+        "groups": "Guruhlar",
+        "exams_title": "Imtihonlar va natijalar",
+        "exams_subtitle": "Farzandingiz imtihon natijalarini kuzating",
+        "score": "Ball",
+        "rank": "Daraja",
+        "average": "O'rtacha ball",
+        "pending": "Kutilmoqda",
+        "subject": "Fan",
+        "report_problem": "Muammo haqida xabar berish",
+        "report_problem_message": "Iltimos, muammoni tasvirlab bering",
+        "logout_confirm": "Chiqish",
+        "logout_message": "Haqiqatan ham chiqmoqchimisiz?",
+        "logout": "Chiqish",
+        "app": "Ilova",
+        "version": "Versiya",
+        "log_out": "Chiqish"
     }
 }
