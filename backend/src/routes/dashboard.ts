@@ -4,7 +4,6 @@ import { supabase } from '../supabase';
 const router = Router();
 
 // GET /api/students/dashboard - Fetch dashboard data
-// GET /api/students/dashboard - Fetch dashboard data
 router.get('/dashboard', async (req: Request, res: Response) => {
     const userId = req.headers['x-user-id'] as string;
 
@@ -62,35 +61,25 @@ router.get('/dashboard', async (req: Request, res: Response) => {
             homework = fetchedHomework || [];
         }
 
-        // 4. Fetch Subjects (Derived from groups or all available if none)
-        // For now, let's fetch all subjects the user is involved in via lessons, or just all subjects if new
+        // 4. Fetch User's Assigned Subjects (from user.subjects column)
         let subjects: any[] = [];
-        if (lessons.length > 0) {
-            // Extract unique subjects from lessons
-            const uniqueSubjects = new Map();
-            lessons.forEach(l => {
-                if (l.subjects) {
-                    uniqueSubjects.set(l.subjects.id, l.subjects);
-                }
-            });
-            subjects = Array.from(uniqueSubjects.values());
-        } else {
-            // Fallback: Fetch all subjects for display if no lessons yet
-            const { data: allSubjects } = await supabase
+        if (user.subjects && Array.isArray(user.subjects) && user.subjects.length > 0) {
+            const { data: fetchedSubjects } = await supabase
                 .from('subjects')
-                .select('*')
-                .limit(10);
-            subjects = allSubjects || [];
+                .select('id, name')
+                .in('id', user.subjects);
+            subjects = fetchedSubjects || [];
         }
+        // If no subjects assigned to user, show empty list (strict filtering as requested)
 
-        // Fetch streak data
+        // 5. Fetch streak data
         const { data: streak } = await supabase
             .from('user_streaks')
             .select('*')
             .eq('user_id', user.id)
             .single();
 
-        // Fetch today's activity
+        // 6. Fetch today's activity
         const { data: todayActivity } = await supabase
             .from('user_activity')
             .select('*')
@@ -98,7 +87,7 @@ router.get('/dashboard', async (req: Request, res: Response) => {
             .eq('activity_date', new Date().toISOString().split('T')[0])
             .single();
 
-        // Fetch total stats
+        // 7. Fetch total stats
         const { data: totalActivity } = await supabase
             .from('user_activity')
             .select('study_minutes, tests_completed, questions_answered')
@@ -122,9 +111,9 @@ router.get('/dashboard', async (req: Request, res: Response) => {
             streak: streak || { current_streak: 0, longest_streak: 0, total_active_days: 0 },
             today_activity: todayActivity || { study_minutes: 0, tests_completed: 0, questions_answered: 0 },
             total_stats: totalStats,
-            lessons: lessons, // Real lessons
-            homework: homework, // Real homework
-            subjects: subjects, // Real subjects
+            lessons: lessons,
+            homework: homework,
+            subjects: subjects, // Filtered by user's assigned subjects
         });
     } catch (error) {
         console.error('Dashboard error:', error);
