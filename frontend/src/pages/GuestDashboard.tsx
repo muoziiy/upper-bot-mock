@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAppData } from '../context/AppDataContext';
 import { useTelegram } from '../context/TelegramContext';
 import { LogOut, RefreshCw } from 'lucide-react';
@@ -6,8 +7,15 @@ import StudentDashboard from './StudentDashboard';
 
 const GuestDashboard: React.FC = () => {
     const { user } = useTelegram();
-    const { refreshData } = useAppData();
+    const { refreshData, dashboardData, loading: appLoading } = useAppData();
     const [loading, setLoading] = useState(false);
+    const navigate = useNavigate();
+
+    useEffect(() => {
+        if (!appLoading && dashboardData?.user?.role && dashboardData.user.role !== 'guest') {
+            navigate('/');
+        }
+    }, [dashboardData, appLoading, navigate]);
 
     const handleExit = async () => {
         if (!confirm('You will exit Guest Mode and return to Onboarding. Continue?')) return;
@@ -33,10 +41,8 @@ const GuestDashboard: React.FC = () => {
         }
     };
 
-    const handleRefresh = async () => {
-        setLoading(true);
-        await refreshData();
-        setLoading(false);
+    const handleRefresh = () => {
+        window.location.reload();
     };
 
     return (
