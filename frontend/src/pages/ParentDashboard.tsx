@@ -68,8 +68,18 @@ const ParentDashboard: React.FC = () => {
     const levelOrder = currentLevel ? getLevelOrder(currentLevel.current_level) : 1;
     const progressPercentage = currentLevel?.progress_percentage || 0;
 
-    // Get lessons for selected child
-    const currentLessons = selectedChild?.lessons || [];
+    // Get lessons for selected child and subject
+    const currentLessons = selectedChild?.lessons?.filter((lesson: any) => {
+        // Mock logic: 
+        // Subject 1 (English) -> lessons with 'Grammar' or 'English'
+        // Subject 2 (Math) -> lessons with 'Math' or 'Algebra'
+        // Subject 3 (Physics) -> lessons with 'Physics'
+
+        if (selectedSubjectId === '1') return lesson.title.includes('Grammar') || lesson.title.includes('English');
+        if (selectedSubjectId === '2') return lesson.title.includes('Math') || lesson.title.includes('Algebra');
+        if (selectedSubjectId === '3') return lesson.title.includes('Physics');
+        return true;
+    }) || [];
 
     return (
         <div className="min-h-screen bg-tg-secondary pb-24 pt-4 text-tg-text">
@@ -92,12 +102,12 @@ const ParentDashboard: React.FC = () => {
                             </motion.div>
                         )}
                     </div>
-                    <p className="text-tg-hint text-lg">{t('parent.track_ children_progress')}</p>
+                    <p className="text-tg-hint text-lg">{t('parent.track_children_progress')}</p>
                 </header>
 
                 {/* Child Selector */}
                 {parentData?.children && parentData.children.length > 0 && (
-                    <div className="relative">
+                    <div className="relative z-20">
                         <button
                             onClick={() => setShowChildSelector(!showChildSelector)}
                             className="w-full bg-tg-bg rounded-xl p-4 flex items-center justify-between hover:bg-tg-bg/80 active:bg-tg-bg/60 transition-colors shadow-sm"
@@ -126,7 +136,7 @@ const ParentDashboard: React.FC = () => {
                                     initial={{ opacity: 0, y: -10 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     exit={{ opacity: 0, y: -10 }}
-                                    className="absolute top-full left-0 right-0 mt-2 bg-tg-bg rounded-xl shadow-lg overflow-hidden z-10"
+                                    className="absolute top-full left-0 right-0 mt-2 bg-tg-bg rounded-xl shadow-lg overflow-hidden z-20"
                                 >
                                     {parentData.children.map((child) => (
                                         <button
@@ -136,8 +146,8 @@ const ParentDashboard: React.FC = () => {
                                                 setShowChildSelector(false);
                                             }}
                                             className={`w-full p-4 flex items-center gap-3 transition-colors ${selectedChildId === child.id
-                                                    ? 'bg-tg-button/10'
-                                                    : 'hover:bg-tg-secondary/50'
+                                                ? 'bg-tg-button/10'
+                                                : 'hover:bg-tg-secondary/50'
                                                 }`}
                                         >
                                             <div className="w-10 h-10 rounded-full bg-gradient-to-br from-tg-button to-tg-accent flex items-center justify-center text-white text-lg font-bold">

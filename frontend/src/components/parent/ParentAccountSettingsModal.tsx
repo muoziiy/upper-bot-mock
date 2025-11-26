@@ -1,7 +1,6 @@
 import React, { useEffect } from 'react';
 import { useTelegram } from '../../context/TelegramContext';
 import { useTranslation } from 'react-i18next';
-import { X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface ParentAccountSettingsModalProps {
@@ -65,17 +64,11 @@ const ParentAccountSettingsModal: React.FC<ParentAccountSettingsModalProps> = ({
                         animate={{ y: 0 }}
                         exit={{ y: '100%' }}
                         transition={{ type: 'spring', damping: 25, stiffness: 500 }}
-                        className="fixed inset-x-0 bottom-0 bg-tg-bg rounded-t-3xl z-50 max-h-[90vh] overflow-y-auto"
+                        className="fixed inset-x-0 bottom-0 bg-tg-bg rounded-t-3xl z-[60] max-h-[90vh] overflow-y-auto"
                     >
                         {/* Header */}
                         <div className="sticky top-0 bg-tg-bg border-b border-tg-hint/10 px-4 py-4 flex items-center justify-between">
                             <h2 className="text-xl font-bold text-tg-text">{t('settings.title')}</h2>
-                            <button
-                                onClick={onClose}
-                                className="p-2 hover:bg-tg-secondary/50 rounded-full transition-colors"
-                            >
-                                <X size={24} className="text-tg-hint" />
-                            </button>
                         </div>
 
                         <div className="p-4 space-y-6">
