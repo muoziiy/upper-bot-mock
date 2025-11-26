@@ -1,6 +1,8 @@
 -- ============================================
 -- EDUCATION CENTER BOT - COMPLETE CONSOLIDATED SCHEMA
 -- ============================================
+-- This is the single source of truth for the entire database schema
+-- Run this fresh on a new database, or use it as reference
 
 -- Enable UUID extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
@@ -9,7 +11,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 -- ENUMS (Idempotent creation)
 -- ============================================
 DO $$ BEGIN
-    CREATE TYPE user_role AS ENUM ('guest', 'student', 'teacher', 'admin');
+    CREATE TYPE user_role AS ENUM ('guest', 'student', 'teacher', 'admin', 'super_admin', 'parent', 'waiting_user', 'waiting_staff', 'new_user');
 EXCEPTION
     WHEN duplicate_object THEN null;
 END $$;
@@ -43,13 +45,56 @@ CREATE TABLE IF NOT EXISTS users (
     username TEXT,
     first_name TEXT,
     last_name TEXT,
-    role user_role DEFAULT 'student',
+    surname TEXT,
+    age INTEGER,
+    sex TEXT,
+    phone_number TEXT,
+    bio TEXT,
+    timezone TEXT DEFAULT 'Asia/Tashkent',
+    language_code TEXT,
+    student_id TEXT UNIQUE,
+    role user_role DEFAULT 'new_user',
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 CREATE INDEX IF NOT EXISTS idx_users_telegram_id ON users(telegram_id);
 CREATE INDEX IF NOT EXISTS idx_users_role ON users(role);
+CREATE INDEX IF NOT EXISTS idx_users_student_id ON users(student_id);
+
+-- Function to generate unique 6-digit student_id
+CREATE OR REPLACE FUNCTION generate_unique_student_id()
+RETURNS TRIGGER AS $$
+DECLARE
+    new_id TEXT;
+    done BOOLEAN DEFAULT FALSE;
+BEGIN
+    IF NEW.student_id IS NOT NULL THEN
+        RETURN NEW;
+    END IF;
+
+    WHILE NOT done LOOP
+        -- Generate random 6-digit number
+        new_id := floor(random() * (999999 - 100000 + 1) + 100000)::TEXT;
+        
+        -- Check if it exists
+        PERFORM 1 FROM users WHERE student_id = new_id;
+        IF NOT FOUND THEN
+            done := TRUE;
+        END IF;
+    END LOOP;
+
+    NEW.student_id := new_id;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Trigger to assign student_id on insert
+DROP TRIGGER IF EXISTS trigger_assign_student_id ON users;
+CREATE TRIGGER trigger_assign_student_id
+BEFORE INSERT ON users
+FOR EACH ROW
+EXECUTE FUNCTION generate_unique_student_id();
 
 -- GROUPS TABLE
 CREATE TABLE IF NOT EXISTS groups (
@@ -70,6 +115,20 @@ CREATE TABLE IF NOT EXISTS group_members (
 );
 
 CREATE INDEX IF NOT EXISTS idx_group_members_student_id ON group_members(student_id);
+
+-- SUBJECTS TABLE
+CREATE TABLE IF NOT EXISTS subjects (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    name TEXT UNIQUE NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- TEACHER SUBJECTS TABLE (Many-to-Many)
+CREATE TABLE IF NOT EXISTS teacher_subjects (
+    teacher_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    subject_id UUID REFERENCES subjects(id) ON DELETE CASCADE,
+    PRIMARY KEY (teacher_id, subject_id)
+);
 
 -- EXAMS TABLE
 CREATE TABLE IF NOT EXISTS exams (
@@ -122,7 +181,75 @@ CREATE INDEX IF NOT EXISTS idx_exam_results_student_id ON exam_results(student_i
 CREATE INDEX IF NOT EXISTS idx_exam_results_exam_id ON exam_results(exam_id);
 
 -- ============================================
--- 2. STREAK SYSTEM
+-- 2. PARENT-CHILDREN RELATIONSHIP
+-- ============================================
+CREATE TABLE IF NOT EXISTS parent_children (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    parent_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    student_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    UNIQUE(parent_id, student_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_parent_children_parent ON parent_children(parent_id);
+CREATE INDEX IF NOT EXISTS idx_parent_children_student ON parent_children(student_id);
+
+-- ============================================
+-- 3. PAYMENT & ATTENDANCE RECORDS
+-- ============================================
+
+-- PAYMENT RECORDS TABLE
+CREATE TABLE IF NOT EXISTS payment_records (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    student_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    group_id UUID REFERENCES groups(id) ON DELETE SET NULL,
+    amount DECIMAL(10, 2) NOT NULL,
+    payment_date DATE NOT NULL,
+    status TEXT DEFAULT 'pending', -- 'paid', 'pending', 'unpaid'
+    month INTEGER, -- 1-12
+    year INTEGER,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_payment_records_student ON payment_records(student_id);
+CREATE INDEX IF NOT EXISTS idx_payment_records_group ON payment_records(group_id);
+CREATE INDEX IF NOT EXISTS idx_payment_records_date ON payment_records(payment_date);
+CREATE INDEX IF NOT EXISTS idx_payment_records_status ON payment_records(status);
+
+-- ATTENDANCE RECORDS TABLE
+CREATE TABLE IF NOT EXISTS attendance_records (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    student_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    group_id UUID REFERENCES groups(id) ON DELETE CASCADE,
+    attendance_date DATE NOT NULL,
+    status TEXT DEFAULT 'present', -- 'present', 'absent', 'late'
+    notes TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    UNIQUE(student_id, group_id, attendance_date)
+);
+
+CREATE INDEX IF NOT EXISTS idx_attendance_records_student ON attendance_records(student_id);
+CREATE INDEX IF NOT EXISTS idx_attendance_records_group ON attendance_records(group_id);
+CREATE INDEX IF NOT EXISTS idx_attendance_records_date ON attendance_records(attendance_date);
+CREATE INDEX IF NOT EXISTS idx_attendance_records_status ON attendance_records(status);
+
+-- ============================================
+-- 4. ADMIN REQUESTS
+-- ============================================
+CREATE TABLE IF NOT EXISTS admin_requests (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    status TEXT DEFAULT 'pending', -- 'pending', 'approved', 'declined'
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_admin_requests_status ON admin_requests(status);
+
+-- ============================================
+-- 5. STREAK SYSTEM
 -- ============================================
 
 -- User daily activity tracking
@@ -150,7 +277,7 @@ CREATE TABLE IF NOT EXISTS user_streaks (
 );
 
 -- ============================================
--- 3. ACHIEVEMENTS & BADGES
+-- 6. ACHIEVEMENTS & BADGES
 -- ============================================
 
 -- Achievement definitions
@@ -184,7 +311,7 @@ CREATE INDEX IF NOT EXISTS idx_user_achievements_user ON user_achievements(user_
 CREATE INDEX IF NOT EXISTS idx_user_achievements_unlocked ON user_achievements(unlocked_at DESC);
 
 -- ============================================
--- 4. LEADERBOARDS
+-- 7. LEADERBOARDS
 -- ============================================
 
 -- Leaderboard entries
@@ -206,7 +333,7 @@ CREATE INDEX IF NOT EXISTS idx_leaderboard_user ON leaderboard_entries(user_id);
 CREATE INDEX IF NOT EXISTS idx_leaderboard_group ON leaderboard_entries(group_id) WHERE group_id IS NOT NULL;
 
 -- ============================================
--- 5. SOCIAL FEATURES
+-- 8. SOCIAL FEATURES
 -- ============================================
 
 -- Study Groups
@@ -255,7 +382,7 @@ CREATE INDEX IF NOT EXISTS idx_challenges_opponent ON challenges(opponent_id);
 CREATE INDEX IF NOT EXISTS idx_challenges_status ON challenges(status);
 
 -- ============================================
--- 6. JOURNEY SYSTEM
+-- 9. JOURNEY SYSTEM
 -- ============================================
 
 -- Curriculum
@@ -364,9 +491,15 @@ CREATE INDEX IF NOT EXISTS idx_exam_reg_student ON exam_registrations(student_id
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE groups ENABLE ROW LEVEL SECURITY;
 ALTER TABLE group_members ENABLE ROW LEVEL SECURITY;
+ALTER TABLE subjects ENABLE ROW LEVEL SECURITY;
+ALTER TABLE teacher_subjects ENABLE ROW LEVEL SECURITY;
 ALTER TABLE exams ENABLE ROW LEVEL SECURITY;
 ALTER TABLE questions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE exam_results ENABLE ROW LEVEL SECURITY;
+ALTER TABLE parent_children ENABLE ROW LEVEL SECURITY;
+ALTER TABLE payment_records ENABLE ROW LEVEL SECURITY;
+ALTER TABLE attendance_records ENABLE ROW LEVEL SECURITY;
+ALTER TABLE admin_requests ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_activity ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_streaks ENABLE ROW LEVEL SECURITY;
 ALTER TABLE achievements ENABLE ROW LEVEL SECURITY;
@@ -385,8 +518,26 @@ ALTER TABLE exam_registrations ENABLE ROW LEVEL SECURITY;
 -- Drop existing policies to avoid errors
 DROP POLICY IF EXISTS "users_read_own" ON users;
 DROP POLICY IF EXISTS "users_update_own" ON users;
+DROP POLICY IF EXISTS "parents_view_children_users" ON users;
+DROP POLICY IF EXISTS "super_admins_manage_users" ON users;
 DROP POLICY IF EXISTS "students_view_groups" ON groups;
+DROP POLICY IF EXISTS "parents_view_children_groups" ON groups;
+DROP POLICY IF EXISTS "everyone_view_subjects" ON subjects;
+DROP POLICY IF EXISTS "admins_manage_subjects" ON subjects;
+DROP POLICY IF EXISTS "everyone_view_teacher_subjects" ON teacher_subjects;
+DROP POLICY IF EXISTS "teachers_manage_own_subjects" ON teacher_subjects;
+DROP POLICY IF EXISTS "admins_manage_teacher_subjects" ON teacher_subjects;
 DROP POLICY IF EXISTS "students_view_published_exams" ON exams;
+DROP POLICY IF EXISTS "parents_view_children_exam_results" ON exam_results;
+DROP POLICY IF EXISTS "parents_view_their_children" ON parent_children;
+DROP POLICY IF EXISTS "parents_view_children_payments" ON payment_records;
+DROP POLICY IF EXISTS "students_view_own_payments" ON payment_records;
+DROP POLICY IF EXISTS "parents_view_children_attendance" ON attendance_records;
+DROP POLICY IF EXISTS "students_view_own_attendance" ON attendance_records;
+DROP POLICY IF EXISTS "users_create_requests" ON admin_requests;
+DROP POLICY IF EXISTS "users_view_own_requests" ON admin_requests;
+DROP POLICY IF EXISTS "super_admins_view_all_requests" ON admin_requests;
+DROP POLICY IF EXISTS "super_admins_update_requests" ON admin_requests;
 DROP POLICY IF EXISTS "users_read_own_streak" ON user_streaks;
 DROP POLICY IF EXISTS "public_read_achievements" ON achievements;
 DROP POLICY IF EXISTS "users_read_own_achievements" ON user_achievements;
@@ -394,16 +545,85 @@ DROP POLICY IF EXISTS "public_read_leaderboard" ON leaderboard_entries;
 DROP POLICY IF EXISTS "students_view_curriculum" ON curriculum;
 DROP POLICY IF EXISTS "students_view_lessons" ON lessons;
 DROP POLICY IF EXISTS "users_manage_own_progress" ON user_lesson_progress;
+DROP POLICY IF EXISTS "parents_view_children_progress" ON user_lesson_progress;
+DROP POLICY IF EXISTS "parents_view_children_level" ON user_current_level;
 
 -- USERS
 CREATE POLICY "users_read_own" ON users FOR SELECT USING (id = auth.uid());
 CREATE POLICY "users_update_own" ON users FOR UPDATE USING (id = auth.uid());
+CREATE POLICY "parents_view_children_users" ON users FOR SELECT USING (
+    id IN (
+        SELECT student_id FROM parent_children WHERE parent_id = auth.uid()
+    ) OR id = auth.uid()
+);
+CREATE POLICY "super_admins_manage_users" ON users FOR ALL USING (
+    EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND role = 'super_admin')
+);
 
 -- GROUPS
 CREATE POLICY "students_view_groups" ON groups FOR SELECT USING (EXISTS (SELECT 1 FROM group_members WHERE group_id = groups.id AND student_id = auth.uid()));
+CREATE POLICY "parents_view_children_groups" ON groups FOR SELECT USING (
+    id IN (
+        SELECT group_id FROM group_members 
+        WHERE student_id IN (
+            SELECT student_id FROM parent_children WHERE parent_id = auth.uid()
+        )
+    )
+);
+
+-- SUBJECTS
+CREATE POLICY "everyone_view_subjects" ON subjects FOR SELECT USING (true);
+CREATE POLICY "admins_manage_subjects" ON subjects FOR ALL USING (
+    EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND role IN ('admin', 'super_admin'))
+);
+
+-- TEACHER SUBJECTS
+CREATE POLICY "everyone_view_teacher_subjects" ON teacher_subjects FOR SELECT USING (true);
+CREATE POLICY "teachers_manage_own_subjects" ON teacher_subjects FOR ALL USING (
+    auth.uid() = teacher_id
+);
+CREATE POLICY "admins_manage_teacher_subjects" ON teacher_subjects FOR ALL USING (
+    EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND role IN ('admin', 'super_admin'))
+);
 
 -- EXAMS
 CREATE POLICY "students_view_published_exams" ON exams FOR SELECT USING (is_published = TRUE);
+
+-- EXAM RESULTS
+CREATE POLICY "parents_view_children_exam_results" ON exam_results FOR SELECT USING (
+    student_id IN (
+        SELECT student_id FROM parent_children WHERE parent_id = auth.uid()
+    )
+);
+
+-- PARENT-CHILDREN
+CREATE POLICY "parents_view_their_children" ON parent_children FOR SELECT USING (parent_id = auth.uid());
+
+-- PAYMENT RECORDS
+CREATE POLICY "parents_view_children_payments" ON payment_records FOR SELECT USING (
+    student_id IN (
+        SELECT student_id FROM parent_children WHERE parent_id = auth.uid()
+    )
+);
+CREATE POLICY "students_view_own_payments" ON payment_records FOR SELECT USING (student_id = auth.uid());
+
+-- ATTENDANCE RECORDS
+CREATE POLICY "parents_view_children_attendance" ON attendance_records FOR SELECT USING (
+    student_id IN (
+        SELECT student_id FROM parent_children WHERE parent_id = auth.uid()
+    )
+);
+CREATE POLICY "students_view_own_attendance" ON attendance_records FOR SELECT USING (student_id = auth.uid());
+
+-- ADMIN REQUESTS
+CREATE POLICY "users_create_requests" ON admin_requests FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "users_view_own_requests" ON admin_requests FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "super_admins_view_all_requests" ON admin_requests FOR SELECT USING (
+    EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND role = 'super_admin')
+);
+CREATE POLICY "super_admins_update_requests" ON admin_requests FOR UPDATE USING (
+    EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND role = 'super_admin')
+);
 
 -- STREAKS
 CREATE POLICY "users_read_own_streak" ON user_streaks FOR SELECT USING (user_id = auth.uid());
@@ -419,6 +639,16 @@ CREATE POLICY "public_read_leaderboard" ON leaderboard_entries FOR SELECT USING 
 CREATE POLICY "students_view_curriculum" ON curriculum FOR SELECT USING (is_active = TRUE);
 CREATE POLICY "students_view_lessons" ON lessons FOR SELECT USING (is_active = TRUE);
 CREATE POLICY "users_manage_own_progress" ON user_lesson_progress FOR ALL USING (user_id = auth.uid());
+CREATE POLICY "parents_view_children_progress" ON user_lesson_progress FOR SELECT USING (
+    user_id IN (
+        SELECT student_id FROM parent_children WHERE parent_id = auth.uid()
+    )
+);
+CREATE POLICY "parents_view_children_level" ON user_current_level FOR SELECT USING (
+    user_id IN (
+        SELECT student_id FROM parent_children WHERE parent_id = auth.uid()
+    )
+);
 
 -- ============================================
 -- FUNCTIONS & TRIGGERS
@@ -435,6 +665,12 @@ $$ language 'plpgsql';
 
 DROP TRIGGER IF EXISTS update_users_updated_at ON users;
 CREATE TRIGGER update_users_updated_at BEFORE UPDATE ON users FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_payment_records_updated_at ON payment_records;
+CREATE TRIGGER update_payment_records_updated_at BEFORE UPDATE ON payment_records FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_attendance_records_updated_at ON attendance_records;
+CREATE TRIGGER update_attendance_records_updated_at BEFORE UPDATE ON attendance_records FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- Update Streak Function
 CREATE OR REPLACE FUNCTION update_user_streak()
@@ -469,8 +705,15 @@ DROP TRIGGER IF EXISTS trigger_update_streak ON user_activity;
 CREATE TRIGGER trigger_update_streak AFTER INSERT OR UPDATE ON user_activity FOR EACH ROW EXECUTE FUNCTION update_user_streak();
 
 -- ============================================
--- SEED DATA (Achievements)
+-- SEED DATA (Subjects & Achievements)
 -- ============================================
+
+-- Insert Default Subjects
+INSERT INTO subjects (name) VALUES 
+('Mathematics'), ('Physics'), ('English'), ('Chemistry'), ('Biology'), ('History'), ('Geography')
+ON CONFLICT (name) DO NOTHING;
+
+-- Insert Achievements
 INSERT INTO achievements (slug, name, description, icon, category, requirement, points, rarity) VALUES
 ('first_day', 'First Steps', 'Completed your first day of learning', '🎯', 'streak', '{"type": "streak", "value": 1}', 5, 'common'),
 ('week_warrior', 'Week Warrior', 'Maintained a 7-day streak', '🔥', 'streak', '{"type": "streak", "value": 7}', 15, 'rare'),
