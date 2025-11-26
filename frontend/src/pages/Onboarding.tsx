@@ -187,43 +187,49 @@ const Onboarding: React.FC = () => {
 
             <div className="space-y-4">
                 <div>
-                    <label className="block text-sm text-tg-hint mb-1">Name</label>
+                    <label className="block text-sm text-tg-hint mb-1">Name <span className="text-red-500">*</span></label>
                     <input
                         type="text"
                         value={formData.name}
                         onChange={e => setFormData({ ...formData, name: e.target.value })}
                         className="w-full bg-tg-bg border border-tg-hint/20 rounded-lg p-3 text-tg-text focus:border-tg-button outline-none"
                         placeholder="Enter your name"
+                        required
                     />
                 </div>
                 <div>
-                    <label className="block text-sm text-tg-hint mb-1">Surname</label>
+                    <label className="block text-sm text-tg-hint mb-1">Surname <span className="text-red-500">*</span></label>
                     <input
                         type="text"
                         value={formData.surname}
                         onChange={e => setFormData({ ...formData, surname: e.target.value })}
                         className="w-full bg-tg-bg border border-tg-hint/20 rounded-lg p-3 text-tg-text focus:border-tg-button outline-none"
                         placeholder="Enter your surname"
+                        required
                     />
                 </div>
                 <div className="flex gap-4">
                     <div className="flex-1">
-                        <label className="block text-sm text-tg-hint mb-1">Age</label>
+                        <label className="block text-sm text-tg-hint mb-1">Age <span className="text-red-500">*</span></label>
                         <input
                             type="number"
                             value={formData.age}
                             onChange={e => setFormData({ ...formData, age: e.target.value })}
                             className="w-full bg-tg-bg border border-tg-hint/20 rounded-lg p-3 text-tg-text focus:border-tg-button outline-none"
                             placeholder="Age"
+                            required
+                            min="1"
+                            max="150"
                         />
                     </div>
                 </div>
 
                 {/* Custom Gender Selection */}
                 <div>
-                    <label className="block text-sm text-tg-hint mb-2">Sex</label>
+                    <label className="block text-sm text-tg-hint mb-2">Sex <span className="text-red-500">*</span></label>
                     <div className="flex gap-3">
                         <button
+                            type="button"
                             onClick={() => setFormData({ ...formData, sex: 'male' })}
                             className={`flex-1 py-3 rounded-xl border transition-all ${formData.sex === 'male'
                                 ? 'bg-blue-500/10 border-blue-500 text-blue-500 font-medium'
@@ -233,6 +239,7 @@ const Onboarding: React.FC = () => {
                             Male
                         </button>
                         <button
+                            type="button"
                             onClick={() => setFormData({ ...formData, sex: 'female' })}
                             className={`flex-1 py-3 rounded-xl border transition-all ${formData.sex === 'female'
                                 ? 'bg-pink-500/10 border-pink-500 text-pink-500 font-medium'
@@ -246,13 +253,14 @@ const Onboarding: React.FC = () => {
 
                 {type === 'student' && (
                     <div>
-                        <label className="block text-sm text-tg-hint mb-1">Phone Number</label>
+                        <label className="block text-sm text-tg-hint mb-1">Phone Number <span className="text-red-500">*</span></label>
                         <input
                             type="tel"
                             value={formData.phoneNumber}
                             onChange={e => setFormData({ ...formData, phoneNumber: e.target.value })}
                             className="w-full bg-tg-bg border border-tg-hint/20 rounded-lg p-3 text-tg-text focus:border-tg-button outline-none"
                             placeholder="+998..."
+                            required
                         />
                     </div>
                 )}
@@ -260,7 +268,7 @@ const Onboarding: React.FC = () => {
                 {type === 'staff' && (
                     <>
                         <div>
-                            <label className="block text-sm text-tg-hint mb-1">Subjects</label>
+                            <label className="block text-sm text-tg-hint mb-1">Subjects <span className="text-red-500">*</span></label>
                             <div className="grid grid-cols-2 gap-2">
                                 {subjects.map(sub => (
                                     <button
