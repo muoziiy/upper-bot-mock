@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useAppData } from '../context/AppDataContext';
 import { Section } from '../components/ui/Section';
 import { Card } from '../components/ui/Card';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
+import { ChevronDown } from 'lucide-react';
 import LottieAnimation from '../components/ui/LottieAnimation';
 import loadingAnimation from '../assets/animations/loading.json';
 import SegmentedControl from '../components/ui/SegmentedControl';
@@ -14,6 +15,7 @@ const ParentExams: React.FC = () => {
     const [selectedChildId, setSelectedChildId] = useState<string>('');
     const [selectedSubjectId, setSelectedSubjectId] = useState('1');
     const [activeTab, setActiveTab] = useState<'upcoming' | 'current' | 'old'>('upcoming');
+    const [showChildSelector, setShowChildSelector] = useState(false);
 
     // Set first child as default
     useEffect(() => {
@@ -83,20 +85,65 @@ const ParentExams: React.FC = () => {
                     <p className="text-tg-hint">{t('parent.exams_subtitle')}</p>
                 </header>
 
-                {/* Child Selector - Compact */}
+                {/* Child Selector - Custom Dropdown */}
                 {parentData?.children && parentData.children.length > 0 && (
-                    <div className="mb-4">
-                        <select
-                            value={selectedChildId}
-                            onChange={(e) => setSelectedChildId(e.target.value)}
-                            className="w-full bg-tg-bg rounded-xl p-3 text-tg-text border border-tg-hint/10 focus:outline-none focus:border-tg-button transition-colors"
+                    <div className="relative z-20 mb-6">
+                        <button
+                            onClick={() => setShowChildSelector(!showChildSelector)}
+                            className="w-full bg-tg-bg rounded-xl p-4 flex items-center justify-between hover:bg-tg-bg/80 active:bg-tg-bg/60 transition-colors shadow-sm"
                         >
-                            {parentData.children.map((child) => (
-                                <option key={child.id} value={child.id}>
-                                    {child.first_name} {child.last_name}
-                                </option>
-                            ))}
-                        </select>
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-tg-button to-tg-accent flex items-center justify-center text-white text-lg font-bold">
+                                    {selectedChild?.first_name?.[0] || '?'}
+                                </div>
+                                <div className="text-left">
+                                    <p className="font-semibold text-tg-text">
+                                        {selectedChild?.first_name} {selectedChild?.last_name}
+                                    </p>
+                                    <p className="text-xs text-tg-hint">{t('parent.selected_child')}</p>
+                                </div>
+                            </div>
+                            <ChevronDown
+                                size={20}
+                                className={`text-tg-hint transition-transform ${showChildSelector ? 'rotate-180' : ''}`}
+                            />
+                        </button>
+
+                        {/* Dropdown */}
+                        <AnimatePresence>
+                            {showChildSelector && (
+                                <motion.div
+                                    initial={{ opacity: 0, y: -10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: -10 }}
+                                    className="absolute top-full left-0 right-0 mt-2 bg-tg-bg rounded-xl shadow-lg overflow-hidden z-20"
+                                >
+                                    {parentData.children.map((child) => (
+                                        <button
+                                            key={child.id}
+                                            onClick={() => {
+                                                setSelectedChildId(child.id);
+                                                setShowChildSelector(false);
+                                            }}
+                                            className={`w-full p-4 flex items-center gap-3 transition-colors ${selectedChildId === child.id
+                                                ? 'bg-tg-button/10'
+                                                : 'hover:bg-tg-secondary/50'
+                                                }`}
+                                        >
+                                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-tg-button to-tg-accent flex items-center justify-center text-white text-lg font-bold">
+                                                {child.first_name?.[0] || '?'}
+                                            </div>
+                                            <div className="text-left">
+                                                <p className="font-semibold text-tg-text">
+                                                    {child.first_name} {child.last_name}
+                                                </p>
+                                                <p className="text-xs text-tg-hint capitalize">{child.role}</p>
+                                            </div>
+                                        </button>
+                                    ))}
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
                     </div>
                 )}
 

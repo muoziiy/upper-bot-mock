@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useTelegram } from '../../context/TelegramContext';
 import { useTranslation } from 'react-i18next';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ChevronDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface ParentAttendanceModalProps {
@@ -15,6 +15,7 @@ const ParentAttendanceModal: React.FC<ParentAttendanceModalProps> = ({ isOpen, o
     const { webApp } = useTelegram();
     const [currentMonth, setCurrentMonth] = useState(new Date());
     const [selectedSubject, setSelectedSubject] = useState<string>('');
+    const [showSubjectSelector, setShowSubjectSelector] = useState(false);
 
     useEffect(() => {
         if (isOpen && webApp) {
@@ -123,23 +124,50 @@ const ParentAttendanceModal: React.FC<ParentAttendanceModalProps> = ({ isOpen, o
                         </div>
 
                         <div className="p-4 space-y-6">
-                            {/* Subject Selector */}
+                            {/* Subject Selector - Custom Dropdown */}
                             {child?.subjects && child.subjects.length > 0 && (
-                                <div>
+                                <div className="relative z-20">
                                     <label className="text-xs font-medium text-tg-hint uppercase mb-2 block">
                                         {t('parent.subject')}
                                     </label>
-                                    <select
-                                        value={selectedSubject}
-                                        onChange={(e) => setSelectedSubject(e.target.value)}
-                                        className="w-full bg-tg-secondary/50 rounded-xl p-3 text-tg-text border border-tg-hint/10 focus:outline-none focus:border-tg-button transition-colors"
+                                    <button
+                                        onClick={() => setShowSubjectSelector(!showSubjectSelector)}
+                                        className="w-full bg-tg-secondary/50 rounded-xl p-3 flex items-center justify-between hover:bg-tg-secondary/70 active:bg-tg-secondary/80 transition-colors border border-tg-hint/10"
                                     >
-                                        {child.subjects.map((subject: any, idx: number) => (
-                                            <option key={idx} value={subject.name}>
-                                                {subject.name}
-                                            </option>
-                                        ))}
-                                    </select>
+                                        <span className="text-tg-text font-medium">{selectedSubject}</span>
+                                        <ChevronDown
+                                            size={20}
+                                            className={`text-tg-hint transition-transform ${showSubjectSelector ? 'rotate-180' : ''}`}
+                                        />
+                                    </button>
+
+                                    {/* Dropdown */}
+                                    <AnimatePresence>
+                                        {showSubjectSelector && (
+                                            <motion.div
+                                                initial={{ opacity: 0, y: -10 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                exit={{ opacity: 0, y: -10 }}
+                                                className="absolute top-full left-0 right-0 mt-2 bg-tg-bg rounded-xl shadow-lg border border-tg-hint/10 overflow-hidden z-30"
+                                            >
+                                                {child.subjects.map((subject: any, idx: number) => (
+                                                    <button
+                                                        key={idx}
+                                                        onClick={() => {
+                                                            setSelectedSubject(subject.name);
+                                                            setShowSubjectSelector(false);
+                                                        }}
+                                                        className={`w-full p-3 text-left transition-colors ${selectedSubject === subject.name
+                                                            ? 'bg-tg-button/10 text-tg-button font-medium'
+                                                            : 'hover:bg-tg-secondary/50 text-tg-text'
+                                                            }`}
+                                                    >
+                                                        {subject.name}
+                                                    </button>
+                                                ))}
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
                                 </div>
                             )}
 

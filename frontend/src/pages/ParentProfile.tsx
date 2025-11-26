@@ -121,9 +121,16 @@ const ParentProfile: React.FC = () => {
                                         </div>
                                         <div className="space-y-2">
                                             {child.subjects?.map((subject: any, idx: number) => (
-                                                <div key={idx} className="flex items-center justify-between">
-                                                    <span className="text-sm font-medium">{subject.name}</span>
-                                                    <span className="text-xs text-tg-hint">{subject.group}</span>
+                                                <div key={idx} className="flex items-center justify-between py-1">
+                                                    <div>
+                                                        <p className="text-sm font-medium text-tg-text">{subject.name}</p>
+                                                        <p className="text-xs text-tg-hint">
+                                                            {t('common.teacher')}: {subject.teacher || 'Mr. Smith'}
+                                                        </p>
+                                                    </div>
+                                                    <span className="text-xs font-medium bg-tg-secondary/50 px-2 py-1 rounded-lg text-tg-hint">
+                                                        {subject.group}
+                                                    </span>
                                                 </div>
                                             ))}
                                         </div>

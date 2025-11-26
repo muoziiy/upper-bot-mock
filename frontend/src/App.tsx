@@ -9,7 +9,11 @@ import './i18n'; // Initialize i18n
 const StudentDashboard = React.lazy(() => import('./pages/StudentDashboard'));
 const TeacherDashboard = React.lazy(() => import('./pages/TeacherDashboard'));
 const ParentDashboard = React.lazy(() => import('./pages/ParentDashboard'));
-const AdminDashboard = React.lazy(() => import('./pages/AdminDashboard'));
+const AdminDashboard = React.lazy(() => import('./pages/admin/AdminDashboard'));
+const AdminStats = React.lazy(() => import('./pages/admin/AdminStats'));
+const AdminGroups = React.lazy(() => import('./pages/admin/AdminGroups'));
+const AdminTeachers = React.lazy(() => import('./pages/admin/AdminTeachers'));
+const AdminActions = React.lazy(() => import('./pages/admin/AdminActions'));
 const Leaderboard = React.lazy(() => import('./pages/Leaderboard'));
 const Profile = React.lazy(() => import('./pages/Profile'));
 const Exams = React.lazy(() => import('./pages/Exams'));
@@ -69,7 +73,10 @@ const AppContent: React.FC = () => {
 
     // Admin Routes
     { path: "/admin", element: <AdminDashboard /> },
-    // { path: "/admin/actions", element: <QuickActions /> },
+    { path: "/admin/stats", element: <AdminStats /> },
+    { path: "/admin/groups", element: <AdminGroups /> },
+    { path: "/admin/teachers", element: <AdminTeachers /> },
+    { path: "/admin/actions", element: <AdminActions /> },
     { path: "/admin/profile", element: <Profile /> },
   ]);
 
