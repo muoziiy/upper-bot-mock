@@ -52,6 +52,14 @@ const AdminStats: React.FC = () => {
                 </div>
             ) : (
                 <div className="space-y-6">
+                    <div className="px-4">
+                        <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-3">
+                            <p className="text-xs text-yellow-500">
+                                Note: These stats might not reflect overall data. Please contact your accountant to verify actual monthly payments and statistics.
+                            </p>
+                        </div>
+                    </div>
+
                     <Section title="Financial Overview">
                         <ListItem title="Total Revenue (Nov)" value="$12,450" icon="💰" />
                         <ListItem title="Pending Payments" value={<span className="text-orange-500">$1,200</span>} icon="⏳" />
