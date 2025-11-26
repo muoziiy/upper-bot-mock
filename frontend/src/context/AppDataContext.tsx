@@ -22,6 +22,9 @@ interface DashboardData {
     };
     average_score: number;
     upcoming_exams: any[];
+    lessons: any[];
+    homework: any[];
+    subjects: any[];
 }
 
 interface TeacherData {
@@ -292,49 +295,11 @@ export const AppDataProvider: React.FC<{ children: ReactNode }> = ({ children })
                             level_started_at: new Date().toISOString(),
                             updated_at: new Date().toISOString()
                         },
-                        lessons: [
-                            {
-                                id: 'l1',
-                                curriculum_id: 'c1',
-                                title: 'Advanced Grammar',
-                                description: 'Master complex grammar structures',
-                                content: '',
-                                duration_minutes: 45,
-                                topics: ['Conditionals', 'Passive Voice'],
-                                order_index: 1,
-                                is_active: true,
-                                created_at: new Date().toISOString(),
-                                updated_at: new Date().toISOString(),
-                                status: 'completed',
-                                progress: {
-                                    id: 'p1',
-                                    user_id: 'child1',
-                                    lesson_id: 'l1',
-                                    is_completed: true,
-                                    completion_date: new Date().toISOString(),
-                                    time_spent_minutes: 50,
-                                    notes: null,
-                                    created_at: new Date().toISOString(),
-                                    updated_at: new Date().toISOString()
-                                }
-                            }
-                        ],
+                        lessons: [],
                         exams: {
-                            upcoming: [
-                                {
-                                    id: 'e1',
-                                    title: 'Final English Exam',
-                                    scheduled_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
-                                }
-                            ],
+                            upcoming: [],
                             current: [],
-                            old: [
-                                {
-                                    id: 'e2',
-                                    title: 'Midterm English Exam',
-                                    scheduled_date: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
-                                }
-                            ]
+                            old: []
                         },
                         subjects: [
                             { name: 'English Language', group: 'English 101' },
@@ -394,163 +359,10 @@ export const AppDataProvider: React.FC<{ children: ReactNode }> = ({ children })
                 setAchievementsData(data);
             }
 
-            // Mock Journey Data
-            setJourneyData({
-                userLevel: {
-                    user_id: user.id.toString(),
-                    current_level: 'intermediate',
-                    progress_percentage: 65,
-                    level_started_at: new Date().toISOString(),
-                    updated_at: new Date().toISOString()
-                },
-                curriculum: [],
-                lessons: [
-                    {
-                        id: 'l1',
-                        curriculum_id: 'c1',
-                        title: 'Advanced Grammar Structures',
-                        description: 'Master complex sentence structures and nuances.',
-                        content: 'Lesson content here...',
-                        duration_minutes: 45,
-                        topics: ['Conditionals', 'Inversion', 'Subjunctive'],
-                        order_index: 1,
-                        is_active: true,
-                        created_at: new Date().toISOString(),
-                        updated_at: new Date().toISOString(),
-                        status: 'completed',
-                        progress: {
-                            id: 'p1',
-                            user_id: user.id.toString(),
-                            lesson_id: 'l1',
-                            is_completed: true,
-                            completion_date: new Date().toISOString(),
-                            time_spent_minutes: 50,
-                            notes: 'Great lesson!',
-                            created_at: new Date().toISOString(),
-                            updated_at: new Date().toISOString()
-                        }
-                    },
-                    {
-                        id: 'l2',
-                        curriculum_id: 'c1',
-                        title: 'Business Communication',
-                        description: 'Learn how to communicate effectively in a professional setting.',
-                        content: 'Lesson content here...',
-                        duration_minutes: 60,
-                        topics: ['Emails', 'Meetings', 'Negotiations'],
-                        order_index: 2,
-                        is_active: true,
-                        created_at: new Date().toISOString(),
-                        updated_at: new Date().toISOString(),
-                        status: 'unlocked',
-                        progress: {
-                            id: 'p2',
-                            user_id: user.id.toString(),
-                            lesson_id: 'l2',
-                            is_completed: false,
-                            completion_date: null,
-                            time_spent_minutes: 15,
-                            notes: null,
-                            created_at: new Date().toISOString(),
-                            updated_at: new Date().toISOString()
-                        }
-                    },
-                    {
-                        id: 'l3',
-                        curriculum_id: 'c1',
-                        title: 'Academic Writing',
-                        description: 'Prepare for academic essays and reports.',
-                        content: null,
-                        duration_minutes: 90,
-                        topics: ['Essay Structure', 'Citations', 'Analysis'],
-                        order_index: 3,
-                        is_active: true,
-                        created_at: new Date().toISOString(),
-                        updated_at: new Date().toISOString(),
-                        status: 'coming'
-                    }
-                ],
-                exams: {
-                    upcoming: [
-                        {
-                            id: 'e1',
-                            exam_id: 'ex1',
-                            exam_type: 'online',
-                            scheduled_date: '2023-12-01T10:00:00Z',
-                            location: null,
-                            meeting_link: 'https://zoom.us/j/123456789',
-                            max_participants: 20,
-                            current_participants: 15,
-                            is_cancelled: false,
-                            created_at: new Date().toISOString(),
-                            updated_at: new Date().toISOString(),
-                            exam: {
-                                title: 'Mid-Term Grammar Assessment',
-                                description: 'Comprehensive test on grammar topics covered so far.',
-                                duration_minutes: 60
-                            }
-                        }
-                    ],
-                    old: [
-                        {
-                            id: 'e2',
-                            exam_id: 'ex2',
-                            exam_type: 'offline',
-                            scheduled_date: '2023-10-15T14:00:00Z',
-                            location: 'Room 304, Main Building',
-                            meeting_link: null,
-                            max_participants: 30,
-                            current_participants: 28,
-                            is_cancelled: false,
-                            created_at: new Date().toISOString(),
-                            updated_at: new Date().toISOString(),
-                            exam: {
-                                title: 'Placement Test',
-                                description: 'Initial level assessment.',
-                                duration_minutes: 90
-                            }
-                        }
-                    ],
-                    overall: [
-                        {
-                            id: 'e1',
-                            exam_id: 'ex1',
-                            exam_type: 'online',
-                            scheduled_date: '2023-12-01T10:00:00Z',
-                            location: null,
-                            meeting_link: 'https://zoom.us/j/123456789',
-                            max_participants: 20,
-                            current_participants: 15,
-                            is_cancelled: false,
-                            created_at: new Date().toISOString(),
-                            updated_at: new Date().toISOString(),
-                            exam: {
-                                title: 'Mid-Term Grammar Assessment',
-                                description: 'Comprehensive test on grammar topics covered so far.',
-                                duration_minutes: 60
-                            }
-                        },
-                        {
-                            id: 'e2',
-                            exam_id: 'ex2',
-                            exam_type: 'offline',
-                            scheduled_date: '2023-10-15T14:00:00Z',
-                            location: 'Room 304, Main Building',
-                            meeting_link: null,
-                            max_participants: 30,
-                            current_participants: 28,
-                            is_cancelled: false,
-                            created_at: new Date().toISOString(),
-                            updated_at: new Date().toISOString(),
-                            exam: {
-                                title: 'Placement Test',
-                                description: 'Initial level assessment.',
-                                duration_minutes: 90
-                            }
-                        }
-                    ]
-                }
-            });
+            // Real Journey Data (if available) or empty
+            // We are now using dashboardData for lessons/subjects
+            setJourneyData(null);
+
         } catch (err) {
             console.error('Failed to fetch app data:', err);
             setError('Failed to load data');

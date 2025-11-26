@@ -4,6 +4,7 @@ import { supabase } from '../supabase';
 const router = Router();
 
 // GET /api/students/dashboard - Fetch dashboard data
+// GET /api/students/dashboard - Fetch dashboard data
 router.get('/dashboard', async (req: Request, res: Response) => {
     const userId = req.headers['x-user-id'] as string;
 
@@ -21,6 +22,65 @@ router.get('/dashboard', async (req: Request, res: Response) => {
 
         if (!user) {
             return res.status(404).json({ error: 'User not found' });
+        }
+
+        // 1. Get User's Groups
+        const { data: groupMembers } = await supabase
+            .from('group_members')
+            .select('group_id')
+            .eq('student_id', user.id);
+
+        const groupIds = groupMembers?.map(g => g.group_id) || [];
+
+        // 2. Fetch Scheduled Lessons (Real Data)
+        let lessons: any[] = [];
+        if (groupIds.length > 0) {
+            const { data: fetchedLessons } = await supabase
+                .from('scheduled_lessons')
+                .select(`
+                    *,
+                    subjects (name, id),
+                    users (first_name, last_name)
+                `)
+                .in('group_id', groupIds)
+                .order('scheduled_date', { ascending: true });
+            lessons = fetchedLessons || [];
+        }
+
+        // 3. Fetch Homework (Real Data)
+        let homework: any[] = [];
+        if (groupIds.length > 0) {
+            const { data: fetchedHomework } = await supabase
+                .from('homework')
+                .select(`
+                    *,
+                    scheduled_lessons (title),
+                    users (first_name, last_name)
+                `)
+                .in('group_id', groupIds)
+                .order('created_at', { ascending: false });
+            homework = fetchedHomework || [];
+        }
+
+        // 4. Fetch Subjects (Derived from groups or all available if none)
+        // For now, let's fetch all subjects the user is involved in via lessons, or just all subjects if new
+        let subjects: any[] = [];
+        if (lessons.length > 0) {
+            // Extract unique subjects from lessons
+            const uniqueSubjects = new Map();
+            lessons.forEach(l => {
+                if (l.subjects) {
+                    uniqueSubjects.set(l.subjects.id, l.subjects);
+                }
+            });
+            subjects = Array.from(uniqueSubjects.values());
+        } else {
+            // Fallback: Fetch all subjects for display if no lessons yet
+            const { data: allSubjects } = await supabase
+                .from('subjects')
+                .select('*')
+                .limit(10);
+            subjects = allSubjects || [];
         }
 
         // Fetch streak data
@@ -53,26 +113,6 @@ router.get('/dashboard', async (req: Request, res: Response) => {
             { total_study_minutes: 0, total_tests: 0, total_questions: 0 }
         );
 
-        // Fetch upcoming exams
-        const { data: upcomingExams } = await supabase
-            .from('exams')
-            .select('id, title, description, start_time, end_time')
-            .eq('is_published', true)
-            .gte('end_time', new Date().toISOString())
-            .order('start_time', { ascending: true })
-            .limit(5);
-
-        // Calculate average score
-        const { data: results } = await supabase
-            .from('exam_results')
-            .select('score, total_points')
-            .eq('student_id', user.id)
-            .eq('is_completed', true);
-
-        const averageScore = results && results.length > 0
-            ? results.reduce((acc, curr) => acc + (curr.score / curr.total_points) * 100, 0) / results.length
-            : 0;
-
         res.json({
             user: {
                 id: user.id,
@@ -82,8 +122,9 @@ router.get('/dashboard', async (req: Request, res: Response) => {
             streak: streak || { current_streak: 0, longest_streak: 0, total_active_days: 0 },
             today_activity: todayActivity || { study_minutes: 0, tests_completed: 0, questions_answered: 0 },
             total_stats: totalStats,
-            average_score: Math.round(averageScore),
-            upcoming_exams: upcomingExams || [],
+            lessons: lessons, // Real lessons
+            homework: homework, // Real homework
+            subjects: subjects, // Real subjects
         });
     } catch (error) {
         console.error('Dashboard error:', error);
