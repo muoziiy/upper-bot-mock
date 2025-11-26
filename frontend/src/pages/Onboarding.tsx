@@ -94,6 +94,7 @@ const Onboarding: React.FC = () => {
         }
     };
 
+
     const handleCopyId = () => {
         if (user?.id) {
             navigator.clipboard.writeText(user.id.toString());
@@ -101,6 +102,28 @@ const Onboarding: React.FC = () => {
             setTimeout(() => setCopied(false), 2000);
         }
     };
+
+    const isFormValid = (type: 'student' | 'staff') => {
+        const { name, surname, age, phoneNumber, selectedSubjects } = formData;
+
+        // Common required fields
+        if (!name.trim() || !surname.trim() || !age.trim()) {
+            return false;
+        }
+
+        // Student-specific validation
+        if (type === 'student' && !phoneNumber.trim()) {
+            return false;
+        }
+
+        // Staff-specific validation (at least one subject required)
+        if (type === 'staff' && selectedSubjects.length === 0) {
+            return false;
+        }
+
+        return true;
+    };
+
 
     const renderSelection = () => (
         <div className="space-y-4 px-4 pt-8">
@@ -203,8 +226,8 @@ const Onboarding: React.FC = () => {
                         <button
                             onClick={() => setFormData({ ...formData, sex: 'male' })}
                             className={`flex-1 py-3 rounded-xl border transition-all ${formData.sex === 'male'
-                                    ? 'bg-blue-500/10 border-blue-500 text-blue-500 font-medium'
-                                    : 'bg-tg-bg border-tg-hint/20 text-tg-hint'
+                                ? 'bg-blue-500/10 border-blue-500 text-blue-500 font-medium'
+                                : 'bg-tg-bg border-tg-hint/20 text-tg-hint'
                                 }`}
                         >
                             Male
@@ -212,8 +235,8 @@ const Onboarding: React.FC = () => {
                         <button
                             onClick={() => setFormData({ ...formData, sex: 'female' })}
                             className={`flex-1 py-3 rounded-xl border transition-all ${formData.sex === 'female'
-                                    ? 'bg-pink-500/10 border-pink-500 text-pink-500 font-medium'
-                                    : 'bg-tg-bg border-tg-hint/20 text-tg-hint'
+                                ? 'bg-pink-500/10 border-pink-500 text-pink-500 font-medium'
+                                : 'bg-tg-bg border-tg-hint/20 text-tg-hint'
                                 }`}
                         >
                             Female
@@ -249,8 +272,8 @@ const Onboarding: React.FC = () => {
                                             setFormData({ ...formData, selectedSubjects: selected });
                                         }}
                                         className={`p-2 rounded-lg text-sm border transition-colors ${formData.selectedSubjects.includes(sub.id)
-                                                ? 'bg-tg-button text-white border-tg-button'
-                                                : 'bg-tg-bg border-tg-hint/20 text-tg-text'
+                                            ? 'bg-tg-button text-white border-tg-button'
+                                            : 'bg-tg-bg border-tg-hint/20 text-tg-text'
                                             }`}
                                     >
                                         {sub.name}
@@ -272,8 +295,8 @@ const Onboarding: React.FC = () => {
 
                 <button
                     onClick={() => handleSubmit(type)}
-                    disabled={loading}
-                    className="w-full bg-tg-button text-white font-bold py-3 rounded-xl mt-8 disabled:opacity-50"
+                    disabled={loading || !isFormValid(type)}
+                    className="w-full bg-tg-button text-white font-bold py-3 rounded-xl mt-8 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                     {loading ? 'Submitting...' : 'Submit Registration'}
                 </button>

@@ -15,6 +15,7 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS sex TEXT; -- 'male', 'female'
 ALTER TABLE users ADD COLUMN IF NOT EXISTS phone_number TEXT;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS bio TEXT;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS timezone TEXT DEFAULT 'Asia/Tashkent';
+ALTER TABLE users ADD COLUMN IF NOT EXISTS language_code TEXT;
 
 -- 3. Create Subjects Table
 CREATE TABLE IF NOT EXISTS subjects (
