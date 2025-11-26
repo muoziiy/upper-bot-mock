@@ -8,13 +8,16 @@ import './i18n'; // Initialize i18n
 // Lazy load pages
 const StudentDashboard = React.lazy(() => import('./pages/StudentDashboard'));
 const TeacherDashboard = React.lazy(() => import('./pages/TeacherDashboard'));
+const ParentDashboard = React.lazy(() => import('./pages/ParentDashboard'));
 const AdminDashboard = React.lazy(() => import('./pages/AdminDashboard'));
 const Leaderboard = React.lazy(() => import('./pages/Leaderboard'));
 const Profile = React.lazy(() => import('./pages/Profile'));
 const Exams = React.lazy(() => import('./pages/Exams'));
+const ParentExams = React.lazy(() => import('./pages/ParentExams'));
 const Lessons = React.lazy(() => import('./pages/Lessons'));
 const Groups = React.lazy(() => import('./pages/Groups'));
 const TeacherProfile = React.lazy(() => import('./pages/TeacherProfile'));
+const ParentProfile = React.lazy(() => import('./pages/ParentProfile'));
 
 function App() {
   return (
@@ -37,6 +40,7 @@ const AppContent: React.FC = () => {
   const getHomeRoute = () => {
     switch (role) {
       case 'teacher': return '/teacher';
+      case 'parent': return '/parent';
       case 'admin':
       case 'super_admin': return '/admin';
       default: return '/student';
@@ -57,6 +61,11 @@ const AppContent: React.FC = () => {
     { path: "/teacher/groups", element: <Groups /> },
     { path: "/teacher/lessons", element: <Lessons /> },
     { path: "/teacher/profile", element: <TeacherProfile /> },
+
+    // Parent Routes
+    { path: "/parent", element: <ParentDashboard /> },
+    { path: "/parent/exams", element: <ParentExams /> },
+    { path: "/parent/profile", element: <ParentProfile /> },
 
     // Admin Routes
     { path: "/admin", element: <AdminDashboard /> },

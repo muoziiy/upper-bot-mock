@@ -31,13 +31,21 @@ const BottomNav: React.FC = () => {
         { name: t('nav.profile'), icon: User, path: '/teacher/profile' },
     ];
 
+    const parentTabs = [
+        { name: t('nav.home'), icon: Home, path: '/parent' },
+        { name: t('nav.exams'), icon: Trophy, path: '/parent/exams' },
+        { name: t('nav.profile'), icon: User, path: '/parent/profile' },
+    ];
+
     const adminTabs = [
         { name: t('nav.home'), icon: Home, path: '/admin' },
         { name: t('nav.actions'), icon: Settings, path: '/admin/actions' },
         { name: t('nav.profile'), icon: User, path: '/admin/profile' },
     ];
 
-    const tabs = role === 'teacher' ? teacherTabs : (role === 'admin' || role === 'super_admin' ? adminTabs : studentTabs);
+    const tabs = role === 'teacher' ? teacherTabs
+        : role === 'parent' ? parentTabs
+            : (role === 'admin' || role === 'super_admin' ? adminTabs : studentTabs);
 
     return (
         <div className="fixed bottom-4 left-4 right-4 z-50">

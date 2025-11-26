@@ -131,7 +131,7 @@ export const AppDataProvider: React.FC<{ children: ReactNode }> = ({ children })
     const { user } = useTelegram();
     const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
     const [teacherData, setTeacherData] = useState<TeacherData | null>(null);
-    const [parentData] = useState<ParentData | null>(null);
+    const [parentData, setParentData] = useState<ParentData | null>(null);
     const [leaderboardData, setLeaderboardData] = useState<LeaderboardData | null>(null);
     const [achievementsData, setAchievementsData] = useState<AchievementsData | null>(null);
     const [journeyData, setJourneyData] = useState<JourneyData | null>(null);
@@ -237,6 +237,100 @@ export const AppDataProvider: React.FC<{ children: ReactNode }> = ({ children })
                         messages: [
                             { id: 'm1', sender: 'Student 1', text: 'Teacher, when is the exam?', time: '10:00', is_me: false },
                             { id: 'm2', sender: 'You', text: 'Next Monday!', time: '10:05', is_me: true },
+                        ]
+                    }
+                ]
+            });
+
+            // Mock Parent Data
+            setParentData({
+                parent: {
+                    id: user.id.toString(),
+                    first_name: user.first_name || 'Parent',
+                    last_name: user.last_name || ''
+                },
+                children: [
+                    {
+                        id: 'child1',
+                        first_name: 'Alice',
+                        last_name: 'Smith',
+                        role: 'student',
+                        userLevel: {
+                            user_id: 'child1',
+                            current_level: 'intermediate',
+                            progress_percentage: 75,
+                            level_started_at: new Date().toISOString(),
+                            updated_at: new Date().toISOString()
+                        },
+                        lessons: [
+                            {
+                                id: 'l1',
+                                curriculum_id: 'c1',
+                                title: 'Advanced Grammar',
+                                description: 'Master complex grammar structures',
+                                content: '',
+                                duration_minutes: 45,
+                                topics: ['Conditionals', 'Passive Voice'],
+                                order_index: 1,
+                                is_active: true,
+                                created_at: new Date().toISOString(),
+                                updated_at: new Date().toISOString(),
+                                status: 'completed',
+                                progress: {
+                                    id: 'p1',
+                                    user_id: 'child1',
+                                    lesson_id: 'l1',
+                                    is_completed: true,
+                                    completion_date: new Date().toISOString(),
+                                    time_spent_minutes: 50,
+                                    notes: null,
+                                    created_at: new Date().toISOString(),
+                                    updated_at: new Date().toISOString()
+                                }
+                            }
+                        ],
+                        exams: {
+                            upcoming: [
+                                {
+                                    id: 'e1',
+                                    title: 'Final English Exam',
+                                    scheduled_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+                                }
+                            ],
+                            current: [],
+                            old: [
+                                {
+                                    id: 'e2',
+                                    title: 'Midterm English Exam',
+                                    scheduled_date: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
+                                }
+                            ]
+                        },
+                        subjects: [
+                            { name: 'English Language', group: 'English 101' },
+                            { name: 'Mathematics', group: 'Math Advanced' }
+                        ]
+                    },
+                    {
+                        id: 'child2',
+                        first_name: 'Bob',
+                        last_name: 'Smith',
+                        role: 'student',
+                        userLevel: {
+                            user_id: 'child2',
+                            current_level: 'beginner',
+                            progress_percentage: 45,
+                            level_started_at: new Date().toISOString(),
+                            updated_at: new Date().toISOString()
+                        },
+                        lessons: [],
+                        exams: {
+                            upcoming: [],
+                            current: [],
+                            old: []
+                        },
+                        subjects: [
+                            { name: 'Physics', group: 'Physics Basics' }
                         ]
                     }
                 ]
