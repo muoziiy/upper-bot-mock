@@ -15,6 +15,10 @@ const AdminGroups = React.lazy(() => import('./pages/admin/AdminGroups'));
 const AdminTeachers = React.lazy(() => import('./pages/admin/AdminTeachers'));
 const AdminAdmins = React.lazy(() => import('./pages/admin/AdminAdmins'));
 const AdminActions = React.lazy(() => import('./pages/admin/AdminActions'));
+const AdminSubjects = React.lazy(() => import('./pages/admin/AdminSubjects')); // New
+const Onboarding = React.lazy(() => import('./pages/Onboarding')); // New
+const GuestDashboard = React.lazy(() => import('./pages/GuestDashboard')); // New
+const WaitingPage = React.lazy(() => import('./pages/WaitingPage')); // New
 const Leaderboard = React.lazy(() => import('./pages/Leaderboard'));
 const Profile = React.lazy(() => import('./pages/Profile'));
 const Exams = React.lazy(() => import('./pages/Exams'));
@@ -40,7 +44,7 @@ const AppContent: React.FC = () => {
   const { user } = useTelegram();
   const { loading, dashboardData } = useAppData();
 
-  const role = dashboardData?.user.role || 'student';
+  const role = dashboardData?.user.role || 'new_user'; // Default to new_user if not set
 
   const getHomeRoute = () => {
     switch (role) {
@@ -48,12 +52,21 @@ const AppContent: React.FC = () => {
       case 'parent': return '/parent';
       case 'admin':
       case 'super_admin': return '/admin';
-      default: return '/student';
+      case 'guest': return '/guest';
+      case 'waiting_user':
+      case 'waiting_staff': return '/waiting';
+      case 'new_user': return '/onboarding';
+      default: return '/student'; // Fallback for 'student'
     }
   };
 
   const element = useRoutes([
     { path: "/", element: <Navigate to={getHomeRoute()} replace /> },
+
+    // Onboarding & Guest Routes
+    { path: "/onboarding", element: <Onboarding /> },
+    { path: "/guest", element: <GuestDashboard /> },
+    { path: "/waiting", element: <WaitingPage /> },
 
     // Student Routes
     { path: "/student", element: <StudentDashboard /> },
@@ -79,6 +92,7 @@ const AppContent: React.FC = () => {
     { path: "/admin/teachers", element: <AdminTeachers /> },
     { path: "/admin/admins", element: <AdminAdmins /> },
     { path: "/admin/actions", element: <AdminActions /> },
+    { path: "/admin/subjects", element: <AdminSubjects /> }, // New
     { path: "/admin/profile", element: <Profile /> },
   ]);
 

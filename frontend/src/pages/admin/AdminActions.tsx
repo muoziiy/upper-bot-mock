@@ -26,6 +26,13 @@ const AdminActions: React.FC = () => {
                     subtitle="Start a new class group"
                     icon="👥"
                     showChevron
+                />
+                <ListItem
+                    title="Manage Subjects"
+                    subtitle="Add or edit subjects"
+                    icon="📚"
+                    onClick={() => window.location.href = '/admin/subjects'} // Using href for now or useNavigate if available
+                    showChevron
                     isLast
                 />
             </Section>

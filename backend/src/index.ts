@@ -10,6 +10,7 @@ import streakRoutes from './routes/streak';
 import achievementsRoutes from './routes/achievements';
 import leaderboardRoutes from './routes/leaderboard';
 import journeyRoutes from './routes/journey';
+import onboardingRoutes from './routes/onboarding';
 import bot from './bot';
 
 dotenv.config();
@@ -21,6 +22,7 @@ app.use(cors());
 app.use(express.json());
 
 app.use('/api/auth', authRoutes);
+app.use('/api/onboarding', onboardingRoutes);
 app.use('/api/students', studentRoutes);
 app.use('/api/students', dashboardRoutes);
 app.use('/api/students', streakRoutes);

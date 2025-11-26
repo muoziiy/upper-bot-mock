@@ -42,7 +42,7 @@ bot.start(async (ctx) => {
                     username: user.username || null,
                     first_name: user.first_name,
                     last_name: user.last_name || null,
-                    role: 'student',
+                    role: 'new_user',
                     updated_at: new Date().toISOString(),
                 });
             error = insertError;
@@ -240,5 +240,85 @@ bot.action(/^(approve|decline)_admin:(.+)$/, async (ctx) => {
 // Enable graceful stop
 process.once('SIGINT', () => bot.stop('SIGINT'));
 process.once('SIGTERM', () => bot.stop('SIGTERM'));
+
+// Handle Student/Staff Approval/Decline Actions
+bot.action(/^(approve|decline)_(student|staff)_(.+)$/, async (ctx) => {
+    const action = ctx.match[1]; // 'approve' or 'decline'
+    const type = ctx.match[2]; // 'student' or 'staff'
+    const userId = ctx.match[3];
+    const adminTelegramId = ctx.from?.id;
+
+    if (!adminTelegramId) return;
+
+    try {
+        // Verify the clicker is an Admin or Super Admin
+        const { data: adminUser } = await supabase
+            .from('users')
+            .select('role')
+            .eq('telegram_id', adminTelegramId)
+            .single();
+
+        if (!adminUser || !['admin', 'super_admin'].includes(adminUser.role)) {
+            return ctx.answerCbQuery('You are not authorized to perform this action.');
+        }
+
+        // Get target user details
+        const { data: targetUser } = await supabase
+            .from('users')
+            .select('telegram_id, first_name, role')
+            .eq('id', userId)
+            .single();
+
+        if (!targetUser) {
+            return ctx.answerCbQuery('User not found.');
+        }
+
+        // Check if already processed (simple check based on current role)
+        // If approving a student, role should be 'guest'. If approving staff, role should be 'waiting_staff'.
+        // If already 'student' or 'teacher', it's done.
+        if (type === 'student' && targetUser.role === 'student') {
+            return ctx.editMessageText(`✅ Request already approved.`);
+        }
+        if (type === 'staff' && targetUser.role === 'teacher') {
+            return ctx.editMessageText(`✅ Request already approved.`);
+        }
+
+        if (action === 'approve') {
+            const newRole = type === 'student' ? 'student' : 'teacher';
+
+            // Update user role
+            await supabase
+                .from('users')
+                .update({ role: newRole, updated_at: new Date().toISOString() })
+                .eq('id', userId);
+
+            await ctx.editMessageText(`✅ ${type === 'student' ? 'Student' : 'Staff'} approved by ${ctx.from.first_name}.`);
+
+            // Notify user
+            if (targetUser.telegram_id) {
+                const msg = type === 'student'
+                    ? '🎉 Your account has been approved! You can now access the full student dashboard.'
+                    : '🎉 Your teacher account has been approved! You can now access the teacher dashboard.';
+                await ctx.telegram.sendMessage(Number(targetUser.telegram_id), msg);
+            }
+        } else {
+            // Decline - maybe set to guest or keep as is but notify? 
+            // For now, let's just notify and maybe set to guest if it was waiting_staff?
+            // If student (guest) is declined, maybe nothing changes or block? 
+            // User said "approve or decline".
+
+            await ctx.editMessageText(`❌ ${type === 'student' ? 'Student' : 'Staff'} request declined by ${ctx.from.first_name}.`);
+
+            // Notify user
+            if (targetUser.telegram_id) {
+                await ctx.telegram.sendMessage(Number(targetUser.telegram_id), 'Your registration request has been declined. Please contact support.');
+            }
+        }
+
+    } catch (error) {
+        console.error('Error handling onboarding action:', error);
+        ctx.answerCbQuery('An error occurred.');
+    }
+});
 
 export default bot;

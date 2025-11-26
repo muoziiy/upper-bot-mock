@@ -1,0 +1,281 @@
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useTelegram } from '../context/TelegramContext';
+import { useAppData } from '../context/AppDataContext';
+import { User, GraduationCap, Users, ChevronRight, ArrowLeft } from 'lucide-react';
+
+const Onboarding: React.FC = () => {
+    const { user } = useTelegram();
+    const { refreshData } = useAppData();
+    const navigate = useNavigate();
+    const [step, setStep] = useState<'selection' | 'student_form' | 'staff_form' | 'existing_info'>('selection');
+    const [loading, setLoading] = useState(false);
+    const [subjects, setSubjects] = useState<any[]>([]);
+
+    // Form States
+    const [formData, setFormData] = useState({
+        name: user?.first_name || '',
+        surname: user?.last_name || '',
+        age: '',
+        sex: 'male',
+        phoneNumber: '',
+        bio: '',
+        selectedSubjects: [] as string[]
+    });
+
+    useEffect(() => {
+        if (step === 'staff_form') {
+            fetchSubjects();
+        }
+    }, [step]);
+
+    const fetchSubjects = async () => {
+        try {
+            const res = await fetch(`${import.meta.env.VITE_API_URL}/onboarding/subjects`);
+            if (res.ok) {
+                const data = await res.json();
+                setSubjects(data);
+            }
+        } catch (e) {
+            console.error('Failed to fetch subjects', e);
+        }
+    };
+
+    const handleSubmit = async (type: 'student' | 'staff' | 'existing') => {
+        setLoading(true);
+        try {
+            const endpoint = type === 'existing' ? '/onboarding/existing' : `/onboarding/${type}`;
+            const body = {
+                userId: user?.id,
+                ...formData,
+                subjects: formData.selectedSubjects // Only for staff
+            };
+
+            const res = await fetch(`${import.meta.env.VITE_API_URL}${endpoint}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+
+            if (res.ok) {
+                await refreshData(); // Refresh to get new role
+                navigate('/');
+            } else {
+                alert('Failed to submit. Please try again.');
+            }
+        } catch (e) {
+            console.error('Submission error', e);
+            alert('An error occurred.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const renderSelection = () => (
+        <div className="space-y-4 px-4 pt-8">
+            <h1 className="text-2xl font-bold text-center mb-8 text-tg-text">Welcome to Education Center</h1>
+
+            <button
+                onClick={() => setStep('student_form')}
+                className="w-full bg-tg-bg p-4 rounded-xl flex items-center justify-between shadow-sm hover:bg-tg-secondary/50 transition-colors"
+            >
+                <div className="flex items-center gap-4">
+                    <div className="bg-blue-500/10 p-3 rounded-full text-blue-500">
+                        <User size={24} />
+                    </div>
+                    <div className="text-left">
+                        <h3 className="font-semibold text-tg-text">New Student</h3>
+                        <p className="text-sm text-tg-hint">I want to start learning</p>
+                    </div>
+                </div>
+                <ChevronRight className="text-tg-hint" />
+            </button>
+
+            <button
+                onClick={() => setStep('existing_info')}
+                className="w-full bg-tg-bg p-4 rounded-xl flex items-center justify-between shadow-sm hover:bg-tg-secondary/50 transition-colors"
+            >
+                <div className="flex items-center gap-4">
+                    <div className="bg-green-500/10 p-3 rounded-full text-green-500">
+                        <Users size={24} />
+                    </div>
+                    <div className="text-left">
+                        <h3 className="font-semibold text-tg-text">Existing Student</h3>
+                        <p className="text-sm text-tg-hint">I already have an account</p>
+                    </div>
+                </div>
+                <ChevronRight className="text-tg-hint" />
+            </button>
+
+            <button
+                onClick={() => setStep('staff_form')}
+                className="w-full bg-tg-bg p-4 rounded-xl flex items-center justify-between shadow-sm hover:bg-tg-secondary/50 transition-colors"
+            >
+                <div className="flex items-center gap-4">
+                    <div className="bg-purple-500/10 p-3 rounded-full text-purple-500">
+                        <GraduationCap size={24} />
+                    </div>
+                    <div className="text-left">
+                        <h3 className="font-semibold text-tg-text">Staff</h3>
+                        <p className="text-sm text-tg-hint">I am a teacher or admin</p>
+                    </div>
+                </div>
+                <ChevronRight className="text-tg-hint" />
+            </button>
+        </div>
+    );
+
+    const renderForm = (type: 'student' | 'staff') => (
+        <div className="px-4 pt-4 pb-20">
+            <button onClick={() => setStep('selection')} className="mb-6 text-tg-hint flex items-center gap-1">
+                <ArrowLeft size={18} /> Back
+            </button>
+
+            <h2 className="text-xl font-bold mb-6 text-tg-text">
+                {type === 'student' ? 'Student Registration' : 'Staff Registration'}
+            </h2>
+
+            <div className="space-y-4">
+                <div>
+                    <label className="block text-sm text-tg-hint mb-1">Name</label>
+                    <input
+                        type="text"
+                        value={formData.name}
+                        onChange={e => setFormData({ ...formData, name: e.target.value })}
+                        className="w-full bg-tg-bg border border-tg-hint/20 rounded-lg p-3 text-tg-text focus:border-tg-button outline-none"
+                        placeholder="Enter your name"
+                    />
+                </div>
+                <div>
+                    <label className="block text-sm text-tg-hint mb-1">Surname</label>
+                    <input
+                        type="text"
+                        value={formData.surname}
+                        onChange={e => setFormData({ ...formData, surname: e.target.value })}
+                        className="w-full bg-tg-bg border border-tg-hint/20 rounded-lg p-3 text-tg-text focus:border-tg-button outline-none"
+                        placeholder="Enter your surname"
+                    />
+                </div>
+                <div className="flex gap-4">
+                    <div className="flex-1">
+                        <label className="block text-sm text-tg-hint mb-1">Age</label>
+                        <input
+                            type="number"
+                            value={formData.age}
+                            onChange={e => setFormData({ ...formData, age: e.target.value })}
+                            className="w-full bg-tg-bg border border-tg-hint/20 rounded-lg p-3 text-tg-text focus:border-tg-button outline-none"
+                            placeholder="Age"
+                        />
+                    </div>
+                    <div className="flex-1">
+                        <label className="block text-sm text-tg-hint mb-1">Sex</label>
+                        <select
+                            value={formData.sex}
+                            onChange={e => setFormData({ ...formData, sex: e.target.value })}
+                            className="w-full bg-tg-bg border border-tg-hint/20 rounded-lg p-3 text-tg-text focus:border-tg-button outline-none"
+                        >
+                            <option value="male">Male</option>
+                            <option value="female">Female</option>
+                        </select>
+                    </div>
+                </div>
+
+                {type === 'student' && (
+                    <div>
+                        <label className="block text-sm text-tg-hint mb-1">Phone Number</label>
+                        <input
+                            type="tel"
+                            value={formData.phoneNumber}
+                            onChange={e => setFormData({ ...formData, phoneNumber: e.target.value })}
+                            className="w-full bg-tg-bg border border-tg-hint/20 rounded-lg p-3 text-tg-text focus:border-tg-button outline-none"
+                            placeholder="+998..."
+                        />
+                    </div>
+                )}
+
+                {type === 'staff' && (
+                    <>
+                        <div>
+                            <label className="block text-sm text-tg-hint mb-1">Subjects</label>
+                            <div className="grid grid-cols-2 gap-2">
+                                {subjects.map(sub => (
+                                    <button
+                                        key={sub.id}
+                                        onClick={() => {
+                                            const selected = formData.selectedSubjects.includes(sub.id)
+                                                ? formData.selectedSubjects.filter(id => id !== sub.id)
+                                                : [...formData.selectedSubjects, sub.id];
+                                            setFormData({ ...formData, selectedSubjects: selected });
+                                        }}
+                                        className={`p-2 rounded-lg text-sm border transition-colors ${formData.selectedSubjects.includes(sub.id)
+                                            ? 'bg-tg-button text-white border-tg-button'
+                                            : 'bg-tg-bg border-tg-hint/20 text-tg-text'
+                                            }`}
+                                    >
+                                        {sub.name}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                        <div>
+                            <label className="block text-sm text-tg-hint mb-1">Bio (Optional)</label>
+                            <textarea
+                                value={formData.bio}
+                                onChange={e => setFormData({ ...formData, bio: e.target.value })}
+                                className="w-full bg-tg-bg border border-tg-hint/20 rounded-lg p-3 text-tg-text focus:border-tg-button outline-none h-24 resize-none"
+                                placeholder="Tell us about yourself..."
+                            />
+                        </div>
+                    </>
+                )}
+
+                <button
+                    onClick={() => handleSubmit(type)}
+                    disabled={loading}
+                    className="w-full bg-tg-button text-white font-bold py-3 rounded-xl mt-8 disabled:opacity-50"
+                >
+                    {loading ? 'Submitting...' : 'Submit Registration'}
+                </button>
+            </div>
+        </div>
+    );
+
+    const renderExistingInfo = () => (
+        <div className="px-4 pt-4 text-center">
+            <button onClick={() => setStep('selection')} className="mb-6 text-tg-hint flex items-center gap-1">
+                <ArrowLeft size={18} /> Back
+            </button>
+
+            <div className="bg-tg-bg rounded-xl p-6 shadow-sm mb-6">
+                <h2 className="text-xl font-bold mb-2 text-tg-text">Account Recovery</h2>
+                <p className="text-tg-hint mb-6">
+                    Please show this ID to an administrator to recover your account access.
+                </p>
+
+                <div className="bg-tg-secondary p-4 rounded-lg mb-4">
+                    <p className="text-xs text-tg-hint uppercase mb-1">Your Telegram ID</p>
+                    <p className="text-2xl font-mono font-bold text-tg-text">{user?.id}</p>
+                </div>
+
+                <button
+                    onClick={() => handleSubmit('existing')}
+                    disabled={loading}
+                    className="w-full bg-tg-button text-white font-bold py-3 rounded-xl disabled:opacity-50"
+                >
+                    {loading ? 'Processing...' : 'I have notified an Admin'}
+                </button>
+            </div>
+        </div>
+    );
+
+    return (
+        <div className="min-h-screen bg-tg-secondary">
+            {step === 'selection' && renderSelection()}
+            {step === 'student_form' && renderForm('student')}
+            {step === 'staff_form' && renderForm('staff')}
+            {step === 'existing_info' && renderExistingInfo()}
+        </div>
+    );
+};
+
+export default Onboarding;
