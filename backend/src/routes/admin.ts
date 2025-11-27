@@ -277,10 +277,15 @@ router.get('/stats/financial', async (req, res) => {
 
 // Get Students List (with Search)
 // SECURITY: Only returns safe fields (no telegram username or profile image)
+// Get Students List (with Search)
+// SECURITY: Only returns safe fields (no telegram username or profile image)
+// Get Students List (with Search)
+// SECURITY: Only returns safe fields (no telegram username or profile image)
 router.get('/students', async (req, res) => {
     const { search } = req.query;
 
     try {
+        // 1. Fetch base student data
         let query = supabase
             .from('users')
             .select(`
@@ -292,8 +297,14 @@ router.get('/students', async (req, res) => {
                 age,
                 sex,
                 group_members (
+                    group_id,
+                    payment_day,
+                    lessons_balance,
                     groups (
-                        name
+                        id,
+                        name,
+                        price,
+                        payment_model
                     )
                 )
             `)
@@ -306,22 +317,68 @@ router.get('/students', async (req, res) => {
             query = query.or(`first_name.ilike.%${searchStr}%,surname.ilike.%${searchStr}%,student_id.ilike.%${searchStr}%`);
         }
 
-        const { data, error } = await query;
+        const { data: studentsData, error: studentsError } = await query;
+        if (studentsError) throw studentsError;
 
-        if (error) throw error;
+        // 2. Fetch overdue status for ALL students
+        const { data: overdueData, error: overdueError } = await supabase
+            .rpc('get_overdue_students', { target_date: new Date().toISOString() });
 
-        // Transform data to flatten groups
-        // CRITICAL: Never expose username or profile picture
-        const students = data.map((student: any) => ({
-            id: student.id,
-            student_id: student.student_id,
-            telegram_id: student.telegram_id, // Needed for notifications only
-            first_name: student.first_name,
-            surname: student.surname,
-            age: student.age,
-            sex: student.sex,
-            groups: student.group_members?.map((gm: any) => gm.groups?.name).filter(Boolean) || []
-        }));
+        if (overdueError) {
+            console.error('Error fetching overdue status:', overdueError);
+            // Continue without overdue status if RPC fails, but log it
+        }
+
+        // Create a map for quick lookup: student_id -> group_id -> overdue_info
+        const overdueMap = new Map<string, Map<string, any>>();
+        if (overdueData) {
+            overdueData.forEach((item: any) => {
+                if (!overdueMap.has(item.student_id)) {
+                    overdueMap.set(item.student_id, new Map());
+                }
+                overdueMap.get(item.student_id)?.set(item.group_id, item);
+            });
+        }
+
+        // 3. Merge data
+        const students = studentsData.map((student: any) => {
+            const studentOverdueMap = overdueMap.get(student.id);
+            let isStudentOverdue = false;
+
+            const groups = student.group_members?.map((gm: any) => {
+                const group = gm.groups;
+                // Check if this specific group is overdue for this student
+                const overdueInfo = studentOverdueMap?.get(group.id);
+
+                if (overdueInfo) {
+                    isStudentOverdue = true;
+                }
+
+                return {
+                    id: group.id,
+                    name: group.name,
+                    price: group.price,
+                    payment_model: group.payment_model,
+                    payment_day: gm.payment_day,
+                    lessons_balance: gm.lessons_balance,
+                    is_overdue: !!overdueInfo,
+                    amount_due: overdueInfo?.amount_due || 0,
+                    overdue_reason: overdueInfo?.reason || null
+                };
+            }).filter((g: any) => g.name) || [];
+
+            return {
+                id: student.id,
+                student_id: student.student_id,
+                telegram_id: student.telegram_id,
+                first_name: student.first_name,
+                surname: student.surname,
+                age: student.age,
+                sex: student.sex,
+                groups: groups,
+                payment_status: isStudentOverdue ? 'overdue' : 'paid' // Simplified overall status
+            };
+        });
 
         res.json(students);
     } catch (error) {
@@ -553,12 +610,65 @@ router.get('/groups/list', async (req, res) => {
     try {
         const { data, error } = await supabase
             .from('groups')
-            .select('id, name')
+            .select('id, name, price, schedule, payment_model, teacher_id')
             .order('name');
 
         if (error) throw error;
         res.json(data);
     } catch (error) {
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Create Group
+router.post('/groups', async (req, res) => {
+    const { name, teacher_id, price, schedule, payment_model } = req.body;
+
+    try {
+        const { data, error } = await supabase
+            .from('groups')
+            .insert({
+                name,
+                teacher_id: teacher_id || null,
+                price: price || 0,
+                schedule: schedule || {},
+                payment_model: payment_model || 'monthly_date'
+            })
+            .select()
+            .single();
+
+        if (error) throw error;
+        res.json(data);
+    } catch (error) {
+        console.error('Error creating group:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Update Group
+router.put('/groups/:id', async (req, res) => {
+    const { id } = req.params;
+    const { name, teacher_id, price, schedule, payment_model } = req.body;
+
+    try {
+        const { data, error } = await supabase
+            .from('groups')
+            .update({
+                name,
+                teacher_id: teacher_id || null,
+                price: price || 0,
+                schedule: schedule || {},
+                payment_model: payment_model || 'monthly_date',
+                updated_at: new Date().toISOString()
+            })
+            .eq('id', id)
+            .select()
+            .single();
+
+        if (error) throw error;
+        res.json(data);
+    } catch (error) {
+        console.error('Error updating group:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
 });
@@ -583,9 +693,24 @@ router.put('/students/:id/groups', async (req, res) => {
                 .single();
 
             if (!existing) {
+                // Get group details to set default payment terms
+                const { data: group } = await supabase
+                    .from('groups')
+                    .select('payment_model')
+                    .eq('id', groupId)
+                    .single();
+
+                const payment_day = req.body.payment_day || 1;
+                const lessons_balance = req.body.lessons_balance || (group?.payment_model === '12_lessons' ? 12 : 0);
+
                 const { error } = await supabase
                     .from('group_members')
-                    .insert({ student_id: id, group_id: groupId });
+                    .insert({
+                        student_id: id,
+                        group_id: groupId,
+                        payment_day,
+                        lessons_balance
+                    });
                 if (error) throw error;
             }
         } else if (action === 'remove') {

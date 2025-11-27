@@ -39,9 +39,18 @@ const AdminFilterModal: React.FC<AdminFilterModalProps> = ({ isOpen, onClose, fi
             >
                 <div className="flex items-center justify-between p-4 border-b border-tg-hint/10">
                     <h2 className="text-lg font-semibold text-tg-text">Filters</h2>
-                    <button onClick={onClose} className="p-2 hover:bg-tg-hint/10 rounded-full">
-                        <X size={20} className="text-tg-hint" />
-                    </button>
+                    <div className="flex gap-2">
+                        {/* Clear All Button */}
+                        <button
+                            onClick={() => setLocalFilters({ status: 'all', month: new Date().getMonth() + 1, year: new Date().getFullYear() })}
+                            className="text-xs font-medium text-tg-button hover:opacity-80 px-2 py-1"
+                        >
+                            Clear All
+                        </button>
+                        <button onClick={onClose} className="p-2 hover:bg-tg-hint/10 rounded-full">
+                            <X size={20} className="text-tg-hint" />
+                        </button>
+                    </div>
                 </div>
 
                 <div className="p-4 space-y-6">
@@ -56,7 +65,7 @@ const AdminFilterModal: React.FC<AdminFilterModalProps> = ({ isOpen, onClose, fi
                                     className={cn(
                                         "px-4 py-2 rounded-xl text-sm font-medium transition-all border",
                                         localFilters.status === status
-                                            ? "bg-tg-button text-white border-tg-button"
+                                            ? "bg-tg-button text-white border-tg-button shadow-md"
                                             : "bg-tg-secondary text-tg-text border-transparent hover:bg-tg-secondary/80"
                                     )}
                                 >
@@ -75,10 +84,10 @@ const AdminFilterModal: React.FC<AdminFilterModalProps> = ({ isOpen, onClose, fi
                                     key={month}
                                     onClick={() => setLocalFilters({ ...localFilters, month: idx + 1 })}
                                     className={cn(
-                                        "px-2 py-2 rounded-lg text-xs font-medium transition-all text-center",
+                                        "px-2 py-2 rounded-lg text-xs font-medium transition-all text-center border",
                                         localFilters.month === idx + 1
-                                            ? "bg-tg-button text-white"
-                                            : "bg-tg-secondary text-tg-text hover:bg-tg-secondary/80"
+                                            ? "bg-tg-button text-white border-tg-button shadow-md"
+                                            : "bg-tg-secondary text-tg-text border-transparent hover:bg-tg-secondary/80"
                                     )}
                                 >
                                     {month}

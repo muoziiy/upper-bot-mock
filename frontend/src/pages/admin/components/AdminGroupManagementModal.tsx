@@ -7,6 +7,8 @@ import { useTelegram } from '../../../context/TelegramContext';
 interface Group {
     id: string;
     name: string;
+    price?: number;
+    payment_model?: string;
 }
 
 interface AdminGroupManagementModalProps {
@@ -14,7 +16,7 @@ interface AdminGroupManagementModalProps {
     onClose: () => void;
     studentId: string;
     studentName: string;
-    currentGroups: string[];
+    currentGroups: { id: string; name: string }[];
     onUpdate: () => void;
 }
 
@@ -38,7 +40,7 @@ const AdminGroupManagementModal: React.FC<AdminGroupManagementModalProps> = ({
 
     const fetchGroups = async () => {
         try {
-            const res = await fetch(`${import.meta.env.VITE_API_URL}/groups`); // Assuming endpoint
+            const res = await fetch(`${import.meta.env.VITE_API_URL}/admin/groups/list`);
             if (res.ok) {
                 const data = await res.json();
                 setAvailableGroups(data);
@@ -64,6 +66,8 @@ const AdminGroupManagementModal: React.FC<AdminGroupManagementModalProps> = ({
                     buttons: [{ type: 'ok' }]
                 });
                 onUpdate();
+            } else {
+                throw new Error('Failed to update');
             }
         } catch (e) {
             webApp?.showAlert('Failed to update groups');
@@ -94,10 +98,17 @@ const AdminGroupManagementModal: React.FC<AdminGroupManagementModalProps> = ({
 
                     <div className="space-y-2">
                         {availableGroups.map((group) => {
-                            const isAssigned = currentGroups.includes(group.name);
+                            const isAssigned = currentGroups.some(g => g.id === group.id);
                             return (
                                 <div key={group.id} className="flex items-center justify-between p-3 bg-tg-secondary rounded-xl border border-tg-hint/10">
-                                    <span className="font-medium text-tg-text">{group.name}</span>
+                                    <div>
+                                        <span className="font-medium text-tg-text block">{group.name}</span>
+                                        {group.price && (
+                                            <span className="text-xs text-tg-hint">
+                                                {group.price.toLocaleString()} UZS • {group.payment_model === '12_lessons' ? '12 Lessons' : 'Monthly'}
+                                            </span>
+                                        )}
+                                    </div>
                                     <button
                                         onClick={() => handleToggleGroup(group.id, isAssigned ? 'remove' : 'add')}
                                         disabled={loading}

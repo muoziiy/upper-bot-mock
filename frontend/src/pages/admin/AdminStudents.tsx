@@ -16,7 +16,14 @@ interface Student {
     surname: string;
     age: number;
     sex: 'male' | 'female' | null;
-    groups: string[];
+    groups: {
+        id: string;
+        name: string;
+        price: number;
+        payment_model: string;
+        is_overdue?: boolean;
+        amount_due?: number;
+    }[];
     payment_status?: 'paid' | 'unpaid' | 'overdue';
 }
 
@@ -67,8 +74,7 @@ const AdminStudents: React.FC = () => {
                 // Client-side filtering for now (until backend supports it)
                 let filtered = data;
                 if (filters.status !== 'all') {
-                    // This is a placeholder. Real filtering should happen on backend or based on fetched payment status
-                    // For now, we just show all because payment_status isn't fully populated in the list yet
+                    filtered = filtered.filter((s: Student) => s.payment_status === filters.status);
                 }
                 setStudents(filtered);
             }
@@ -170,74 +176,96 @@ const AdminStudents: React.FC = () => {
                         <p className="text-tg-hint text-sm">Loading students...</p>
                     </div>
                 ) : students.length > 0 ? (
-                    students.map((student) => (
-                        <motion.div
-                            key={student.id}
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className="bg-tg-bg p-4 rounded-2xl shadow-sm border border-tg-hint/5 relative overflow-hidden"
-                        >
-                            <div className="flex items-start gap-4">
-                                {/* Emoji Avatar */}
-                                <div className="w-12 h-12 rounded-full bg-tg-secondary flex items-center justify-center text-2xl flex-shrink-0">
-                                    {getAvatarEmoji(student.sex)}
-                                </div>
-
-                                <div className="flex-1 min-w-0">
-                                    <div className="flex justify-between items-start">
-                                        <div>
-                                            <h3 className="font-semibold text-tg-text text-lg leading-tight truncate">
-                                                {student.first_name} {student.surname}
-                                            </h3>
-                                            <p className="text-tg-hint text-xs font-mono mt-0.5">
-                                                ID: {student.student_id}
-                                            </p>
-                                        </div>
-                                        {/* Status Badge (Mock for now - real data needs backend update) */}
-                                        {/* In future, this will reflect real payment status */}
+                    students.map((student) => {
+                        return (
+                            <motion.div
+                                key={student.id}
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className="bg-tg-bg p-4 rounded-2xl shadow-sm border border-tg-hint/5 relative overflow-hidden"
+                            >
+                                <div className="flex items-start gap-4">
+                                    {/* Emoji Avatar */}
+                                    <div className="w-12 h-12 rounded-full bg-tg-secondary flex items-center justify-center text-2xl flex-shrink-0">
+                                        {getAvatarEmoji(student.sex)}
                                     </div>
 
-                                    {/* Groups */}
-                                    <div className="flex flex-wrap gap-1.5 mt-3">
-                                        {student.groups.length > 0 ? (
-                                            student.groups.map((group, idx) => (
-                                                <span key={idx} className="bg-blue-500/10 text-blue-500 px-2 py-0.5 rounded-md text-xs font-medium">
-                                                    {group}
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex justify-between items-start">
+                                            <div>
+                                                <h3 className="font-semibold text-tg-text text-lg leading-tight truncate">
+                                                    {student.first_name} {student.surname}
+                                                </h3>
+                                                <p className="text-tg-hint text-xs font-mono mt-0.5">
+                                                    ID: {student.student_id}
+                                                </p>
+                                            </div>
+                                            {/* Status Badge */}
+                                            {student.payment_status === 'overdue' && (
+                                                <span className="bg-red-500/10 text-red-500 px-2 py-0.5 rounded-md text-xs font-bold animate-pulse">
+                                                    Overdue
                                                 </span>
-                                            ))
-                                        ) : (
-                                            <span className="text-tg-hint text-xs italic">No groups</span>
-                                        )}
+                                            )}
+                                        </div>
+
+                                        {/* Groups & Prices */}
+                                        <div className="flex flex-col gap-1 mt-3">
+                                            {student.groups.length > 0 ? (
+                                                student.groups.map((group: any, idx) => (
+                                                    <div key={idx} className={cn(
+                                                        "flex justify-between items-center p-2 rounded-lg border",
+                                                        group.is_overdue
+                                                            ? "bg-red-500/5 border-red-500/20"
+                                                            : "bg-tg-secondary/50 border-transparent"
+                                                    )}>
+                                                        <span className="text-sm font-medium text-tg-text">{group.name}</span>
+                                                        <div className="flex flex-col items-end">
+                                                            <span className={cn(
+                                                                "text-xs font-bold",
+                                                                group.is_overdue ? "text-red-500" : "text-tg-hint"
+                                                            )}>
+                                                                {group.price ? `${group.price.toLocaleString()} UZS` : 'Free'}
+                                                            </span>
+                                                            {group.is_overdue && (
+                                                                <span className="text-[10px] text-red-400">Due now</span>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                ))
+                                            ) : (
+                                                <span className="text-tg-hint text-xs italic">No groups</span>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
 
-                            {/* Action Buttons */}
-                            <div className="grid grid-cols-3 gap-2 mt-4 pt-3 border-t border-tg-hint/10">
-                                <button
-                                    onClick={() => handleEditClick(student)}
-                                    className="flex flex-col items-center gap-1 py-1 text-tg-button active:opacity-70"
-                                >
-                                    <Edit size={18} />
-                                    <span className="text-[10px] font-medium">Edit Info</span>
-                                </button>
-                                <button
-                                    onClick={() => handleGroupClick(student)}
-                                    className="flex flex-col items-center gap-1 py-1 text-tg-button active:opacity-70"
-                                >
-                                    <Users size={18} />
-                                    <span className="text-[10px] font-medium">Groups</span>
-                                </button>
-                                <button
-                                    onClick={() => handlePaymentClick(student)}
-                                    className="flex flex-col items-center gap-1 py-1 text-tg-button active:opacity-70"
-                                >
-                                    <CreditCard size={18} />
-                                    <span className="text-[10px] font-medium">Payments</span>
-                                </button>
-                            </div>
-                        </motion.div>
-                    ))
+                                {/* Action Buttons */}
+                                <div className="grid grid-cols-3 gap-2 mt-4 pt-3 border-t border-tg-hint/10">
+                                    <button
+                                        onClick={() => handleEditClick(student)}
+                                        className="flex flex-col items-center gap-1 py-1 text-tg-button active:opacity-70"
+                                    >
+                                        <Edit size={18} />
+                                        <span className="text-[10px] font-medium">Edit Info</span>
+                                    </button>
+                                    <button
+                                        onClick={() => handleGroupClick(student)}
+                                        className="flex flex-col items-center gap-1 py-1 text-tg-button active:opacity-70"
+                                    >
+                                        <Users size={18} />
+                                        <span className="text-[10px] font-medium">Groups</span>
+                                    </button>
+                                    <button
+                                        onClick={() => handlePaymentClick(student)}
+                                        className="flex flex-col items-center gap-1 py-1 text-tg-button active:opacity-70"
+                                    >
+                                        <CreditCard size={18} />
+                                        <span className="text-[10px] font-medium">Payments</span>
+                                    </button>
+                                </div>
+                            </motion.div>
+                        );
+                    })
                 ) : (
                     <div className="text-center py-12">
                         <div className="text-4xl mb-3">🔍</div>

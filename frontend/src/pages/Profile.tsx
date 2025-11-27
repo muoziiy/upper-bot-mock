@@ -141,71 +141,89 @@ const Profile: React.FC = () => {
                     <ChevronRight size={20} className="text-tg-hint" />
                 </button>
 
-                {/* My Subjects */}
+                {/* My Courses (Groups) */}
                 <div>
                     <div className="px-4 pb-2 text-xs font-medium uppercase text-tg-hint">
                         {t('profile.my_subjects')}
                     </div>
                     <div className="space-y-4">
-                        {subjects.map(subject => (
-                            <div key={subject.id} className="bg-tg-bg rounded-xl overflow-hidden shadow-sm">
-                                {/* Subject Header */}
-                                <div className="p-4 border-b border-tg-secondary/50">
-                                    <h3 className="text-lg font-semibold text-tg-text">{subject.name}</h3>
-                                </div>
-
-                                {/* Info Rows */}
-                                <div className="divide-y divide-tg-secondary/50">
-                                    {/* Group & Teacher */}
-                                    <div className="flex items-center divide-x divide-tg-secondary/50">
-                                        <div className="flex-1 p-3 flex flex-col items-center justify-center text-center">
-                                            <span className="text-xs text-tg-hint uppercase mb-1">{t('profile.group')}</span>
-                                            <span className="font-medium text-tg-text">{subject.group}</span>
-                                        </div>
-                                        <button
-                                            onClick={() => setSelectedTeacher(subject.teacher)}
-                                            className="flex-1 p-3 flex flex-col items-center justify-center text-center hover:bg-tg-secondary/30 transition-colors active:bg-tg-secondary/50"
-                                        >
-                                            <span className="text-xs text-tg-hint uppercase mb-1 flex items-center gap-1">
-                                                {t('profile.teacher')} <ChevronRight size={12} />
+                        {dashboardData?.groups && dashboardData.groups.length > 0 ? (
+                            dashboardData.groups.map((group: any) => (
+                                <div key={group.id} className="bg-tg-bg rounded-xl overflow-hidden shadow-sm">
+                                    {/* Group Header */}
+                                    <div className="p-4 border-b border-tg-secondary/50 flex justify-between items-center">
+                                        <h3 className="text-lg font-semibold text-tg-text">{group.name}</h3>
+                                        {group.price && (
+                                            <span className="text-sm font-bold text-tg-button bg-tg-button/10 px-2 py-1 rounded-lg">
+                                                {group.price.toLocaleString()} UZS
                                             </span>
-                                            <span className="font-medium text-tg-button">{subject.teacher.first_name}</span>
-                                        </button>
+                                        )}
                                     </div>
 
-                                    {/* Payment Circles */}
-                                    <button
-                                        onClick={() => setSelectedSubjectPayments(subject)}
-                                        className="w-full p-4 flex flex-col items-center hover:bg-tg-secondary/30 transition-colors active:bg-tg-secondary/50"
-                                    >
-                                        <span className="text-xs text-tg-hint uppercase mb-3 flex items-center gap-1">
-                                            {t('profile.payment_history')} <ChevronRight size={12} />
-                                        </span>
-                                        <div className="grid grid-cols-6 gap-3">
-                                            {subject.payments.map((payment, idx) => (
-                                                <div
-                                                    key={idx}
-                                                    className={`
-                                                        w-3 h-3 rounded-full 
-                                                        ${payment.status === 'paid' ? 'bg-green-500' :
-                                                            payment.status === 'pending' ? 'bg-yellow-500' : 'bg-tg-secondary border border-tg-hint/30'}
-                                                    `}
-                                                />
-                                            ))}
-                                        </div>
-                                    </button>
+                                    {/* Info Rows */}
+                                    <div className="divide-y divide-tg-secondary/50">
+                                        {/* Teacher */}
+                                        {group.teacher ? (
+                                            <button
+                                                onClick={() => setSelectedTeacher(group.teacher)}
+                                                className="w-full p-3 flex items-center justify-between hover:bg-tg-secondary/30 transition-colors active:bg-tg-secondary/50"
+                                            >
+                                                <span className="text-xs text-tg-hint uppercase">{t('profile.teacher')}</span>
+                                                <div className="flex items-center gap-1">
+                                                    <span className="font-medium text-tg-button">{group.teacher.first_name} {group.teacher.last_name}</span>
+                                                    <ChevronRight size={14} className="text-tg-hint" />
+                                                </div>
+                                            </button>
+                                        ) : (
+                                            <div className="p-3 flex items-center justify-between">
+                                                <span className="text-xs text-tg-hint uppercase">{t('profile.teacher')}</span>
+                                                <span className="text-sm text-tg-hint italic">Not assigned</span>
+                                            </div>
+                                        )}
 
-                                    {/* Attendance Link */}
-                                    <button
-                                        onClick={() => setSelectedSubjectAttendance(subject)}
-                                        className="w-full p-3 flex items-center justify-center gap-2 hover:bg-tg-secondary/30 transition-colors active:bg-tg-secondary/50 text-tg-button"
-                                    >
-                                        <Calendar size={18} />
-                                        <span className="font-medium">{t('profile.view_attendance')}</span>
-                                    </button>
+                                        {/* Payment Circles */}
+                                        <button
+                                            onClick={() => setSelectedSubjectPayments({ name: group.name, payments: group.payments })}
+                                            className="w-full p-4 flex flex-col items-center hover:bg-tg-secondary/30 transition-colors active:bg-tg-secondary/50"
+                                        >
+                                            <span className="text-xs text-tg-hint uppercase mb-3 flex items-center gap-1">
+                                                {t('profile.payment_history')} <ChevronRight size={12} />
+                                            </span>
+                                            <div className="grid grid-cols-6 gap-3">
+                                                {group.payments && group.payments.length > 0 ? (
+                                                    group.payments.slice(0, 12).map((payment: any, idx: number) => (
+                                                        <div
+                                                            key={idx}
+                                                            className={`
+                                                                w-3 h-3 rounded-full 
+                                                                ${payment.status === 'paid' ? 'bg-green-500' :
+                                                                    payment.status === 'pending' ? 'bg-yellow-500' : 'bg-red-500/50'}
+                                                            `}
+                                                            title={`${payment.status} - ${new Date(payment.payment_date).toLocaleDateString()}`}
+                                                        />
+                                                    ))
+                                                ) : (
+                                                    <span className="text-xs text-tg-hint col-span-6">No payments recorded</span>
+                                                )}
+                                            </div>
+                                        </button>
+
+                                        {/* Attendance Link */}
+                                        <button
+                                            onClick={() => setSelectedSubjectAttendance({ name: group.name, attendance: group.attendance })}
+                                            className="w-full p-3 flex items-center justify-center gap-2 hover:bg-tg-secondary/30 transition-colors active:bg-tg-secondary/50 text-tg-button"
+                                        >
+                                            <Calendar size={18} />
+                                            <span className="font-medium">{t('profile.view_attendance')}</span>
+                                        </button>
+                                    </div>
                                 </div>
+                            ))
+                        ) : (
+                            <div className="text-center py-8 text-tg-hint">
+                                <p>No courses found.</p>
                             </div>
-                        ))}
+                        )}
                     </div>
                 </div>
             </div>

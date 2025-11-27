@@ -1,8 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Section } from '../../components/ui/Section';
 import { ListItem } from '../../components/ui/ListItem';
+import AdminCreateGroupModal from './components/AdminCreateGroupModal';
 
 const AdminActions: React.FC = () => {
+    const [showCreateGroupModal, setShowCreateGroupModal] = useState(false);
 
     return (
         <div className="page-content pt-4">
@@ -25,6 +27,7 @@ const AdminActions: React.FC = () => {
                     title="Create Group"
                     subtitle="Start a new class group"
                     icon="👥"
+                    onClick={() => setShowCreateGroupModal(true)}
                     showChevron
                 />
                 <ListItem
@@ -68,6 +71,15 @@ const AdminActions: React.FC = () => {
                     isLast
                 />
             </Section>
+
+            {/* Modals */}
+            <AdminCreateGroupModal
+                isOpen={showCreateGroupModal}
+                onClose={() => setShowCreateGroupModal(false)}
+                onSuccess={() => {
+                    // Optional: Refresh data or show success
+                }}
+            />
         </div>
     );
 };

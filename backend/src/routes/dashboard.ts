@@ -23,13 +23,71 @@ router.get('/dashboard', async (req: Request, res: Response) => {
             return res.status(404).json({ error: 'User not found' });
         }
 
-        // 1. Get User's Groups
+        // 1. Get User's Groups with details
         const { data: groupMembers } = await supabase
             .from('group_members')
-            .select('group_id')
+            .select(`
+                group_id,
+                groups (
+                    id,
+                    name,
+                    price,
+                    payment_model,
+                    teacher_id
+                )
+            `)
             .eq('student_id', user.id);
 
         const groupIds = groupMembers?.map(g => g.group_id) || [];
+
+        // Fetch Teachers for these groups
+        const teacherIds = groupMembers?.map(g => g.groups?.teacher_id).filter(Boolean) || [];
+        let teachersMap = new Map();
+        if (teacherIds.length > 0) {
+            const { data: teachers } = await supabase
+                .from('users')
+                .select('id, first_name, surname, email, phone_number') // Secure fields
+                .in('id', teacherIds);
+
+            teachers?.forEach(t => teachersMap.set(t.id, t));
+        }
+
+        // Fetch Payments for these groups
+        const { data: payments } = await supabase
+            .from('payment_records')
+            .select('*')
+            .eq('student_id', user.id)
+            .in('group_id', groupIds)
+            .order('payment_date', { ascending: false });
+
+        // Fetch Attendance (simplified: from lesson_attendance if exists, or just mock for now as schema might vary)
+        // We'll check if 'lesson_attendance' table exists or how attendance is stored.
+        // Based on previous context, it might be linked to scheduled_lessons.
+        // For now, let's return empty attendance or fetch if we know the table.
+        // Let's assume we can fetch it later or use a separate endpoint.
+        // But Profile.tsx expects it.
+
+        // Construct rich groups data for Profile
+        const richGroups = groupMembers?.map((gm: any) => {
+            const group = gm.groups;
+            const teacher = teachersMap.get(group.teacher_id);
+            const groupPayments = payments?.filter(p => p.group_id === group.id) || [];
+
+            return {
+                id: group.id,
+                name: group.name,
+                price: group.price,
+                payment_model: group.payment_model,
+                teacher: teacher ? {
+                    id: teacher.id,
+                    first_name: teacher.first_name,
+                    last_name: teacher.surname,
+                    phone: teacher.phone_number
+                } : null,
+                payments: groupPayments,
+                attendance: [] // Placeholder until we confirm attendance schema
+            };
+        }) || [];
 
         // 2. Fetch Scheduled Lessons (Real Data)
         let lessons: any[] = [];
@@ -107,6 +165,7 @@ router.get('/dashboard', async (req: Request, res: Response) => {
                 id: user.id,
                 first_name: user.first_name,
                 role: user.role,
+                student_id: user.student_id
             },
             streak: streak || { current_streak: 0, longest_streak: 0, total_active_days: 0 },
             today_activity: todayActivity || { study_minutes: 0, tests_completed: 0, questions_answered: 0 },
@@ -114,6 +173,7 @@ router.get('/dashboard', async (req: Request, res: Response) => {
             lessons: lessons,
             homework: homework,
             subjects: subjects, // Filtered by user's assigned subjects
+            groups: richGroups // New field with rich group data
         });
     } catch (error) {
         console.error('Dashboard error:', error);

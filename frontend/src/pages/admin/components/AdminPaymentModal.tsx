@@ -68,7 +68,7 @@ const AdminPaymentModal: React.FC<AdminPaymentModalProps> = ({ isOpen, onClose, 
 
     const fetchSubjects = async () => {
         try {
-            const res = await fetch(`${import.meta.env.VITE_API_URL}/subjects`); // Assuming this endpoint exists
+            const res = await fetch(`${import.meta.env.VITE_API_URL}/subjects`);
             if (res.ok) {
                 const data = await res.json();
                 setSubjects(data);
@@ -99,7 +99,7 @@ const AdminPaymentModal: React.FC<AdminPaymentModalProps> = ({ isOpen, onClose, 
             if (res.ok) {
                 webApp?.showPopup({
                     title: 'Success',
-                    message: 'Payment recorded and notification sent to student.',
+                    message: 'Payment recorded successfully.',
                     buttons: [{ type: 'ok' }]
                 });
                 setView('list');
@@ -124,7 +124,7 @@ const AdminPaymentModal: React.FC<AdminPaymentModalProps> = ({ isOpen, onClose, 
     };
 
     const handleDelete = async (paymentId: string) => {
-        webApp?.showConfirm('Are you sure you want to delete this payment? The student will be notified.', async (confirm) => {
+        webApp?.showConfirm('Are you sure you want to delete this payment?', async (confirm) => {
             if (confirm) {
                 try {
                     const res = await fetch(`${import.meta.env.VITE_API_URL}/admin/students/${studentId}/payments/${paymentId}`, {
