@@ -1,5 +1,13 @@
 import express from 'express';
 import { supabase } from '../supabase';
+import {
+    sendStudentPaymentNotification,
+    sendStudentGroupNotification,
+    sendStudentInfoNotification,
+    sendTeacherPayoutNotification,
+    sendTeacherGroupNotification,
+    sendTeacherSubjectNotification
+} from '../services/notifications';
 
 const router = express.Router();
 
@@ -268,6 +276,7 @@ router.get('/stats/financial', async (req, res) => {
 });
 
 // Get Students List (with Search)
+// SECURITY: Only returns safe fields (no telegram username or profile image)
 router.get('/students', async (req, res) => {
     const { search } = req.query;
 
@@ -277,6 +286,7 @@ router.get('/students', async (req, res) => {
             .select(`
                 id,
                 student_id,
+                telegram_id,
                 first_name,
                 surname,
                 age,
@@ -301,14 +311,220 @@ router.get('/students', async (req, res) => {
         if (error) throw error;
 
         // Transform data to flatten groups
+        // CRITICAL: Never expose username or profile picture
         const students = data.map((student: any) => ({
-            ...student,
+            id: student.id,
+            student_id: student.student_id,
+            telegram_id: student.telegram_id, // Needed for notifications only
+            first_name: student.first_name,
+            surname: student.surname,
+            age: student.age,
+            sex: student.sex,
             groups: student.group_members?.map((gm: any) => gm.groups?.name).filter(Boolean) || []
         }));
 
         res.json(students);
     } catch (error) {
         console.error('Error fetching students:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// ==============================================================================
+// STUDENT PAYMENT MANAGEMENT ENDPOINTS
+// ==============================================================================
+
+// Get all payments for a specific student
+router.get('/students/:id/payments', async (req, res) => {
+    const { id } = req.params;
+
+    try {
+        const { data, error } = await supabase
+            .from('payment_records')
+            .select(`
+                *,
+                subjects (name)
+            `)
+            .eq('student_id', id)
+            .order('payment_date', { ascending: false });
+
+        if (error) throw error;
+
+        // Transform to include subject name
+        const payments = data.map((payment: any) => ({
+            ...payment,
+            subject_name: payment.subjects?.name
+        }));
+
+        res.json(payments);
+    } catch (error) {
+        console.error('Error fetching student payments:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Add new payment record (with notification)
+router.post('/students/:id/payments', async (req, res) => {
+    const { id } = req.params;
+    const { subject_id, amount, payment_date, payment_method, status, month, year, notes } = req.body;
+
+    try {
+        // Insert payment
+        const { data: payment, error: paymentError } = await supabase
+            .from('payment_records')
+            .insert({
+                student_id: id,
+                subject_id,
+                amount,
+                payment_date,
+                payment_method,
+                status,
+                month,
+                year,
+                notes
+            })
+            .select(`*, subjects(name)`)
+            .single();
+
+        if (paymentError) throw paymentError;
+
+        // Get student's telegram_id for notification
+        const { data: student, error: studentError } = await supabase
+            .from('users')
+            .select('telegram_id')
+            .eq('id', id)
+            .single();
+
+        if (studentError) throw studentError;
+
+        // Send notification to student
+        try {
+            await sendStudentPaymentNotification(student.telegram_id, {
+                action: 'added',
+                subject: payment.subjects?.name || 'Unknown',
+                amount: parseFloat(amount),
+                date: payment_date,
+                method: payment_method,
+                status
+            });
+        } catch (notifError) {
+            console.error('Failed to send payment notification:', notifError);
+        }
+
+        res.json(payment);
+    } catch (error) {
+        console.error('Error adding payment:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Update payment record (with notification)
+router.put('/students/:id/payments/:paymentId', async (req, res) => {
+    const { id, paymentId } = req.params;
+    const { subject_id, amount, payment_date, payment_method, status, month, year, notes } = req.body;
+
+    try {
+        // Update payment
+        const { data: payment, error: paymentError } = await supabase
+            .from('payment_records')
+            .update({
+                subject_id,
+                amount,
+                payment_date,
+                payment_method,
+                status,
+                month,
+                year,
+                notes,
+                updated_at: new Date().toISOString()
+            })
+            .eq('id', paymentId)
+            .eq('student_id', id)
+            .select(`*, subjects(name)`)
+            .single();
+
+        if (paymentError) throw paymentError;
+
+        // Get student's telegram_id for notification
+        const { data: student, error: studentError } = await supabase
+            .from('users')
+            .select('telegram_id')
+            .eq('id', id)
+            .single();
+
+        if (studentError) throw studentError;
+
+        // Send notification to student
+        try {
+            await sendStudentPaymentNotification(student.telegram_id, {
+                action: 'updated',
+                subject: payment.subjects?.name || 'Unknown',
+                amount: parseFloat(amount),
+                date: payment_date,
+                method: payment_method,
+                status
+            });
+        } catch (notifError) {
+            console.error('Failed to send payment notification:', notifError);
+        }
+
+        res.json(payment);
+    } catch (error) {
+        console.error('Error updating payment:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Delete payment record (with notification)
+router.delete('/students/:id/payments/:paymentId', async (req, res) => {
+    const { id, paymentId } = req.params;
+
+    try {
+        // Get payment details before deleting (for notification)
+        const { data: payment, error: fetchError } = await supabase
+            .from('payment_records')
+            .select(`*, subjects(name)`)
+            .eq('id', paymentId)
+            .eq('student_id', id)
+            .single();
+
+        if (fetchError) throw fetchError;
+
+        // Delete payment
+        const { error: deleteError } = await supabase
+            .from('payment_records')
+            .delete()
+            .eq('id', paymentId)
+            .eq('student_id', id);
+
+        if (deleteError) throw deleteError;
+
+        // Get student's telegram_id for notification
+        const { data: student, error: studentError } = await supabase
+            .from('users')
+            .select('telegram_id')
+            .eq('id', id)
+            .single();
+
+        if (studentError) throw studentError;
+
+        // Send notification to student
+        try {
+            await sendStudentPaymentNotification(student.telegram_id, {
+                action: 'deleted',
+                subject: payment.subjects?.name || 'Unknown',
+                amount: parseFloat(payment.amount),
+                date: payment.payment_date,
+                method: payment.payment_method,
+                status: payment.status
+            });
+        } catch (notifError) {
+            console.error('Failed to send payment notification:', notifError);
+        }
+
+        res.json({ success: true, message: 'Payment deleted successfully' });
+    } catch (error) {
+        console.error('Error deleting payment:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
 });

@@ -19,20 +19,64 @@ router.get('/dashboard', async (req, res) => {
         if (!user) {
             return res.status(404).json({ error: 'User not found' });
         }
-        // Fetch streak data
+        // 1. Get User's Groups
+        const { data: groupMembers } = await supabase_1.supabase
+            .from('group_members')
+            .select('group_id')
+            .eq('student_id', user.id);
+        const groupIds = groupMembers?.map(g => g.group_id) || [];
+        // 2. Fetch Scheduled Lessons (Real Data)
+        let lessons = [];
+        if (groupIds.length > 0) {
+            const { data: fetchedLessons } = await supabase_1.supabase
+                .from('scheduled_lessons')
+                .select(`
+                    *,
+                    subjects (name, id),
+                    users (first_name, last_name)
+                `)
+                .in('group_id', groupIds)
+                .order('scheduled_date', { ascending: true });
+            lessons = fetchedLessons || [];
+        }
+        // 3. Fetch Homework (Real Data)
+        let homework = [];
+        if (groupIds.length > 0) {
+            const { data: fetchedHomework } = await supabase_1.supabase
+                .from('homework')
+                .select(`
+                    *,
+                    scheduled_lessons (title),
+                    users (first_name, last_name)
+                `)
+                .in('group_id', groupIds)
+                .order('created_at', { ascending: false });
+            homework = fetchedHomework || [];
+        }
+        // 4. Fetch User's Assigned Subjects (from user.subjects column)
+        let subjects = [];
+        if (user.subjects && Array.isArray(user.subjects) && user.subjects.length > 0) {
+            const { data: fetchedSubjects } = await supabase_1.supabase
+                .from('subjects')
+                .select('id, name')
+                .in('id', user.subjects);
+            subjects = fetchedSubjects || [];
+        }
+        // If no subjects assigned to user, show empty list (strict filtering as requested)
+        // 5. Fetch streak data
         const { data: streak } = await supabase_1.supabase
             .from('user_streaks')
             .select('*')
             .eq('user_id', user.id)
             .single();
-        // Fetch today's activity
+        // 6. Fetch today's activity
         const { data: todayActivity } = await supabase_1.supabase
             .from('user_activity')
             .select('*')
             .eq('user_id', user.id)
             .eq('activity_date', new Date().toISOString().split('T')[0])
             .single();
-        // Fetch total stats
+        // 7. Fetch total stats
         const { data: totalActivity } = await supabase_1.supabase
             .from('user_activity')
             .select('study_minutes, tests_completed, questions_answered')
@@ -42,23 +86,6 @@ router.get('/dashboard', async (req, res) => {
             total_tests: acc.total_tests + (curr.tests_completed || 0),
             total_questions: acc.total_questions + (curr.questions_answered || 0),
         }), { total_study_minutes: 0, total_tests: 0, total_questions: 0 });
-        // Fetch upcoming exams
-        const { data: upcomingExams } = await supabase_1.supabase
-            .from('exams')
-            .select('id, title, description, start_time, end_time')
-            .eq('is_published', true)
-            .gte('end_time', new Date().toISOString())
-            .order('start_time', { ascending: true })
-            .limit(5);
-        // Calculate average score
-        const { data: results } = await supabase_1.supabase
-            .from('exam_results')
-            .select('score, total_points')
-            .eq('student_id', user.id)
-            .eq('is_completed', true);
-        const averageScore = results && results.length > 0
-            ? results.reduce((acc, curr) => acc + (curr.score / curr.total_points) * 100, 0) / results.length
-            : 0;
         res.json({
             user: {
                 id: user.id,
@@ -68,8 +95,9 @@ router.get('/dashboard', async (req, res) => {
             streak: streak || { current_streak: 0, longest_streak: 0, total_active_days: 0 },
             today_activity: todayActivity || { study_minutes: 0, tests_completed: 0, questions_answered: 0 },
             total_stats: totalStats,
-            average_score: Math.round(averageScore),
-            upcoming_exams: upcomingExams || [],
+            lessons: lessons,
+            homework: homework,
+            subjects: subjects, // Filtered by user's assigned subjects
         });
     }
     catch (error) {

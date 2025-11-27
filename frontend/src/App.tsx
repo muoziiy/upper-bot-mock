@@ -13,7 +13,6 @@ const AdminDashboard = React.lazy(() => import('./pages/admin/AdminDashboard'));
 const AdminStats = React.lazy(() => import('./pages/admin/AdminStats'));
 const AdminGroups = React.lazy(() => import('./pages/admin/AdminGroups'));
 const AdminTeachers = React.lazy(() => import('./pages/admin/AdminTeachers'));
-const AdminAdmins = React.lazy(() => import('./pages/admin/AdminAdmins'));
 const AdminActions = React.lazy(() => import('./pages/admin/AdminActions'));
 const AdminSubjects = React.lazy(() => import('./pages/admin/AdminSubjects'));
 const AdminStudents = React.lazy(() => import('./pages/admin/AdminStudents')); // New
@@ -97,7 +96,6 @@ const AppContent: React.FC = () => {
     { path: "/admin/stats", element: <AdminStats /> },
     { path: "/admin/groups", element: <AdminGroups /> },
     { path: "/admin/teachers", element: <AdminTeachers /> },
-    { path: "/admin/admins", element: <AdminAdmins /> },
     { path: "/admin/actions", element: <AdminActions /> },
     { path: "/admin/subjects", element: <AdminSubjects /> },
     { path: "/admin/students", element: <AdminStudents /> }, // New

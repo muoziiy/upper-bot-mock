@@ -1,5 +1,5 @@
 ﻿import React from 'react';
-import { Home, Trophy, User, Map, Users, Calendar, BarChart2, Zap } from 'lucide-react';
+import { Home, Trophy, User, Map, Users, Calendar, BarChart2, Zap, GraduationCap, UsersRound } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../lib/utils';
@@ -39,7 +39,8 @@ const BottomNav: React.FC = () => {
 
     const adminTabs = [
         { name: 'Stats', icon: BarChart2, path: '/admin/stats' },
-        { name: 'Admins', icon: Users, path: '/admin/admins' },
+        { name: 'Students', icon: GraduationCap, path: '/admin/students' },
+        { name: 'Teachers', icon: UsersRound, path: '/admin/teachers' },
         { name: 'Actions', icon: Zap, path: '/admin/actions' },
     ];
 

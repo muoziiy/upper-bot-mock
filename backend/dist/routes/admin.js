@@ -5,6 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const supabase_1 = require("../supabase");
+const notifications_1 = require("../services/notifications");
 const router = express_1.default.Router();
 // Get all users
 router.get('/users', async (req, res) => {
@@ -132,6 +133,345 @@ router.post('/decline-request', async (req, res) => {
     }
     catch (error) {
         console.error('Error declining request:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+// --- STATS ENDPOINTS ---
+// General Stats
+router.get('/stats/general', async (req, res) => {
+    try {
+        // 1. Total Students
+        const { count: totalStudents, error: studentError } = await supabase_1.supabase
+            .from('users')
+            .select('*', { count: 'exact', head: true })
+            .eq('role', 'student');
+        if (studentError)
+            throw studentError;
+        // 2. Total Teachers
+        const { count: totalTeachers, error: teacherError } = await supabase_1.supabase
+            .from('users')
+            .select('*', { count: 'exact', head: true })
+            .eq('role', 'teacher');
+        if (teacherError)
+            throw teacherError;
+        // 3. Active Groups
+        const { count: activeGroups, error: groupError } = await supabase_1.supabase
+            .from('groups')
+            .select('*', { count: 'exact', head: true }); // Assuming all groups are active for now
+        if (groupError)
+            throw groupError;
+        // 4. Total Subjects
+        const { count: totalSubjects, error: subjectError } = await supabase_1.supabase
+            .from('subjects')
+            .select('*', { count: 'exact', head: true });
+        if (subjectError)
+            throw subjectError;
+        // 5. New Students (This Month)
+        const startOfMonth = new Date();
+        startOfMonth.setDate(1);
+        startOfMonth.setHours(0, 0, 0, 0);
+        const { count: newStudents, error: newStudentError } = await supabase_1.supabase
+            .from('users')
+            .select('*', { count: 'exact', head: true })
+            .eq('role', 'student')
+            .gte('created_at', startOfMonth.toISOString());
+        if (newStudentError)
+            throw newStudentError;
+        // 6. New Groups (This Month)
+        const { count: newGroups, error: newGroupError } = await supabase_1.supabase
+            .from('groups')
+            .select('*', { count: 'exact', head: true })
+            .gte('created_at', startOfMonth.toISOString());
+        if (newGroupError)
+            throw newGroupError;
+        res.json({
+            totalStudents: totalStudents || 0,
+            totalTeachers: totalTeachers || 0,
+            activeGroups: activeGroups || 0,
+            totalSubjects: totalSubjects || 0,
+            newStudents: newStudents || 0,
+            newGroups: newGroups || 0
+        });
+    }
+    catch (error) {
+        console.error('Error fetching general stats:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+// Financial Stats
+router.get('/stats/financial', async (req, res) => {
+    try {
+        const startOfMonth = new Date();
+        startOfMonth.setDate(1);
+        startOfMonth.setHours(0, 0, 0, 0);
+        // 1. Total Revenue (This Month) - Completed payments
+        const { data: revenueData, error: revenueError } = await supabase_1.supabase
+            .from('payments')
+            .select('amount')
+            .eq('status', 'completed')
+            .gte('transaction_date', startOfMonth.toISOString());
+        if (revenueError)
+            throw revenueError;
+        const totalRevenue = revenueData?.reduce((sum, p) => sum + Number(p.amount), 0) || 0;
+        // 2. Pending Payments
+        const { data: pendingData, error: pendingError } = await supabase_1.supabase
+            .from('payments')
+            .select('amount')
+            .eq('status', 'pending');
+        if (pendingError)
+            throw pendingError;
+        const pendingPayments = pendingData?.reduce((sum, p) => sum + Number(p.amount), 0) || 0;
+        // 3. Recent Transactions (Limit 5)
+        const { data: recentTransactions, error: transactionsError } = await supabase_1.supabase
+            .from('payments')
+            .select('*, users(first_name, surname)')
+            .order('transaction_date', { ascending: false })
+            .limit(5);
+        if (transactionsError)
+            throw transactionsError;
+        res.json({
+            totalRevenue,
+            pendingPayments,
+            recentTransactions: recentTransactions || []
+        });
+    }
+    catch (error) {
+        console.error('Error fetching financial stats:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+// Get Students List (with Search)
+// SECURITY: Only returns safe fields (no telegram username or profile image)
+router.get('/students', async (req, res) => {
+    const { search } = req.query;
+    try {
+        let query = supabase_1.supabase
+            .from('users')
+            .select(`
+                id,
+                student_id,
+                telegram_id,
+                first_name,
+                surname,
+                age,
+                sex,
+                group_members (
+                    groups (
+                        name
+                    )
+                )
+            `)
+            .eq('role', 'student')
+            .order('created_at', { ascending: false });
+        if (search) {
+            const searchStr = String(search);
+            // Search by name, surname, or student_id
+            query = query.or(`first_name.ilike.%${searchStr}%,surname.ilike.%${searchStr}%,student_id.ilike.%${searchStr}%`);
+        }
+        const { data, error } = await query;
+        if (error)
+            throw error;
+        // Transform data to flatten groups
+        // CRITICAL: Never expose username or profile picture
+        const students = data.map((student) => ({
+            id: student.id,
+            student_id: student.student_id,
+            telegram_id: student.telegram_id, // Needed for notifications only
+            first_name: student.first_name,
+            surname: student.surname,
+            age: student.age,
+            sex: student.sex,
+            groups: student.group_members?.map((gm) => gm.groups?.name).filter(Boolean) || []
+        }));
+        res.json(students);
+    }
+    catch (error) {
+        console.error('Error fetching students:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+// ==============================================================================
+// STUDENT PAYMENT MANAGEMENT ENDPOINTS
+// ==============================================================================
+// Get all payments for a specific student
+router.get('/students/:id/payments', async (req, res) => {
+    const { id } = req.params;
+    try {
+        const { data, error } = await supabase_1.supabase
+            .from('payment_records')
+            .select(`
+                *,
+                subjects (name)
+            `)
+            .eq('student_id', id)
+            .order('payment_date', { ascending: false });
+        if (error)
+            throw error;
+        // Transform to include subject name
+        const payments = data.map((payment) => ({
+            ...payment,
+            subject_name: payment.subjects?.name
+        }));
+        res.json(payments);
+    }
+    catch (error) {
+        console.error('Error fetching student payments:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+// Add new payment record (with notification)
+router.post('/students/:id/payments', async (req, res) => {
+    const { id } = req.params;
+    const { subject_id, amount, payment_date, payment_method, status, month, year, notes } = req.body;
+    try {
+        // Insert payment
+        const { data: payment, error: paymentError } = await supabase_1.supabase
+            .from('payment_records')
+            .insert({
+            student_id: id,
+            subject_id,
+            amount,
+            payment_date,
+            payment_method,
+            status,
+            month,
+            year,
+            notes
+        })
+            .select(`*, subjects(name)`)
+            .single();
+        if (paymentError)
+            throw paymentError;
+        // Get student's telegram_id for notification
+        const { data: student, error: studentError } = await supabase_1.supabase
+            .from('users')
+            .select('telegram_id')
+            .eq('id', id)
+            .single();
+        if (studentError)
+            throw studentError;
+        // Send notification to student
+        try {
+            await (0, notifications_1.sendStudentPaymentNotification)(student.telegram_id, {
+                action: 'added',
+                subject: payment.subjects?.name || 'Unknown',
+                amount: parseFloat(amount),
+                date: payment_date,
+                method: payment_method,
+                status
+            });
+        }
+        catch (notifError) {
+            console.error('Failed to send payment notification:', notifError);
+        }
+        res.json(payment);
+    }
+    catch (error) {
+        console.error('Error adding payment:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+// Update payment record (with notification)
+router.put('/students/:id/payments/:paymentId', async (req, res) => {
+    const { id, paymentId } = req.params;
+    const { subject_id, amount, payment_date, payment_method, status, month, year, notes } = req.body;
+    try {
+        // Update payment
+        const { data: payment, error: paymentError } = await supabase_1.supabase
+            .from('payment_records')
+            .update({
+            subject_id,
+            amount,
+            payment_date,
+            payment_method,
+            status,
+            month,
+            year,
+            notes,
+            updated_at: new Date().toISOString()
+        })
+            .eq('id', paymentId)
+            .eq('student_id', id)
+            .select(`*, subjects(name)`)
+            .single();
+        if (paymentError)
+            throw paymentError;
+        // Get student's telegram_id for notification
+        const { data: student, error: studentError } = await supabase_1.supabase
+            .from('users')
+            .select('telegram_id')
+            .eq('id', id)
+            .single();
+        if (studentError)
+            throw studentError;
+        // Send notification to student
+        try {
+            await (0, notifications_1.sendStudentPaymentNotification)(student.telegram_id, {
+                action: 'updated',
+                subject: payment.subjects?.name || 'Unknown',
+                amount: parseFloat(amount),
+                date: payment_date,
+                method: payment_method,
+                status
+            });
+        }
+        catch (notifError) {
+            console.error('Failed to send payment notification:', notifError);
+        }
+        res.json(payment);
+    }
+    catch (error) {
+        console.error('Error updating payment:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+// Delete payment record (with notification)
+router.delete('/students/:id/payments/:paymentId', async (req, res) => {
+    const { id, paymentId } = req.params;
+    try {
+        // Get payment details before deleting (for notification)
+        const { data: payment, error: fetchError } = await supabase_1.supabase
+            .from('payment_records')
+            .select(`*, subjects(name)`)
+            .eq('id', paymentId)
+            .eq('student_id', id)
+            .single();
+        if (fetchError)
+            throw fetchError;
+        // Delete payment
+        const { error: deleteError } = await supabase_1.supabase
+            .from('payment_records')
+            .delete()
+            .eq('id', paymentId)
+            .eq('student_id', id);
+        if (deleteError)
+            throw deleteError;
+        // Get student's telegram_id for notification
+        const { data: student, error: studentError } = await supabase_1.supabase
+            .from('users')
+            .select('telegram_id')
+            .eq('id', id)
+            .single();
+        if (studentError)
+            throw studentError;
+        // Send notification to student
+        try {
+            await (0, notifications_1.sendStudentPaymentNotification)(student.telegram_id, {
+                action: 'deleted',
+                subject: payment.subjects?.name || 'Unknown',
+                amount: parseFloat(payment.amount),
+                date: payment.payment_date,
+                method: payment.payment_method,
+                status: payment.status
+            });
+        }
+        catch (notifError) {
+            console.error('Failed to send payment notification:', notifError);
+        }
+        res.json({ success: true, message: 'Payment deleted successfully' });
+    }
+    catch (error) {
+        console.error('Error deleting payment:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
 });

@@ -220,6 +220,7 @@ bot.action(/^(approve|decline)_admin:(.+)$/, async (ctx) => {
 process.once('SIGINT', () => bot.stop('SIGINT'));
 process.once('SIGTERM', () => bot.stop('SIGTERM'));
 // Handle Student/Staff Approval/Decline Actions
+// Handle Student/Staff Approval/Decline Actions
 bot.action(/^(approve|decline)_(student|staff)_(.+)$/, async (ctx) => {
     const action = ctx.match[1]; // 'approve' or 'decline'
     const type = ctx.match[2]; // 'student' or 'staff'
@@ -241,19 +242,10 @@ bot.action(/^(approve|decline)_(student|staff)_(.+)$/, async (ctx) => {
         const { data: targetUser } = await supabase_1.supabase
             .from('users')
             .select('telegram_id, first_name, role')
-            .eq('id', userId)
+            .eq('telegram_id', userId) // userId in callback is telegram_id
             .single();
         if (!targetUser) {
             return ctx.answerCbQuery('User not found.');
-        }
-        // Check if already processed (simple check based on current role)
-        // If approving a student, role should be 'guest'. If approving staff, role should be 'waiting_staff'.
-        // If already 'student' or 'teacher', it's done.
-        if (type === 'student' && targetUser.role === 'student') {
-            return ctx.editMessageText(`✅ Request already approved.`);
-        }
-        if (type === 'staff' && targetUser.role === 'teacher') {
-            return ctx.editMessageText(`✅ Request already approved.`);
         }
         if (action === 'approve') {
             const newRole = type === 'student' ? 'student' : 'teacher';
@@ -261,8 +253,14 @@ bot.action(/^(approve|decline)_(student|staff)_(.+)$/, async (ctx) => {
             await supabase_1.supabase
                 .from('users')
                 .update({ role: newRole, updated_at: new Date().toISOString() })
-                .eq('id', userId);
-            await ctx.editMessageText(`✅ ${type === 'student' ? 'Student' : 'Staff'} approved by ${ctx.from.first_name}.`);
+                .eq('telegram_id', userId);
+            // Edit Admin Message
+            const originalText = ctx.callbackQuery.message && 'text' in ctx.callbackQuery.message
+                ? ctx.callbackQuery.message.text
+                : 'New Request';
+            // Remove the "New Student Request" header and append status
+            const cleanText = originalText.replace('🆕 **New Student Request**', '').trim();
+            await ctx.editMessageText(`✅ **Student Request Approved**\n\n${cleanText}\n\n👮‍♂️ **Approved by:** ${ctx.from.first_name}`, { parse_mode: 'Markdown' });
             // Notify user
             if (targetUser.telegram_id) {
                 const msg = type === 'student'
@@ -272,14 +270,21 @@ bot.action(/^(approve|decline)_(student|staff)_(.+)$/, async (ctx) => {
             }
         }
         else {
-            // Decline - maybe set to guest or keep as is but notify? 
-            // For now, let's just notify and maybe set to guest if it was waiting_staff?
-            // If student (guest) is declined, maybe nothing changes or block? 
-            // User said "approve or decline".
-            await ctx.editMessageText(`❌ ${type === 'student' ? 'Student' : 'Staff'} request declined by ${ctx.from.first_name}.`);
+            // Decline
+            const newRole = type === 'student' ? 'new_user' : 'new_user'; // Reset to new_user
+            await supabase_1.supabase
+                .from('users')
+                .update({ role: newRole, updated_at: new Date().toISOString() })
+                .eq('telegram_id', userId);
+            // Edit Admin Message
+            const originalText = ctx.callbackQuery.message && 'text' in ctx.callbackQuery.message
+                ? ctx.callbackQuery.message.text
+                : 'New Request';
+            const cleanText = originalText.replace('🆕 **New Student Request**', '').trim();
+            await ctx.editMessageText(`❌ **Student Request Declined**\n\n${cleanText}\n\n👮‍♂️ **Declined by:** ${ctx.from.first_name}`, { parse_mode: 'Markdown' });
             // Notify user
             if (targetUser.telegram_id) {
-                await ctx.telegram.sendMessage(Number(targetUser.telegram_id), 'Your registration request has been declined. Please contact support.');
+                await ctx.telegram.sendMessage(Number(targetUser.telegram_id), 'Your registration request has been declined. Please contact support or try again.');
             }
         }
     }
