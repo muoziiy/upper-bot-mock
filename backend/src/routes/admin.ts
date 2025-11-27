@@ -147,4 +147,124 @@ router.post('/decline-request', async (req, res) => {
     }
 });
 
+// --- STATS ENDPOINTS ---
+
+// General Stats
+router.get('/stats/general', async (req, res) => {
+    try {
+        // 1. Total Students
+        const { count: totalStudents, error: studentError } = await supabase
+            .from('users')
+            .select('*', { count: 'exact', head: true })
+            .eq('role', 'student');
+
+        if (studentError) throw studentError;
+
+        // 2. Total Teachers
+        const { count: totalTeachers, error: teacherError } = await supabase
+            .from('users')
+            .select('*', { count: 'exact', head: true })
+            .eq('role', 'teacher');
+
+        if (teacherError) throw teacherError;
+
+        // 3. Active Groups
+        const { count: activeGroups, error: groupError } = await supabase
+            .from('groups')
+            .select('*', { count: 'exact', head: true }); // Assuming all groups are active for now
+
+        if (groupError) throw groupError;
+
+        // 4. Total Subjects
+        const { count: totalSubjects, error: subjectError } = await supabase
+            .from('subjects')
+            .select('*', { count: 'exact', head: true });
+
+        if (subjectError) throw subjectError;
+
+        // 5. New Students (This Month)
+        const startOfMonth = new Date();
+        startOfMonth.setDate(1);
+        startOfMonth.setHours(0, 0, 0, 0);
+
+        const { count: newStudents, error: newStudentError } = await supabase
+            .from('users')
+            .select('*', { count: 'exact', head: true })
+            .eq('role', 'student')
+            .gte('created_at', startOfMonth.toISOString());
+
+        if (newStudentError) throw newStudentError;
+
+        // 6. New Groups (This Month)
+        const { count: newGroups, error: newGroupError } = await supabase
+            .from('groups')
+            .select('*', { count: 'exact', head: true })
+            .gte('created_at', startOfMonth.toISOString());
+
+        if (newGroupError) throw newGroupError;
+
+        res.json({
+            totalStudents: totalStudents || 0,
+            totalTeachers: totalTeachers || 0,
+            activeGroups: activeGroups || 0,
+            totalSubjects: totalSubjects || 0,
+            newStudents: newStudents || 0,
+            newGroups: newGroups || 0
+        });
+
+    } catch (error) {
+        console.error('Error fetching general stats:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Financial Stats
+router.get('/stats/financial', async (req, res) => {
+    try {
+        const startOfMonth = new Date();
+        startOfMonth.setDate(1);
+        startOfMonth.setHours(0, 0, 0, 0);
+
+        // 1. Total Revenue (This Month) - Completed payments
+        const { data: revenueData, error: revenueError } = await supabase
+            .from('payments')
+            .select('amount')
+            .eq('status', 'completed')
+            .gte('transaction_date', startOfMonth.toISOString());
+
+        if (revenueError) throw revenueError;
+
+        const totalRevenue = revenueData?.reduce((sum, p) => sum + Number(p.amount), 0) || 0;
+
+        // 2. Pending Payments
+        const { data: pendingData, error: pendingError } = await supabase
+            .from('payments')
+            .select('amount')
+            .eq('status', 'pending');
+
+        if (pendingError) throw pendingError;
+
+        const pendingPayments = pendingData?.reduce((sum, p) => sum + Number(p.amount), 0) || 0;
+
+        // 3. Recent Transactions (Limit 5)
+        const { data: recentTransactions, error: transactionsError } = await supabase
+            .from('payments')
+            .select('*, users(first_name, surname)')
+            .order('transaction_date', { ascending: false })
+            .limit(5);
+
+        if (transactionsError) throw transactionsError;
+
+        res.json({
+            totalRevenue,
+            pendingPayments,
+            recentTransactions: recentTransactions || []
+        });
+
+    } catch (error) {
+        console.error('Error fetching financial stats:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
 export default router;
