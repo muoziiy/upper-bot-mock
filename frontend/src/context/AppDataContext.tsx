@@ -25,6 +25,7 @@ interface DashboardData {
     lessons: any[];
     homework: any[];
     subjects: any[];
+    groups?: any[];
 }
 
 interface TeacherData {

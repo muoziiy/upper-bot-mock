@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Calendar, Clock, DollarSign, User } from 'lucide-react';
+import { X, Clock, DollarSign, User } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '../../../lib/utils';
 import { useTelegram } from '../../../context/TelegramContext';

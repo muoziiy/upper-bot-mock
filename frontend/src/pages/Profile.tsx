@@ -28,59 +28,6 @@ const Profile: React.FC = () => {
         );
     }
 
-    // Mock Data
-    const subjects = [
-        {
-            id: '1',
-            name: 'English Language',
-            group: 'A-123',
-            teacher: {
-                id: 't1',
-                first_name: 'John',
-                last_name: 'Smith',
-                email: 'john@example.com',
-                phone: '+1234567890',
-                bio: 'Expert in English Literature.',
-                subjects: ['English', 'Literature']
-            },
-            payments: [
-                { status: 'paid', date: '2024-01-05' }, { status: 'paid', date: '2024-02-05' }, { status: 'paid', date: '2024-03-05' },
-                { status: 'paid', date: '2024-04-05' }, { status: 'paid', date: '2024-05-05' }, { status: 'paid', date: '2024-06-05' },
-                { status: 'paid', date: '2024-07-05' }, { status: 'paid', date: '2024-08-05' }, { status: 'pending' },
-                { status: 'unpaid' }, { status: 'unpaid' }, { status: 'unpaid' }
-            ],
-            attendance: [
-                { date: '2024-11-01', status: 'present' },
-                { date: '2024-11-03', status: 'present' },
-                { date: '2024-11-05', status: 'absent' },
-                { date: '2024-11-08', status: 'present' },
-            ]
-        },
-        {
-            id: '2',
-            name: 'Mathematics',
-            group: 'B-456',
-            teacher: {
-                id: 't2',
-                first_name: 'Sarah',
-                last_name: 'Connor',
-                email: 'sarah@example.com',
-                phone: '+9876543210',
-                bio: 'Mathematics genius.',
-                subjects: ['Math', 'Algebra']
-            },
-            payments: [
-                { status: 'paid', date: '2024-01-10' }, { status: 'paid', date: '2024-02-10' }, { status: 'paid', date: '2024-03-10' },
-                { status: 'paid', date: '2024-04-10' }, { status: 'unpaid' }, { status: 'unpaid' },
-                { status: 'unpaid' }, { status: 'unpaid' }, { status: 'unpaid' }, { status: 'unpaid' }, { status: 'unpaid' }, { status: 'unpaid' }
-            ],
-            attendance: [
-                { date: '2024-11-02', status: 'present' },
-                { date: '2024-11-04', status: 'late' },
-            ]
-        }
-    ];
-
     return (
         <div className="min-h-screen bg-tg-secondary pb-24 pt-6 text-tg-text">
             {/* Modals */}
