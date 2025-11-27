@@ -267,4 +267,50 @@ router.get('/stats/financial', async (req, res) => {
     }
 });
 
+// Get Students List (with Search)
+router.get('/students', async (req, res) => {
+    const { search } = req.query;
+
+    try {
+        let query = supabase
+            .from('users')
+            .select(`
+                id,
+                student_id,
+                first_name,
+                surname,
+                age,
+                sex,
+                group_members (
+                    groups (
+                        name
+                    )
+                )
+            `)
+            .eq('role', 'student')
+            .order('created_at', { ascending: false });
+
+        if (search) {
+            const searchStr = String(search);
+            // Search by name, surname, or student_id
+            query = query.or(`first_name.ilike.%${searchStr}%,surname.ilike.%${searchStr}%,student_id.ilike.%${searchStr}%`);
+        }
+
+        const { data, error } = await query;
+
+        if (error) throw error;
+
+        // Transform data to flatten groups
+        const students = data.map((student: any) => ({
+            ...student,
+            groups: student.group_members?.map((gm: any) => gm.groups?.name).filter(Boolean) || []
+        }));
+
+        res.json(students);
+    } catch (error) {
+        console.error('Error fetching students:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
 export default router;
