@@ -41,7 +41,12 @@ router.get('/dashboard', async (req: Request, res: Response) => {
         const groupIds = groupMembers?.map(g => g.group_id) || [];
 
         // Fetch Teachers for these groups
-        const teacherIds = groupMembers?.map(g => g.groups?.teacher_id).filter(Boolean) || [];
+        // Handle case where groups might be returned as array or object
+        const teacherIds = groupMembers?.map((g: any) => {
+            const group = Array.isArray(g.groups) ? g.groups[0] : g.groups;
+            return group?.teacher_id;
+        }).filter(Boolean) || [];
+
         let teachersMap = new Map();
         if (teacherIds.length > 0) {
             const { data: teachers } = await supabase
@@ -60,16 +65,11 @@ router.get('/dashboard', async (req: Request, res: Response) => {
             .in('group_id', groupIds)
             .order('payment_date', { ascending: false });
 
-        // Fetch Attendance (simplified: from lesson_attendance if exists, or just mock for now as schema might vary)
-        // We'll check if 'lesson_attendance' table exists or how attendance is stored.
-        // Based on previous context, it might be linked to scheduled_lessons.
-        // For now, let's return empty attendance or fetch if we know the table.
-        // Let's assume we can fetch it later or use a separate endpoint.
-        // But Profile.tsx expects it.
-
         // Construct rich groups data for Profile
         const richGroups = groupMembers?.map((gm: any) => {
-            const group = gm.groups;
+            const group = Array.isArray(gm.groups) ? gm.groups[0] : gm.groups;
+            if (!group) return null;
+
             const teacher = teachersMap.get(group.teacher_id);
             const groupPayments = payments?.filter(p => p.group_id === group.id) || [];
 
@@ -87,7 +87,7 @@ router.get('/dashboard', async (req: Request, res: Response) => {
                 payments: groupPayments,
                 attendance: [] // Placeholder until we confirm attendance schema
             };
-        }) || [];
+        }).filter(Boolean) || [];
 
         // 2. Fetch Scheduled Lessons (Real Data)
         let lessons: any[] = [];
@@ -128,7 +128,6 @@ router.get('/dashboard', async (req: Request, res: Response) => {
                 .in('id', user.subjects);
             subjects = fetchedSubjects || [];
         }
-        // If no subjects assigned to user, show empty list (strict filtering as requested)
 
         // 5. Fetch streak data
         const { data: streak } = await supabase
