@@ -475,4 +475,99 @@ router.delete('/students/:id/payments/:paymentId', async (req, res) => {
         res.status(500).json({ error: 'Internal server error' });
     }
 });
+// ==============================================================================
+// HELPER ENDPOINTS FOR DROPDOWNS
+// ==============================================================================
+// Get all subjects (simple list)
+router.get('/subjects/list', async (req, res) => {
+    try {
+        const { data, error } = await supabase_1.supabase
+            .from('subjects')
+            .select('id, name')
+            .order('name');
+        if (error)
+            throw error;
+        res.json(data);
+    }
+    catch (error) {
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+// Get all groups (simple list)
+router.get('/groups/list', async (req, res) => {
+    try {
+        const { data, error } = await supabase_1.supabase
+            .from('groups')
+            .select('id, name')
+            .order('name');
+        if (error)
+            throw error;
+        res.json(data);
+    }
+    catch (error) {
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+// ==============================================================================
+// STUDENT GROUP MANAGEMENT
+// ==============================================================================
+// Update student groups (Add/Remove)
+router.put('/students/:id/groups', async (req, res) => {
+    const { id } = req.params;
+    const { groupId, action } = req.body; // action: 'add' | 'remove'
+    try {
+        if (action === 'add') {
+            // Check if already exists
+            const { data: existing } = await supabase_1.supabase
+                .from('group_members')
+                .select('id')
+                .eq('student_id', id)
+                .eq('group_id', groupId)
+                .single();
+            if (!existing) {
+                const { error } = await supabase_1.supabase
+                    .from('group_members')
+                    .insert({ student_id: id, group_id: groupId });
+                if (error)
+                    throw error;
+            }
+        }
+        else if (action === 'remove') {
+            const { error } = await supabase_1.supabase
+                .from('group_members')
+                .delete()
+                .eq('student_id', id)
+                .eq('group_id', groupId);
+            if (error)
+                throw error;
+        }
+        // Get details for notification
+        const { data: group } = await supabase_1.supabase
+            .from('groups')
+            .select('name')
+            .eq('id', groupId)
+            .single();
+        const { data: student } = await supabase_1.supabase
+            .from('users')
+            .select('telegram_id')
+            .eq('id', id)
+            .single();
+        if (student && group) {
+            try {
+                await (0, notifications_1.sendStudentGroupNotification)(student.telegram_id, {
+                    added: action === 'add' ? [group.name] : [],
+                    removed: action === 'remove' ? [group.name] : []
+                });
+            }
+            catch (e) {
+                console.error('Failed to send group notification', e);
+            }
+        }
+        res.json({ success: true });
+    }
+    catch (error) {
+        console.error('Error updating student groups:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
 exports.default = router;
