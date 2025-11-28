@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { X } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../../../lib/utils';
+import { useTelegram } from '../../../context/TelegramContext';
 
 interface AdminFilterModalProps {
     isOpen: boolean;
@@ -15,12 +16,24 @@ interface AdminFilterModalProps {
 }
 
 const AdminFilterModal: React.FC<AdminFilterModalProps> = ({ isOpen, onClose, filters, onApply }) => {
+    const { webApp } = useTelegram();
     const [localFilters, setLocalFilters] = React.useState(filters);
 
     const months = [
         'January', 'February', 'March', 'April', 'May', 'June',
         'July', 'August', 'September', 'October', 'November', 'December'
     ];
+
+    useEffect(() => {
+        if (isOpen) {
+            webApp.BackButton.show();
+            webApp.BackButton.onClick(onClose);
+            return () => {
+                webApp.BackButton.offClick(onClose);
+                webApp.BackButton.hide();
+            };
+        }
+    }, [isOpen, onClose, webApp]);
 
     const handleApply = () => {
         onApply(localFilters);
@@ -30,14 +43,15 @@ const AdminFilterModal: React.FC<AdminFilterModalProps> = ({ isOpen, onClose, fi
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center bg-black/50 backdrop-blur-sm p-4">
+        <div className="fixed inset-0 z-[60] flex items-end justify-center sm:items-center bg-black/50 backdrop-blur-sm">
             <motion.div
                 initial={{ y: '100%' }}
                 animate={{ y: 0 }}
                 exit={{ y: '100%' }}
-                className="bg-tg-bg w-full max-w-md rounded-t-2xl sm:rounded-2xl overflow-hidden shadow-xl"
+                transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+                className="bg-tg-bg w-full max-w-md rounded-t-2xl sm:rounded-2xl overflow-hidden shadow-xl pb-safe"
             >
-                <div className="flex items-center justify-between p-4 border-b border-tg-hint/10">
+                <div className="flex items-center justify-between p-4 border-b border-tg-hint/10 bg-tg-bg">
                     <h2 className="text-lg font-semibold text-tg-text">Filters</h2>
                     <div className="flex gap-2">
                         {/* Clear All Button */}
@@ -53,12 +67,12 @@ const AdminFilterModal: React.FC<AdminFilterModalProps> = ({ isOpen, onClose, fi
                     </div>
                 </div>
 
-                <div className="p-4 space-y-6">
+                <div className="p-4 space-y-6 bg-tg-bg h-full max-h-[80vh] overflow-y-auto">
                     {/* Status Filter */}
                     <div className="space-y-3">
-                        <label className="text-sm font-medium text-tg-hint uppercase">Payment Status</label>
+                        <label className="text-sm font-medium text-tg-hint uppercase ml-1">Payment Status</label>
                         <div className="flex flex-wrap gap-2">
-                            {['all', 'paid', 'unpaid'].map((status) => (
+                            {['all', 'paid', 'unpaid', 'overdue'].map((status) => (
                                 <button
                                     key={status}
                                     onClick={() => setLocalFilters({ ...localFilters, status: status as any })}
@@ -77,8 +91,8 @@ const AdminFilterModal: React.FC<AdminFilterModalProps> = ({ isOpen, onClose, fi
 
                     {/* Month Filter */}
                     <div className="space-y-3">
-                        <label className="text-sm font-medium text-tg-hint uppercase">Month</label>
-                        <div className="grid grid-cols-3 gap-2 max-h-40 overflow-y-auto pr-1 custom-scrollbar">
+                        <label className="text-sm font-medium text-tg-hint uppercase ml-1">Month</label>
+                        <div className="grid grid-cols-3 gap-2">
                             {months.map((month, idx) => (
                                 <button
                                     key={month}
@@ -97,12 +111,14 @@ const AdminFilterModal: React.FC<AdminFilterModalProps> = ({ isOpen, onClose, fi
                     </div>
 
                     {/* Apply Button */}
-                    <button
-                        onClick={handleApply}
-                        className="w-full py-3.5 rounded-xl bg-tg-button text-white font-semibold active:opacity-90 transition-opacity"
-                    >
-                        Apply Filters
-                    </button>
+                    <div className="pt-4">
+                        <button
+                            onClick={handleApply}
+                            className="w-full py-3.5 rounded-xl bg-tg-button text-white font-semibold active:scale-[0.98] transition-all shadow-lg shadow-tg-button/20"
+                        >
+                            Apply Filters
+                        </button>
+                    </div>
                 </div>
             </motion.div>
         </div>
