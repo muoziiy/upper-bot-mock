@@ -102,7 +102,7 @@ const AdminGroupManagementModal: React.FC<AdminGroupManagementModalProps> = ({
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-50 bg-tg-bg flex flex-col">
+        <div className="fixed inset-0 z-[60] bg-tg-bg flex flex-col">
             {/* Header */}
             <div className="px-4 py-3 border-b border-tg-hint/10 flex items-center justify-between bg-tg-bg">
                 <h2 className="text-lg font-semibold text-tg-text">

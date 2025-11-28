@@ -67,6 +67,14 @@ const AdminStudents: React.FC = () => {
                     }
                 }
                 setStudents(filtered);
+
+                // Update selectedStudent if it exists
+                if (selectedStudent) {
+                    const updatedSelected = filtered.find((s: Student) => s.id === selectedStudent.id);
+                    if (updatedSelected) {
+                        setSelectedStudent(updatedSelected);
+                    }
+                }
             }
         } catch (e) {
             console.error('Failed to fetch students', e);

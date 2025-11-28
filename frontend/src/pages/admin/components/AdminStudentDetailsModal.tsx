@@ -45,7 +45,7 @@ const AdminStudentDetailsModal: React.FC<AdminStudentDetailsModalProps> = ({ isO
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-50 bg-tg-secondary overflow-y-auto pb-10 animate-in slide-in-from-bottom-10 fade-in duration-200">
+        <div className="fixed inset-0 z-[60] bg-tg-secondary overflow-y-auto overscroll-contain pb-10 animate-in slide-in-from-bottom-10 fade-in duration-200">
             {/* Header */}
             <div className="bg-tg-bg sticky top-0 z-10 px-4 py-3 flex items-center justify-center border-b border-tg-hint/10">
                 <h2 className="text-lg font-semibold text-tg-text">Student Details</h2>
