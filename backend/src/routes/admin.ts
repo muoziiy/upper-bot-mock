@@ -300,7 +300,7 @@ router.get('/students', async (req, res) => {
                         id,
                         name,
                         price,
-                        teacher:users (
+                        teacher:users!groups_teacher_id_fkey (
                             first_name,
                             surname
                         )
