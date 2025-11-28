@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useTelegram } from '../../context/TelegramContext';
 import { Search, Filter, CreditCard, Users, Edit } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -29,7 +28,7 @@ interface Student {
 
 const AdminStudents: React.FC = () => {
     const { webApp } = useTelegram();
-    const navigate = useNavigate();
+    // const navigate = useNavigate(); // Not used anymore
     const [students, setStudents] = useState<Student[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
@@ -48,17 +47,8 @@ const AdminStudents: React.FC = () => {
     const [showGroupModal, setShowGroupModal] = useState(false);
 
     // Handle Native Back Button
-    useEffect(() => {
-        if (webApp) {
-            webApp.BackButton.show();
-            const handleBack = () => navigate(-1);
-            webApp.BackButton.onClick(handleBack);
-            return () => {
-                webApp.BackButton.offClick(handleBack);
-                webApp.BackButton.hide();
-            };
-        }
-    }, [webApp, navigate]);
+    // Native Back Button handled by BottomNav/Router now
+
 
     // Fetch students
     const fetchStudents = async () => {
@@ -74,7 +64,11 @@ const AdminStudents: React.FC = () => {
                 // Client-side filtering for now (until backend supports it)
                 let filtered = data;
                 if (filters.status !== 'all') {
-                    filtered = filtered.filter((s: Student) => s.payment_status === filters.status);
+                    if (filters.status === 'unpaid') {
+                        filtered = filtered.filter((s: Student) => s.payment_status === 'unpaid' || s.payment_status === 'overdue');
+                    } else {
+                        filtered = filtered.filter((s: Student) => s.payment_status === filters.status);
+                    }
                 }
                 setStudents(filtered);
             }
@@ -116,60 +110,9 @@ const AdminStudents: React.FC = () => {
     };
 
     return (
-        <div className="min-h-screen bg-tg-secondary">
-            {/* Sticky Header */}
-            <div className="sticky top-0 z-10 bg-tg-bg border-b border-tg-hint/10">
-                <div className="px-4 py-3 space-y-3">
-                    {/* Search Bar */}
-                    <div className="relative flex gap-2">
-                        <div className="relative flex-1">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-tg-hint" size={20} />
-                            <input
-                                type="text"
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                placeholder="Search students..."
-                                className="w-full bg-tg-secondary text-tg-text pl-10 pr-4 py-2.5 rounded-xl border-none outline-none focus:ring-2 focus:ring-tg-button/50 transition-all placeholder:text-tg-hint/70"
-                            />
-                        </div>
-                        <button
-                            onClick={() => setShowFilterModal(true)}
-                            className={cn(
-                                "p-2.5 rounded-xl transition-colors",
-                                filters.status !== 'all' ? "bg-tg-button text-white" : "bg-tg-secondary text-tg-hint"
-                            )}
-                        >
-                            <Filter size={20} />
-                        </button>
-                    </div>
-
-                    {/* Active Filters Display */}
-                    <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-                        <button
-                            onClick={() => setFilters({ ...filters, status: 'all' })}
-                            className={cn(
-                                "px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors",
-                                filters.status === 'all'
-                                    ? "bg-tg-button text-white"
-                                    : "bg-tg-secondary text-tg-hint hover:bg-tg-secondary/80"
-                            )}
-                        >
-                            All
-                        </button>
-                        {filters.status !== 'all' && (
-                            <span className="px-4 py-1.5 rounded-full text-sm font-medium bg-tg-button text-white whitespace-nowrap capitalize">
-                                {filters.status}
-                            </span>
-                        )}
-                        <span className="px-4 py-1.5 rounded-full text-sm font-medium bg-tg-secondary text-tg-hint whitespace-nowrap border border-tg-hint/10">
-                            {new Date(0, filters.month - 1).toLocaleString('default', { month: 'long' })}
-                        </span>
-                    </div>
-                </div>
-            </div>
-
+        <div className="min-h-screen bg-tg-secondary pb-32">
             {/* Student List */}
-            <div className="p-4 space-y-3 pb-24">
+            <div className="p-4 space-y-3">
                 {loading ? (
                     <div className="flex flex-col items-center justify-center py-12 space-y-3">
                         <div className="w-8 h-8 border-2 border-tg-button border-t-transparent rounded-full animate-spin" />
@@ -303,6 +246,56 @@ const AdminStudents: React.FC = () => {
                     />
                 )}
             </AnimatePresence>
+            {/* Bottom Search & Filters - Fixed above navbar */}
+            <div className="fixed bottom-16 left-0 right-0 z-20 bg-tg-bg border-t border-tg-hint/10 shadow-lg">
+                <div className="px-4 py-3 space-y-3">
+                    {/* Search Bar */}
+                    <div className="relative flex gap-2">
+                        <div className="relative flex-1">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-tg-hint" size={20} />
+                            <input
+                                type="text"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                placeholder="Search students..."
+                                className="w-full bg-tg-secondary text-tg-text pl-10 pr-4 py-2.5 rounded-xl border-none outline-none focus:ring-2 focus:ring-tg-button/50 transition-all placeholder:text-tg-hint/70"
+                            />
+                        </div>
+                        <button
+                            onClick={() => setShowFilterModal(true)}
+                            className={cn(
+                                "p-2.5 rounded-xl transition-colors",
+                                filters.status !== 'all' ? "bg-tg-button text-white" : "bg-tg-secondary text-tg-hint"
+                            )}
+                        >
+                            <Filter size={20} />
+                        </button>
+                    </div>
+
+                    {/* Active Filters Display */}
+                    <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+                        <button
+                            onClick={() => setFilters({ ...filters, status: 'all' })}
+                            className={cn(
+                                "px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors",
+                                filters.status === 'all'
+                                    ? "bg-tg-button text-white"
+                                    : "bg-tg-secondary text-tg-hint hover:bg-tg-secondary/80"
+                            )}
+                        >
+                            All
+                        </button>
+                        {filters.status !== 'all' && (
+                            <span className="px-4 py-1.5 rounded-full text-sm font-medium bg-tg-button text-white whitespace-nowrap capitalize">
+                                {filters.status}
+                            </span>
+                        )}
+                        <span className="px-4 py-1.5 rounded-full text-sm font-medium bg-tg-secondary text-tg-hint whitespace-nowrap border border-tg-hint/10">
+                            {new Date(0, filters.month - 1).toLocaleString('default', { month: 'long' })}
+                        </span>
+                    </div>
+                </div>
+            </div>
         </div>
     );
 };

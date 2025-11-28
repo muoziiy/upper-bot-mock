@@ -277,15 +277,11 @@ router.get('/stats/financial', async (req, res) => {
 
 // Get Students List (with Search)
 // SECURITY: Only returns safe fields (no telegram username or profile image)
-// Get Students List (with Search)
-// SECURITY: Only returns safe fields (no telegram username or profile image)
-// Get Students List (with Search)
-// SECURITY: Only returns safe fields (no telegram username or profile image)
 router.get('/students', async (req, res) => {
     const { search } = req.query;
 
     try {
-        // 1. Fetch base student data
+        // 1. Fetch base student data with payment_day
         let query = supabase
             .from('users')
             .select(`
@@ -296,15 +292,13 @@ router.get('/students', async (req, res) => {
                 surname,
                 age,
                 sex,
+                payment_day,
                 group_members (
                     group_id,
-                    payment_day,
-                    lessons_balance,
                     groups (
                         id,
                         name,
-                        price,
-                        payment_model
+                        price
                     )
                 )
             `)
@@ -320,50 +314,33 @@ router.get('/students', async (req, res) => {
         const { data: studentsData, error: studentsError } = await query;
         if (studentsError) throw studentsError;
 
-        // 2. Fetch overdue status for ALL students
+        // 2. Fetch overdue status for ALL students using new RPC
         const { data: overdueData, error: overdueError } = await supabase
             .rpc('get_overdue_students', { target_date: new Date().toISOString() });
 
         if (overdueError) {
             console.error('Error fetching overdue status:', overdueError);
-            // Continue without overdue status if RPC fails, but log it
         }
 
-        // Create a map for quick lookup: student_id -> group_id -> overdue_info
-        const overdueMap = new Map<string, Map<string, any>>();
+        // Create a map for quick lookup: student_id -> overdue_info
+        const overdueMap = new Map<string, any>();
         if (overdueData) {
             overdueData.forEach((item: any) => {
-                if (!overdueMap.has(item.student_id)) {
-                    overdueMap.set(item.student_id, new Map());
-                }
-                overdueMap.get(item.student_id)?.set(item.group_id, item);
+                overdueMap.set(item.student_id, item);
             });
         }
 
         // 3. Merge data
         const students = studentsData.map((student: any) => {
-            const studentOverdueMap = overdueMap.get(student.id);
-            let isStudentOverdue = false;
+            const overdueInfo = overdueMap.get(student.id);
+            const isOverdue = !!overdueInfo;
 
             const groups = student.group_members?.map((gm: any) => {
                 const group = gm.groups;
-                // Check if this specific group is overdue for this student
-                const overdueInfo = studentOverdueMap?.get(group.id);
-
-                if (overdueInfo) {
-                    isStudentOverdue = true;
-                }
-
                 return {
                     id: group.id,
                     name: group.name,
-                    price: group.price,
-                    payment_model: group.payment_model,
-                    payment_day: gm.payment_day,
-                    lessons_balance: gm.lessons_balance,
-                    is_overdue: !!overdueInfo,
-                    amount_due: overdueInfo?.amount_due || 0,
-                    overdue_reason: overdueInfo?.reason || null
+                    price: group.price
                 };
             }).filter((g: any) => g.name) || [];
 
@@ -375,14 +352,40 @@ router.get('/students', async (req, res) => {
                 surname: student.surname,
                 age: student.age,
                 sex: student.sex,
+                payment_day: student.payment_day || 1,
                 groups: groups,
-                payment_status: isStudentOverdue ? 'overdue' : 'paid' // Simplified overall status
+                payment_status: isOverdue ? 'overdue' : 'paid',
+                amount_due: overdueInfo?.total_amount_due || 0
             };
         });
 
         res.json(students);
     } catch (error) {
         console.error('Error fetching students:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Update Student Payment Day
+router.put('/students/:id/payment-day', async (req, res) => {
+    const { id } = req.params;
+    const { payment_day } = req.body;
+
+    if (!payment_day || payment_day < 1 || payment_day > 31) {
+        return res.status(400).json({ error: 'Invalid payment day' });
+    }
+
+    try {
+        const { error } = await supabase
+            .from('users')
+            .update({ payment_day })
+            .eq('id', id);
+
+        if (error) throw error;
+
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Error updating payment day:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
 });
@@ -610,7 +613,7 @@ router.get('/groups/list', async (req, res) => {
     try {
         const { data, error } = await supabase
             .from('groups')
-            .select('id, name, price, schedule, payment_model, teacher_id')
+            .select('id, name, price, schedule, teacher_id')
             .order('name');
 
         if (error) throw error;
@@ -622,7 +625,7 @@ router.get('/groups/list', async (req, res) => {
 
 // Create Group
 router.post('/groups', async (req, res) => {
-    const { name, teacher_id, price, schedule, payment_model } = req.body;
+    const { name, teacher_id, price, schedule } = req.body;
 
     try {
         const { data, error } = await supabase
@@ -631,8 +634,7 @@ router.post('/groups', async (req, res) => {
                 name,
                 teacher_id: teacher_id || null,
                 price: price || 0,
-                schedule: schedule || {},
-                payment_model: payment_model || 'monthly_date'
+                schedule: schedule || {}
             })
             .select()
             .single();
@@ -648,7 +650,7 @@ router.post('/groups', async (req, res) => {
 // Update Group
 router.put('/groups/:id', async (req, res) => {
     const { id } = req.params;
-    const { name, teacher_id, price, schedule, payment_model } = req.body;
+    const { name, teacher_id, price, schedule } = req.body;
 
     try {
         const { data, error } = await supabase
@@ -658,7 +660,6 @@ router.put('/groups/:id', async (req, res) => {
                 teacher_id: teacher_id || null,
                 price: price || 0,
                 schedule: schedule || {},
-                payment_model: payment_model || 'monthly_date',
                 updated_at: new Date().toISOString()
             })
             .eq('id', id)
@@ -693,23 +694,11 @@ router.put('/students/:id/groups', async (req, res) => {
                 .single();
 
             if (!existing) {
-                // Get group details to set default payment terms
-                const { data: group } = await supabase
-                    .from('groups')
-                    .select('payment_model')
-                    .eq('id', groupId)
-                    .single();
-
-                const payment_day = req.body.payment_day || 1;
-                const lessons_balance = req.body.lessons_balance || (group?.payment_model === '12_lessons' ? 12 : 0);
-
                 const { error } = await supabase
                     .from('group_members')
                     .insert({
                         student_id: id,
-                        group_id: groupId,
-                        payment_day,
-                        lessons_balance
+                        group_id: groupId
                     });
                 if (error) throw error;
             }
@@ -749,6 +738,35 @@ router.put('/students/:id/groups', async (req, res) => {
         res.json({ success: true });
     } catch (error) {
         console.error('Error updating student groups:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Get all teachers
+router.get('/teachers', async (req, res) => {
+    try {
+        const { data, error } = await supabase
+            .from('users')
+            .select(`
+                id,
+                first_name,
+                surname,
+                subjects
+            `)
+            .eq('role', 'teacher')
+            .order('first_name', { ascending: true });
+
+        if (error) throw error;
+
+        // TODO: Add groups count if needed
+        const teachers = data.map(teacher => ({
+            ...teacher,
+            groups_count: 0 // Placeholder - can be calculated with join if needed
+        }));
+
+        res.json(teachers);
+    } catch (error) {
+        console.error('Error fetching teachers:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
 });
