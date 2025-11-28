@@ -682,6 +682,24 @@ router.put('/groups/:id', async (req, res) => {
     }
 });
 
+// Delete Group
+router.delete('/groups/:id', async (req, res) => {
+    const { id } = req.params;
+
+    try {
+        const { error } = await supabase
+            .from('groups')
+            .delete()
+            .eq('id', id);
+
+        if (error) throw error;
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Error deleting group:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
 // ==============================================================================
 // STUDENT GROUP MANAGEMENT
 // ==============================================================================

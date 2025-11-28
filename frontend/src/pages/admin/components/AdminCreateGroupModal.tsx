@@ -1,16 +1,28 @@
 import React, { useState, useEffect } from 'react';
-import { Clock, User, ChevronDown, Check } from 'lucide-react';
+import { Clock, User, ChevronDown, Check, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../../../lib/utils';
 import { useTelegram } from '../../../context/TelegramContext';
+
+interface Group {
+    id: string;
+    name: string;
+    price: number;
+    teacher_id: string | null;
+    schedule: {
+        days: string[];
+        time: string;
+    };
+}
 
 interface AdminCreateGroupModalProps {
     isOpen: boolean;
     onClose: () => void;
     onSuccess: () => void;
+    group?: Group | null; // Optional group for editing
 }
 
-const AdminCreateGroupModal: React.FC<AdminCreateGroupModalProps> = ({ isOpen, onClose, onSuccess }) => {
+const AdminCreateGroupModal: React.FC<AdminCreateGroupModalProps> = ({ isOpen, onClose, onSuccess, group }) => {
     const { webApp } = useTelegram();
     const [loading, setLoading] = useState(false);
     const [teachers, setTeachers] = useState<{ id: string, first_name: string, surname: string }[]>([]);
@@ -39,10 +51,6 @@ const AdminCreateGroupModal: React.FC<AdminCreateGroupModalProps> = ({ isOpen, o
             webApp.BackButton.onClick(handleBack);
             return () => {
                 webApp.BackButton.offClick(handleBack);
-                // Don't hide here if we are going back to a page that needs it, 
-                // but usually modals are on top of pages. 
-                // If the underlying page (AdminGroups) needs it, it should re-mount or handle it.
-                // However, AdminGroups is a main tab, so it likely doesn't need a back button.
                 webApp.BackButton.hide();
             };
         }
@@ -51,14 +59,23 @@ const AdminCreateGroupModal: React.FC<AdminCreateGroupModalProps> = ({ isOpen, o
     useEffect(() => {
         if (isOpen) {
             fetchTeachers();
-            // Reset form
-            setName('');
-            setPrice('');
-            setTeacherId('');
-            setSelectedDays([]);
-            setTime('14:00');
+            if (group) {
+                // Edit Mode
+                setName(group.name);
+                setPrice(group.price.toString());
+                setTeacherId(group.teacher_id || '');
+                setSelectedDays(group.schedule?.days || []);
+                setTime(group.schedule?.time || '14:00');
+            } else {
+                // Create Mode
+                setName('');
+                setPrice('');
+                setTeacherId('');
+                setSelectedDays([]);
+                setTime('14:00');
+            }
         }
-    }, [isOpen]);
+    }, [isOpen, group]);
 
     const fetchTeachers = async () => {
         try {
@@ -88,8 +105,14 @@ const AdminCreateGroupModal: React.FC<AdminCreateGroupModalProps> = ({ isOpen, o
 
         setLoading(true);
         try {
-            const res = await fetch(`${import.meta.env.VITE_API_URL}/admin/groups`, {
-                method: 'POST',
+            const url = group
+                ? `${import.meta.env.VITE_API_URL}/admin/groups/${group.id}`
+                : `${import.meta.env.VITE_API_URL}/admin/groups`;
+
+            const method = group ? 'PUT' : 'POST';
+
+            const res = await fetch(url, {
+                method,
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     name,
@@ -105,19 +128,50 @@ const AdminCreateGroupModal: React.FC<AdminCreateGroupModalProps> = ({ isOpen, o
             if (res.ok) {
                 webApp?.showPopup({
                     title: 'Success',
-                    message: 'Group created successfully',
+                    message: group ? 'Group updated successfully' : 'Group created successfully',
                     buttons: [{ type: 'ok' }]
                 });
                 onSuccess();
                 onClose();
             } else {
-                throw new Error('Failed to create group');
+                throw new Error('Failed to save group');
             }
         } catch (e) {
-            webApp?.showAlert('Failed to create group');
+            webApp?.showAlert('Failed to save group');
         } finally {
             setLoading(false);
         }
+    };
+
+    const handleDelete = async () => {
+        if (!group) return;
+
+        webApp?.showConfirm('Are you sure you want to delete this group?', async (confirm) => {
+            if (confirm) {
+                setLoading(true);
+                try {
+                    const res = await fetch(`${import.meta.env.VITE_API_URL}/admin/groups/${group.id}`, {
+                        method: 'DELETE'
+                    });
+
+                    if (res.ok) {
+                        webApp?.showPopup({
+                            title: 'Deleted',
+                            message: 'Group deleted successfully',
+                            buttons: [{ type: 'ok' }]
+                        });
+                        onSuccess();
+                        onClose();
+                    } else {
+                        throw new Error('Failed to delete group');
+                    }
+                } catch (e) {
+                    webApp?.showAlert('Failed to delete group');
+                } finally {
+                    setLoading(false);
+                }
+            }
+        });
     };
 
     const selectedTeacher = teachers.find(t => t.id === teacherId);
@@ -128,7 +182,7 @@ const AdminCreateGroupModal: React.FC<AdminCreateGroupModalProps> = ({ isOpen, o
         <div className="fixed inset-0 z-[60] bg-tg-bg flex flex-col h-[100dvh]">
             {/* Header */}
             <div className="px-4 py-3 border-b border-tg-hint/10 flex items-center justify-center relative bg-tg-bg z-10">
-                <h2 className="text-lg font-semibold text-tg-text">Create Group</h2>
+                <h2 className="text-lg font-semibold text-tg-text">{group ? 'Edit Group' : 'Create Group'}</h2>
             </div>
 
             <div className="flex-1 overflow-y-auto p-4 space-y-6">
@@ -239,6 +293,18 @@ const AdminCreateGroupModal: React.FC<AdminCreateGroupModalProps> = ({ isOpen, o
                         />
                     </div>
                 </div>
+
+                {/* Delete Button (Only in Edit Mode) */}
+                {group && (
+                    <button
+                        onClick={handleDelete}
+                        disabled={loading}
+                        className="w-full py-3.5 rounded-xl bg-red-500/10 text-red-500 font-semibold active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                    >
+                        <Trash2 size={18} />
+                        Delete Group
+                    </button>
+                )}
             </div>
 
             {/* Footer Action */}
@@ -248,7 +314,7 @@ const AdminCreateGroupModal: React.FC<AdminCreateGroupModalProps> = ({ isOpen, o
                     disabled={loading}
                     className="w-full py-3.5 rounded-xl bg-tg-button text-white font-semibold active:scale-[0.98] transition-all shadow-lg shadow-tg-button/20 disabled:opacity-70 disabled:scale-100"
                 >
-                    {loading ? 'Creating...' : 'Create Group'}
+                    {loading ? 'Saving...' : (group ? 'Save Changes' : 'Create Group')}
                 </button>
             </div>
         </div>

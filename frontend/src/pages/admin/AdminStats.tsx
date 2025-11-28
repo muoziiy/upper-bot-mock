@@ -67,13 +67,29 @@ const AdminStats: React.FC = () => {
             </div>
 
             {activeTab === 'general' ? (
-                <div className="space-y-6">
-                    <Section title="Overview">
-                        <ListItem title="Total Students" value={generalStats.totalStudents.toString()} icon="👨‍🎓" />
-                        <ListItem title="Total Teachers" value={generalStats.totalTeachers.toString()} icon="👩‍🏫" />
-                        <ListItem title="Active Groups" value={generalStats.activeGroups.toString()} icon="👥" />
-                        <ListItem title="Total Courses" value={generalStats.totalSubjects.toString()} icon="📚" isLast />
-                    </Section>
+                <div className="space-y-6 px-4">
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="bg-white dark:bg-black/20 p-4 rounded-2xl shadow-sm flex flex-col items-center justify-center gap-2">
+                            <span className="text-4xl">👨‍🎓</span>
+                            <span className="text-2xl font-bold text-tg-text">{generalStats.totalStudents}</span>
+                            <span className="text-xs text-tg-hint font-medium uppercase tracking-wide">Students</span>
+                        </div>
+                        <div className="bg-white dark:bg-black/20 p-4 rounded-2xl shadow-sm flex flex-col items-center justify-center gap-2">
+                            <span className="text-4xl">👩‍🏫</span>
+                            <span className="text-2xl font-bold text-tg-text">{generalStats.totalTeachers}</span>
+                            <span className="text-xs text-tg-hint font-medium uppercase tracking-wide">Teachers</span>
+                        </div>
+                        <div className="bg-white dark:bg-black/20 p-4 rounded-2xl shadow-sm flex flex-col items-center justify-center gap-2">
+                            <span className="text-4xl">👥</span>
+                            <span className="text-2xl font-bold text-tg-text">{generalStats.activeGroups}</span>
+                            <span className="text-xs text-tg-hint font-medium uppercase tracking-wide">Active Groups</span>
+                        </div>
+                        <div className="bg-white dark:bg-black/20 p-4 rounded-2xl shadow-sm flex flex-col items-center justify-center gap-2">
+                            <span className="text-4xl">📚</span>
+                            <span className="text-2xl font-bold text-tg-text">{generalStats.totalSubjects}</span>
+                            <span className="text-xs text-tg-hint font-medium uppercase tracking-wide">Courses</span>
+                        </div>
+                    </div>
 
                     <Section title="Growth (This Month)">
                         <ListItem
@@ -99,10 +115,22 @@ const AdminStats: React.FC = () => {
                         </div>
                     </div>
 
-                    <Section title="Financial Overview (This Month)">
-                        <ListItem title="Total Revenue" value={`$${financialStats.totalRevenue.toLocaleString()}`} icon="💰" />
-                        <ListItem title="Pending Payments" value={<span className="text-orange-500">${financialStats.pendingPayments.toLocaleString()}</span>} icon="⏳" isLast />
-                    </Section>
+                    <div className="px-4 grid grid-cols-2 gap-4">
+                        <div className="bg-white dark:bg-black/20 p-4 rounded-2xl shadow-sm flex flex-col items-center justify-center gap-2">
+                            <span className="text-4xl">💰</span>
+                            <span className="text-lg font-bold text-tg-text break-all text-center">
+                                ${financialStats.totalRevenue.toLocaleString()}
+                            </span>
+                            <span className="text-xs text-tg-hint font-medium uppercase tracking-wide">Total Revenue</span>
+                        </div>
+                        <div className="bg-white dark:bg-black/20 p-4 rounded-2xl shadow-sm flex flex-col items-center justify-center gap-2">
+                            <span className="text-4xl">⏳</span>
+                            <span className="text-lg font-bold text-orange-500 break-all text-center">
+                                ${financialStats.pendingPayments.toLocaleString()}
+                            </span>
+                            <span className="text-xs text-tg-hint font-medium uppercase tracking-wide">Pending</span>
+                        </div>
+                    </div>
 
                     {financialStats.recentTransactions.length > 0 && (
                         <Section title="Recent Transactions">

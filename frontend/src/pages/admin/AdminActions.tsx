@@ -1,11 +1,7 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Section } from '../../components/ui/Section';
 import { ListItem } from '../../components/ui/ListItem';
-import AdminCreateGroupModal from './components/AdminCreateGroupModal';
-
 const AdminActions: React.FC = () => {
-    const [showCreateGroupModal, setShowCreateGroupModal] = useState(false);
-
     return (
         <div className="min-h-screen bg-tg-secondary pt-4 pb-20">
             <h1 className="text-2xl font-bold mb-6 px-4 text-black dark:text-white">Quick Actions</h1>
@@ -24,10 +20,10 @@ const AdminActions: React.FC = () => {
                     showChevron
                 />
                 <ListItem
-                    title="Create Group"
-                    subtitle="Start a new class group"
+                    title="Manage Groups"
+                    subtitle="View, edit, or create groups"
                     icon="👥"
-                    onClick={() => setShowCreateGroupModal(true)}
+                    onClick={() => window.location.href = '/admin/groups'}
                     showChevron
                 />
                 <ListItem
@@ -72,14 +68,7 @@ const AdminActions: React.FC = () => {
                 />
             </Section>
 
-            {/* Modals */}
-            <AdminCreateGroupModal
-                isOpen={showCreateGroupModal}
-                onClose={() => setShowCreateGroupModal(false)}
-                onSuccess={() => {
-                    // Optional: Refresh data or show success
-                }}
-            />
+
         </div>
     );
 };
