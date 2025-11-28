@@ -621,11 +621,28 @@ router.get('/groups/list', async (req, res) => {
     try {
         const { data, error } = await supabase
             .from('groups')
-            .select('id, name, price, schedule, teacher_id')
+            .select(`
+                id, 
+                name, 
+                price, 
+                schedule, 
+                teacher_id,
+                teacher:users!groups_teacher_id_fkey (
+                    first_name,
+                    surname
+                )
+            `)
             .order('name');
 
         if (error) throw error;
-        res.json(data);
+
+        // Flatten teacher name
+        const groups = data.map((g: any) => ({
+            ...g,
+            teacher_name: g.teacher ? `${g.teacher.first_name} ${g.teacher.surname}` : 'No Teacher'
+        }));
+
+        res.json(groups);
     } catch (error) {
         res.status(500).json({ error: 'Internal server error' });
     }

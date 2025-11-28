@@ -33,12 +33,16 @@ const AdminGroupManagementModal: React.FC<AdminGroupManagementModalProps> = ({
     const [availableGroups, setAvailableGroups] = useState<Group[]>([]);
     const [loading, setLoading] = useState(false);
 
+    const [selectedGroupToAdd, setSelectedGroupToAdd] = useState<Group | null>(null);
+
     // Handle Native Back Button
     useEffect(() => {
         if (isOpen) {
             webApp.BackButton.show();
             const handleBack = () => {
-                if (isAdding) {
+                if (selectedGroupToAdd) {
+                    setSelectedGroupToAdd(null);
+                } else if (isAdding) {
                     setIsAdding(false);
                 } else {
                     onClose();
@@ -47,10 +51,12 @@ const AdminGroupManagementModal: React.FC<AdminGroupManagementModalProps> = ({
             webApp.BackButton.onClick(handleBack);
             return () => {
                 webApp.BackButton.offClick(handleBack);
-                if (!isAdding) webApp.BackButton.hide();
+                // Don't hide if we are in a stacked modal context, but here we can't know for sure.
+                // However, since we are the top modal, hiding is usually correct when closing.
+                if (!isAdding && !selectedGroupToAdd) webApp.BackButton.hide();
             };
         }
-    }, [isOpen, isAdding, onClose, webApp]);
+    }, [isOpen, isAdding, selectedGroupToAdd, onClose, webApp]);
 
     // Fetch available groups when adding
     useEffect(() => {
@@ -73,28 +79,57 @@ const AdminGroupManagementModal: React.FC<AdminGroupManagementModalProps> = ({
         }
     };
 
-    const handleAction = async (groupId: string, action: 'add' | 'remove') => {
+    const handleAddGroup = async () => {
+        if (!selectedGroupToAdd) return;
+
         setLoading(true);
         try {
             const res = await fetch(`${import.meta.env.VITE_API_URL}/admin/students/${studentId}/groups`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ groupId, action, joinedAt: joinDate })
+                body: JSON.stringify({ groupId: selectedGroupToAdd.id, action: 'add', joinedAt: joinDate })
             });
 
             if (res.ok) {
                 webApp?.showPopup({
                     title: 'Success',
-                    message: `Group ${action === 'add' ? 'added' : 'removed'} successfully.`,
+                    message: 'Group added successfully.',
                     buttons: [{ type: 'ok' }]
                 });
                 onUpdate();
-                if (action === 'add') setIsAdding(false);
+                setSelectedGroupToAdd(null);
+                setIsAdding(false);
             } else {
-                throw new Error('Failed to update');
+                throw new Error('Failed to add group');
             }
         } catch (e) {
-            webApp?.showAlert('Failed to update groups');
+            webApp?.showAlert('Failed to add group');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleRemoveGroup = async (groupId: string) => {
+        setLoading(true);
+        try {
+            const res = await fetch(`${import.meta.env.VITE_API_URL}/admin/students/${studentId}/groups`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ groupId, action: 'remove' })
+            });
+
+            if (res.ok) {
+                webApp?.showPopup({
+                    title: 'Success',
+                    message: 'Group removed successfully.',
+                    buttons: [{ type: 'ok' }]
+                });
+                onUpdate();
+            } else {
+                throw new Error('Failed to remove group');
+            }
+        } catch (e) {
+            webApp?.showAlert('Failed to remove group');
         } finally {
             setLoading(false);
         }
@@ -107,14 +142,48 @@ const AdminGroupManagementModal: React.FC<AdminGroupManagementModalProps> = ({
             {/* Header */}
             <div className="px-4 py-3 border-b border-tg-hint/10 flex items-center justify-between bg-tg-bg">
                 <h2 className="text-lg font-semibold text-tg-text">
-                    {isAdding ? 'Add Group' : `Groups - ${studentName}`}
+                    {selectedGroupToAdd ? 'Configure Join Date' : (isAdding ? 'Add Group' : `Groups - ${studentName}`)}
                 </h2>
             </div>
 
             {/* Content */}
             <div className="flex-1 overflow-y-auto p-4">
                 <AnimatePresence mode="wait">
-                    {isAdding ? (
+                    {selectedGroupToAdd ? (
+                        <motion.div
+                            key="confirm"
+                            initial={{ opacity: 0, x: 20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0, x: -20 }}
+                            className="space-y-6"
+                        >
+                            <div className="bg-tg-secondary p-4 rounded-xl border border-tg-hint/10">
+                                <span className="text-sm text-tg-hint block mb-1">Selected Group</span>
+                                <span className="text-lg font-bold text-tg-text">{selectedGroupToAdd.name}</span>
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium text-tg-hint ml-1">Join Date</label>
+                                <input
+                                    type="date"
+                                    value={joinDate}
+                                    onChange={(e) => setJoinDate(e.target.value)}
+                                    className="w-full bg-tg-secondary text-tg-text p-3 rounded-xl border-none outline-none focus:ring-2 focus:ring-tg-button/20"
+                                />
+                                <p className="text-xs text-tg-hint ml-1">
+                                    Payments will be calculated from this date.
+                                </p>
+                            </div>
+
+                            <button
+                                onClick={handleAddGroup}
+                                disabled={loading}
+                                className="w-full py-3.5 rounded-xl bg-tg-button text-white font-semibold active:scale-[0.98] transition-all shadow-lg shadow-tg-button/20"
+                            >
+                                {loading ? 'Adding...' : 'Confirm & Add'}
+                            </button>
+                        </motion.div>
+                    ) : isAdding ? (
                         <motion.div
                             key="adding"
                             initial={{ opacity: 0, x: 20 }}
@@ -122,40 +191,29 @@ const AdminGroupManagementModal: React.FC<AdminGroupManagementModalProps> = ({
                             exit={{ opacity: 0, x: -20 }}
                             className="space-y-2"
                         >
-                            <div className="space-y-4">
-                                <div className="space-y-2">
-                                    <label className="text-sm font-medium text-tg-hint ml-1">Join Date</label>
-                                    <input
-                                        type="date"
-                                        value={joinDate}
-                                        onChange={(e) => setJoinDate(e.target.value)}
-                                        className="w-full bg-tg-secondary text-tg-text p-3 rounded-xl border-none outline-none focus:ring-2 focus:ring-tg-button/20"
-                                    />
-                                </div>
-                                <p className="text-sm text-tg-hint mb-2">Select a group to add:</p>
-                                {availableGroups.length > 0 ? (
-                                    availableGroups.map((group) => (
-                                        <button
-                                            key={group.id}
-                                            onClick={() => handleAction(group.id, 'add')}
-                                            disabled={loading}
-                                            className="w-full flex items-center justify-between p-4 bg-tg-secondary rounded-xl active:bg-tg-secondary/80 transition-colors"
-                                        >
-                                            <div className="text-left">
-                                                <span className="font-semibold text-tg-text block">{group.name}</span>
-                                                <span className="text-xs text-tg-hint">
-                                                    {group.price ? `${group.price.toLocaleString()} UZS` : 'Free'}
-                                                </span>
-                                            </div>
-                                            <div className="w-8 h-8 rounded-full bg-tg-button/10 flex items-center justify-center text-tg-button">
-                                                <Plus size={18} />
-                                            </div>
-                                        </button>
-                                    ))
-                                ) : (
-                                    <p className="text-center text-tg-hint py-8">No available groups to add.</p>
-                                )}
-                            </div>
+                            <p className="text-sm text-tg-hint mb-2">Select a group to add:</p>
+                            {availableGroups.length > 0 ? (
+                                availableGroups.map((group) => (
+                                    <button
+                                        key={group.id}
+                                        onClick={() => setSelectedGroupToAdd(group)}
+                                        disabled={loading}
+                                        className="w-full flex items-center justify-between p-4 bg-tg-secondary rounded-xl active:bg-tg-secondary/80 transition-colors"
+                                    >
+                                        <div className="text-left">
+                                            <span className="font-semibold text-tg-text block">{group.name}</span>
+                                            <span className="text-xs text-tg-hint">
+                                                {group.price ? `${group.price.toLocaleString()} UZS` : 'Free'}
+                                            </span>
+                                        </div>
+                                        <div className="w-8 h-8 rounded-full bg-tg-button/10 flex items-center justify-center text-tg-button">
+                                            <Plus size={18} />
+                                        </div>
+                                    </button>
+                                ))
+                            ) : (
+                                <p className="text-center text-tg-hint py-8">No available groups to add.</p>
+                            )}
                         </motion.div>
                     ) : (
                         <motion.div
@@ -186,7 +244,7 @@ const AdminGroupManagementModal: React.FC<AdminGroupManagementModalProps> = ({
                                                 </span>
                                             </div>
                                             <button
-                                                onClick={() => handleAction(group.id, 'remove')}
+                                                onClick={() => handleRemoveGroup(group.id)}
                                                 disabled={loading}
                                                 className="p-2 text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
                                             >

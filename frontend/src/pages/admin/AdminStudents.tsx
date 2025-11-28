@@ -96,19 +96,10 @@ const AdminStudents: React.FC = () => {
     };
 
     const handleAction = (action: 'payment' | 'groups' | 'attendance') => {
-        // Close details modal first? Or keep it open?
-        // Telegram usually stacks modals.
-        // But for simplicity, let's keep details open or close it.
-        // If we keep it open, we need to handle z-index.
-        // Let's close details for now to avoid complexity, or just stack them.
-        // Since our modals are fixed inset-0, stacking works if z-index is higher.
-        // But let's just switch modals.
-        setShowDetailsModal(false);
-        setTimeout(() => {
-            if (action === 'payment') setShowPaymentModal(true);
-            if (action === 'groups') setShowGroupModal(true);
-            if (action === 'attendance') setShowAttendanceModal(true);
-        }, 100);
+        // Keep details modal open to prevent flash
+        if (action === 'payment') setShowPaymentModal(true);
+        if (action === 'groups') setShowGroupModal(true);
+        if (action === 'attendance') setShowAttendanceModal(true);
     };
 
     return (
@@ -183,20 +174,14 @@ const AdminStudents: React.FC = () => {
                     />
                     <AdminPaymentModal
                         isOpen={showPaymentModal}
-                        onClose={() => {
-                            setShowPaymentModal(false);
-                            setShowDetailsModal(true);
-                        }}
+                        onClose={() => setShowPaymentModal(false)}
                         studentId={selectedStudent.id}
                         studentName={`${selectedStudent.first_name} ${selectedStudent.surname}`}
                         groups={selectedStudent.groups}
                     />
                     <AdminGroupManagementModal
                         isOpen={showGroupModal}
-                        onClose={() => {
-                            setShowGroupModal(false);
-                            setShowDetailsModal(true);
-                        }}
+                        onClose={() => setShowGroupModal(false)}
                         studentId={selectedStudent.id}
                         studentName={`${selectedStudent.first_name} ${selectedStudent.surname}`}
                         currentGroups={selectedStudent.groups}
@@ -204,10 +189,7 @@ const AdminStudents: React.FC = () => {
                     />
                     <AdminAttendanceModal
                         isOpen={showAttendanceModal}
-                        onClose={() => {
-                            setShowAttendanceModal(false);
-                            setShowDetailsModal(true);
-                        }}
+                        onClose={() => setShowAttendanceModal(false)}
                         studentId={selectedStudent.id}
                         studentName={`${selectedStudent.first_name} ${selectedStudent.surname}`}
                     />
