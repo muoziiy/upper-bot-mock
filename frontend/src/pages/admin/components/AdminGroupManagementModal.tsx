@@ -102,10 +102,10 @@ const AdminGroupManagementModal: React.FC<AdminGroupManagementModalProps> = ({
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-50 bg-white flex flex-col">
+        <div className="fixed inset-0 z-50 bg-tg-bg flex flex-col">
             {/* Header */}
-            <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between bg-white">
-                <h2 className="text-lg font-semibold text-black">
+            <div className="px-4 py-3 border-b border-tg-hint/10 flex items-center justify-between bg-tg-bg">
+                <h2 className="text-lg font-semibold text-tg-text">
                     {isAdding ? 'Add Group' : `Groups - ${studentName}`}
                 </h2>
             </div>
@@ -121,28 +121,28 @@ const AdminGroupManagementModal: React.FC<AdminGroupManagementModalProps> = ({
                             exit={{ opacity: 0, x: -20 }}
                             className="space-y-2"
                         >
-                            <p className="text-sm text-gray-500 mb-4">Select a group to add:</p>
+                            <p className="text-sm text-tg-hint mb-4">Select a group to add:</p>
                             {availableGroups.length > 0 ? (
                                 availableGroups.map((group) => (
                                     <button
                                         key={group.id}
                                         onClick={() => handleAction(group.id, 'add')}
                                         disabled={loading}
-                                        className="w-full flex items-center justify-between p-4 bg-gray-50 rounded-xl active:bg-gray-100 transition-colors"
+                                        className="w-full flex items-center justify-between p-4 bg-tg-secondary rounded-xl active:bg-tg-secondary/80 transition-colors"
                                     >
                                         <div className="text-left">
-                                            <span className="font-semibold text-black block">{group.name}</span>
-                                            <span className="text-xs text-gray-500">
+                                            <span className="font-semibold text-tg-text block">{group.name}</span>
+                                            <span className="text-xs text-tg-hint">
                                                 {group.price ? `${group.price.toLocaleString()} UZS` : 'Free'}
                                             </span>
                                         </div>
-                                        <div className="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-500">
+                                        <div className="w-8 h-8 rounded-full bg-tg-button/10 flex items-center justify-center text-tg-button">
                                             <Plus size={18} />
                                         </div>
                                     </button>
                                 ))
                             ) : (
-                                <p className="text-center text-gray-400 py-8">No available groups to add.</p>
+                                <p className="text-center text-tg-hint py-8">No available groups to add.</p>
                             )}
                         </motion.div>
                     ) : (
@@ -156,7 +156,7 @@ const AdminGroupManagementModal: React.FC<AdminGroupManagementModalProps> = ({
                             {/* Add Button */}
                             <button
                                 onClick={() => setIsAdding(true)}
-                                className="w-full py-3 rounded-xl bg-blue-500 text-white font-semibold flex items-center justify-center gap-2 active:scale-95 transition-transform"
+                                className="w-full py-3 rounded-xl bg-tg-button text-white font-semibold flex items-center justify-center gap-2 active:scale-95 transition-transform"
                             >
                                 <Plus size={20} />
                                 Add Group
@@ -166,17 +166,17 @@ const AdminGroupManagementModal: React.FC<AdminGroupManagementModalProps> = ({
                             <div className="space-y-2">
                                 {currentGroups.length > 0 ? (
                                     currentGroups.map((group) => (
-                                        <div key={group.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-100">
+                                        <div key={group.id} className="flex items-center justify-between p-4 bg-tg-secondary rounded-xl border border-tg-hint/10">
                                             <div>
-                                                <span className="font-semibold text-black block">{group.name}</span>
-                                                <span className="text-xs text-gray-500">
+                                                <span className="font-semibold text-tg-text block">{group.name}</span>
+                                                <span className="text-xs text-tg-hint">
                                                     {group.price ? `${group.price.toLocaleString()} UZS` : 'Free'}
                                                 </span>
                                             </div>
                                             <button
                                                 onClick={() => handleAction(group.id, 'remove')}
                                                 disabled={loading}
-                                                className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                                className="p-2 text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
                                             >
                                                 <Trash2 size={20} />
                                             </button>
@@ -184,7 +184,7 @@ const AdminGroupManagementModal: React.FC<AdminGroupManagementModalProps> = ({
                                     ))
                                 ) : (
                                     <div className="text-center py-12">
-                                        <p className="text-gray-400">No groups assigned yet.</p>
+                                        <p className="text-tg-hint">No groups assigned yet.</p>
                                     </div>
                                 )}
                             </div>

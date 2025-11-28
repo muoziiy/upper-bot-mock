@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Search } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { Section } from '../../components/ui/Section';
+import { ListItem } from '../../components/ui/ListItem';
 
 interface Teacher {
     id: string;
@@ -44,72 +45,53 @@ const AdminTeachers: React.FC = () => {
         return fullName.includes(searchQuery.toLowerCase());
     });
 
-    const getAvatarEmoji = () => '👨‍🏫';
-
     return (
-        <div className="min-h-screen bg-tg-secondary pb-32">
-            {/* Teacher List */}
-            <div className="p-4 space-y-3">
-                {loading ? (
-                    <div className="flex flex-col items-center justify-center py-12 space-y-3">
-                        <div className="w-8 h-8 border-2 border-tg-button border-t-transparent rounded-full animate-spin" />
-                        <p className="text-tg-hint text-sm">Loading teachers...</p>
-                    </div>
-                ) : filteredTeachers.length > 0 ? (
-                    filteredTeachers.map((teacher) => (
-                        <motion.div
-                            key={teacher.id}
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className="bg-tg-bg p-4 rounded-2xl shadow-sm border border-tg-hint/5"
-                        >
-                            <div className="flex items-start gap-4">
-                                <div className="w-12 h-12 rounded-full bg-tg-secondary flex items-center justify-center text-2xl flex-shrink-0">
-                                    {getAvatarEmoji()}
-                                </div>
-
-                                <div className="flex-1 min-w-0">
-                                    <h3 className="font-semibold text-tg-text text-lg leading-tight truncate">
-                                        {teacher.first_name} {teacher.surname}
-                                    </h3>
-                                    {teacher.subjects && teacher.subjects.length > 0 && (
-                                        <p className="text-tg-hint text-sm mt-1">
-                                            {teacher.subjects.join(', ')}
-                                        </p>
-                                    )}
-                                    {teacher.groups_count !== undefined && (
-                                        <p className="text-tg-hint text-xs mt-1">
-                                            {teacher.groups_count} {teacher.groups_count === 1 ? 'group' : 'groups'}
-                                        </p>
-                                    )}
-                                </div>
-                            </div>
-                        </motion.div>
-                    ))
-                ) : (
-                    <div className="text-center py-12">
-                        <div className="text-4xl mb-3">🔍</div>
-                        <p className="text-tg-hint">No teachers found</p>
-                    </div>
-                )}
+        <div className="min-h-screen bg-tg-secondary pb-20">
+            {/* Search Header */}
+            <div className="bg-tg-secondary sticky top-0 z-20 px-4 py-2 backdrop-blur-md bg-opacity-90">
+                <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-tg-hint" size={18} />
+                    <input
+                        type="text"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        placeholder="Search teachers..."
+                        className="w-full bg-gray-200 dark:bg-black/20 text-black dark:text-white pl-9 pr-4 py-2 rounded-xl border-none outline-none focus:ring-2 focus:ring-tg-button/50 transition-all placeholder:text-tg-hint"
+                    />
+                </div>
             </div>
 
-            {/* Bottom Search Bar - Fixed above navbar */}
-            <div className="fixed bottom-16 left-0 right-0 z-20 bg-tg-bg border-t border-tg-hint/10 shadow-lg">
-                <div className="px-4 py-3">
-                    <div className="relative flex gap-2">
-                        <div className="relative flex-1">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-tg-hint" size={20} />
-                            <input
-                                type="text"
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                placeholder="Search teachers..."
-                                className="w-full bg-tg-secondary text-tg-text pl-10 pr-4 py-2.5 rounded-xl border-none outline-none focus:ring-2 focus:ring-tg-button/50 transition-all placeholder:text-tg-hint/70"
-                            />
-                        </div>
+            {/* Teacher List */}
+            <div className="pt-2">
+                {loading ? (
+                    <div className="flex justify-center py-10">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-tg-button"></div>
                     </div>
-                </div>
+                ) : filteredTeachers.length > 0 ? (
+                    <Section>
+                        {filteredTeachers.map((teacher, idx) => (
+                            <ListItem
+                                key={teacher.id}
+                                icon="👨‍🏫"
+                                title={`${teacher.first_name} ${teacher.surname}`}
+                                subtitle={teacher.subjects?.join(', ') || 'No subjects'}
+                                rightElement={
+                                    teacher.groups_count !== undefined ? (
+                                        <span className="text-sm text-tg-hint">
+                                            {teacher.groups_count} {teacher.groups_count === 1 ? 'group' : 'groups'}
+                                        </span>
+                                    ) : null
+                                }
+                                isLast={idx === filteredTeachers.length - 1}
+                                showChevron
+                            />
+                        ))}
+                    </Section>
+                ) : (
+                    <div className="text-center py-12 text-tg-hint">
+                        No teachers found
+                    </div>
+                )}
             </div>
         </div>
     );

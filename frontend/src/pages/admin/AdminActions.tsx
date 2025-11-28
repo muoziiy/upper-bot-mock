@@ -7,8 +7,8 @@ const AdminActions: React.FC = () => {
     const [showCreateGroupModal, setShowCreateGroupModal] = useState(false);
 
     return (
-        <div className="page-content pt-4">
-            <h1 className="text-2xl font-bold mb-4 px-4 text-tg-text">Quick Actions</h1>
+        <div className="min-h-screen bg-tg-secondary pt-4 pb-20">
+            <h1 className="text-2xl font-bold mb-6 px-4 text-black dark:text-white">Quick Actions</h1>
 
             <Section title="User Management">
                 <ListItem

@@ -48,8 +48,8 @@ const AdminSubjects: React.FC = () => {
     };
 
     return (
-        <div className="page-content pt-4">
-            <h1 className="text-2xl font-bold mb-4 px-4 text-tg-text">Manage Subjects</h1>
+        <div className="min-h-screen bg-tg-secondary pt-4 pb-20">
+            <h1 className="text-2xl font-bold mb-6 px-4 text-black dark:text-white">Manage Subjects</h1>
 
             <div className="px-4 mb-6">
                 <div className="flex gap-2">
@@ -58,12 +58,12 @@ const AdminSubjects: React.FC = () => {
                         value={newSubject}
                         onChange={(e) => setNewSubject(e.target.value)}
                         placeholder="New Subject Name"
-                        className="flex-1 bg-tg-bg border border-tg-hint/20 rounded-lg p-3 text-tg-text outline-none focus:border-tg-button"
+                        className="flex-1 bg-gray-200 dark:bg-black/20 text-black dark:text-white border-none rounded-xl p-3 outline-none focus:ring-2 focus:ring-tg-button/50 transition-all placeholder:text-tg-hint"
                     />
                     <button
                         onClick={handleAddSubject}
                         disabled={loading || !newSubject.trim()}
-                        className="bg-tg-button text-white p-3 rounded-lg flex items-center justify-center disabled:opacity-50"
+                        className="bg-tg-button text-white p-3 rounded-xl flex items-center justify-center disabled:opacity-50 active:scale-95 transition-transform"
                     >
                         <Plus size={24} />
                     </button>

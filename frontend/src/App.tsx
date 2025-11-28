@@ -16,6 +16,7 @@ const AdminTeachers = React.lazy(() => import('./pages/admin/AdminTeachers'));
 const AdminActions = React.lazy(() => import('./pages/admin/AdminActions'));
 const AdminSubjects = React.lazy(() => import('./pages/admin/AdminSubjects'));
 const AdminStudents = React.lazy(() => import('./pages/admin/AdminStudents')); // New
+const AdminProfile = React.lazy(() => import('./pages/admin/AdminProfile')); // New
 const Onboarding = React.lazy(() => import('./pages/Onboarding'));
 const GuestDashboard = React.lazy(() => import('./pages/GuestDashboard'));
 const WaitingPage = React.lazy(() => import('./pages/WaitingPage'));
@@ -99,7 +100,7 @@ const AppContent: React.FC = () => {
     { path: "/admin/actions", element: <AdminActions /> },
     { path: "/admin/subjects", element: <AdminSubjects /> },
     { path: "/admin/students", element: <AdminStudents /> }, // New
-    { path: "/admin/profile", element: <Profile /> },
+    { path: "/admin/profile", element: <AdminProfile /> },
   ]);
 
   if (loading) {

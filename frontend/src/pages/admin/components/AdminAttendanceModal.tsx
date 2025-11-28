@@ -28,20 +28,20 @@ const AdminAttendanceModal: React.FC<AdminAttendanceModalProps> = ({ isOpen, onC
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-50 bg-white flex flex-col">
+        <div className="fixed inset-0 z-50 bg-tg-bg flex flex-col">
             {/* Header */}
-            <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between bg-white">
-                <h2 className="text-lg font-semibold text-black">Attendance</h2>
+            <div className="px-4 py-3 border-b border-tg-hint/10 flex items-center justify-between bg-tg-bg">
+                <h2 className="text-lg font-semibold text-tg-text">Attendance</h2>
             </div>
 
             {/* Content */}
             <div className="flex-1 flex flex-col items-center justify-center p-8 text-center space-y-4">
-                <div className="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center text-blue-500">
+                <div className="w-20 h-20 bg-tg-button/10 rounded-full flex items-center justify-center text-tg-button">
                     <Calendar size={40} />
                 </div>
-                <h3 className="text-xl font-bold text-black">Coming Soon</h3>
-                <p className="text-gray-500">
-                    Attendance tracking for <span className="font-semibold text-black">{studentName}</span> is currently under development.
+                <h3 className="text-xl font-bold text-tg-text">Coming Soon</h3>
+                <p className="text-tg-hint">
+                    Attendance tracking for <span className="font-semibold text-tg-text">{studentName}</span> is currently under development.
                 </p>
             </div>
         </div>

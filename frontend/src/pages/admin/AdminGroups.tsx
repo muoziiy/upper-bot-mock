@@ -2,13 +2,14 @@ import React, { useState } from 'react';
 import SegmentedControl from '../../components/ui/SegmentedControl';
 import { Section } from '../../components/ui/Section';
 import { ListItem } from '../../components/ui/ListItem';
+import { Search } from 'lucide-react';
 
 const AdminGroups: React.FC = () => {
     const [activeTab, setActiveTab] = useState('groups');
 
     return (
-        <div className="page-content pt-4">
-            <h1 className="text-2xl font-bold mb-4 px-4 text-tg-text">Groups & Students</h1>
+        <div className="min-h-screen bg-tg-secondary pt-4 pb-20">
+            <h1 className="text-2xl font-bold mb-4 px-4 text-black dark:text-white">Groups & Students</h1>
 
             <div className="px-4 mb-6">
                 <SegmentedControl
@@ -52,11 +53,14 @@ const AdminGroups: React.FC = () => {
             ) : (
                 <div className="space-y-6">
                     <div className="px-4 mb-4">
-                        <input
-                            type="text"
-                            placeholder="Search students..."
-                            className="w-full bg-tg-secondary text-tg-text p-3 rounded-lg border-none outline-none placeholder-tg-hint"
-                        />
+                        <div className="relative">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-tg-hint" size={18} />
+                            <input
+                                type="text"
+                                placeholder="Search students..."
+                                className="w-full bg-gray-200 dark:bg-black/20 text-black dark:text-white pl-9 pr-4 py-2 rounded-xl border-none outline-none focus:ring-2 focus:ring-tg-button/50 transition-all placeholder:text-tg-hint"
+                            />
+                        </div>
                     </div>
                     <Section title="All Students">
                         <ListItem

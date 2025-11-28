@@ -110,9 +110,6 @@ const AdminPaymentModal: React.FC<AdminPaymentModalProps> = ({ isOpen, onClose, 
         const lessons = parseInt(lessonsAttended);
         if (isNaN(lessons)) return 0;
         // Logic: Price is for 12 lessons usually.
-        // If price is monthly, we might just assume full price?
-        // User said: "calculate how much the user should pay based on the number of lessons"
-        // Assuming price is for 12 lessons standard
         return Math.round((group.price / 12) * lessons);
     };
 
@@ -148,7 +145,7 @@ const AdminPaymentModal: React.FC<AdminPaymentModalProps> = ({ isOpen, onClose, 
             });
 
             if (res.ok) {
-                webApp.showPopup({
+                webApp?.showPopup({
                     title: 'Success',
                     message: 'Payment saved successfully',
                     buttons: [{ type: 'ok' }]
@@ -171,16 +168,16 @@ const AdminPaymentModal: React.FC<AdminPaymentModalProps> = ({ isOpen, onClose, 
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-50 bg-white flex flex-col">
+        <div className="fixed inset-0 z-50 bg-tg-bg flex flex-col">
             {/* Header */}
-            <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between bg-white">
-                <h2 className="text-lg font-semibold text-black">
+            <div className="px-4 py-3 border-b border-tg-hint/10 flex items-center justify-between bg-tg-bg">
+                <h2 className="text-lg font-semibold text-tg-text">
                     {view === 'add' ? 'Add Payment' : `Payments - ${studentName}`}
                 </h2>
             </div>
 
             {/* Content */}
-            <div className="flex-1 overflow-y-auto p-4 bg-white">
+            <div className="flex-1 overflow-y-auto p-4 bg-tg-bg">
                 <AnimatePresence mode="wait">
                     {view === 'history' ? (
                         <motion.div
@@ -193,7 +190,7 @@ const AdminPaymentModal: React.FC<AdminPaymentModalProps> = ({ isOpen, onClose, 
                             {/* Add Button */}
                             <button
                                 onClick={() => setView('add')}
-                                className="w-full py-3 rounded-xl bg-blue-500 text-white font-semibold flex items-center justify-center gap-2 active:scale-95 transition-transform"
+                                className="w-full py-3 rounded-xl bg-tg-button text-white font-semibold flex items-center justify-center gap-2 active:scale-95 transition-transform"
                             >
                                 <Plus size={20} />
                                 Add Payment
@@ -203,32 +200,32 @@ const AdminPaymentModal: React.FC<AdminPaymentModalProps> = ({ isOpen, onClose, 
                             <div className="space-y-3">
                                 {payments.length > 0 ? (
                                     payments.map((payment) => (
-                                        <div key={payment.id} className="bg-gray-50 p-4 rounded-xl border border-gray-100 flex justify-between items-center">
+                                        <div key={payment.id} className="bg-tg-secondary p-4 rounded-xl border border-tg-hint/10 flex justify-between items-center">
                                             <div>
-                                                <div className="font-semibold text-black text-lg">
+                                                <div className="font-semibold text-tg-text text-lg">
                                                     {payment.amount.toLocaleString()} UZS
                                                 </div>
-                                                <div className="text-sm text-gray-500 flex items-center gap-2">
+                                                <div className="text-sm text-tg-hint flex items-center gap-2">
                                                     <span>📅 {new Date(payment.payment_date).toLocaleDateString()}</span>
                                                     <span>•</span>
                                                     <span className="capitalize">{payment.payment_method}</span>
                                                 </div>
                                                 {payment.subject_name && (
-                                                    <div className="text-xs text-blue-500 mt-1 font-medium">
+                                                    <div className="text-xs text-tg-button mt-1 font-medium">
                                                         {payment.subject_name}
                                                     </div>
                                                 )}
                                             </div>
                                             <button
                                                 onClick={() => handleDelete(payment.id)}
-                                                className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                                className="p-2 text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
                                             >
                                                 <Trash2 size={20} />
                                             </button>
                                         </div>
                                     ))
                                 ) : (
-                                    <div className="text-center py-12 text-gray-400">
+                                    <div className="text-center py-12 text-tg-hint">
                                         No payment history found.
                                     </div>
                                 )}
@@ -244,61 +241,61 @@ const AdminPaymentModal: React.FC<AdminPaymentModalProps> = ({ isOpen, onClose, 
                         >
                             {/* Date */}
                             <div className="space-y-2">
-                                <label className="text-sm font-medium text-gray-500 ml-1">Date</label>
+                                <label className="text-sm font-medium text-tg-hint ml-1">Date</label>
                                 <div className="relative">
-                                    <Calendar className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                                    <Calendar className="absolute left-3.5 top-1/2 -translate-y-1/2 text-tg-hint" size={18} />
                                     <input
                                         type="date"
                                         value={date}
                                         onChange={(e) => setDate(e.target.value)}
-                                        className="w-full bg-gray-50 text-black pl-11 p-3.5 rounded-xl border-none outline-none focus:ring-2 focus:ring-blue-500/20"
+                                        className="w-full bg-tg-secondary text-tg-text pl-11 p-3.5 rounded-xl border-none outline-none focus:ring-2 focus:ring-tg-button/20"
                                     />
                                 </div>
                             </div>
 
                             {/* Group */}
                             <div className="space-y-2">
-                                <label className="text-sm font-medium text-gray-500 ml-1">Group</label>
+                                <label className="text-sm font-medium text-tg-hint ml-1">Group</label>
                                 <div className="relative">
                                     <select
                                         value={selectedGroupId}
                                         onChange={(e) => setSelectedGroupId(e.target.value)}
-                                        className="w-full bg-gray-50 text-black p-3.5 rounded-xl border-none outline-none appearance-none focus:ring-2 focus:ring-blue-500/20"
+                                        className="w-full bg-tg-secondary text-tg-text p-3.5 rounded-xl border-none outline-none appearance-none focus:ring-2 focus:ring-tg-button/20"
                                     >
                                         <option value="" disabled>Select Group</option>
                                         {groups.map(g => (
                                             <option key={g.id} value={g.id}>{g.name} ({g.price.toLocaleString()} UZS)</option>
                                         ))}
                                     </select>
-                                    <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={18} />
+                                    <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 text-tg-hint pointer-events-none" size={18} />
                                 </div>
                             </div>
 
                             {/* Lessons Attended */}
                             <div className="space-y-2">
-                                <label className="text-sm font-medium text-gray-500 ml-1">Lessons Attended</label>
+                                <label className="text-sm font-medium text-tg-hint ml-1">Lessons Attended</label>
                                 <input
                                     type="number"
                                     value={lessonsAttended}
                                     onChange={(e) => setLessonsAttended(e.target.value)}
-                                    className="w-full bg-gray-50 text-black p-3.5 rounded-xl border-none outline-none focus:ring-2 focus:ring-blue-500/20"
+                                    className="w-full bg-tg-secondary text-tg-text p-3.5 rounded-xl border-none outline-none focus:ring-2 focus:ring-tg-button/20"
                                 />
-                                <p className="text-xs text-gray-500 ml-1">
+                                <p className="text-xs text-tg-hint ml-1">
                                     💡 Expected: {expectedAmount.toLocaleString()} UZS ({lessonsAttended}/12 lessons)
                                 </p>
                             </div>
 
                             {/* Payment Method */}
                             <div className="space-y-2">
-                                <label className="text-sm font-medium text-gray-500 ml-1">Payment Method</label>
+                                <label className="text-sm font-medium text-tg-hint ml-1">Payment Method</label>
                                 <div className="flex gap-2">
                                     <button
                                         onClick={() => setMethod('cash')}
                                         className={cn(
                                             "flex-1 py-3 rounded-xl border transition-all flex items-center justify-center gap-2",
                                             method === 'cash'
-                                                ? "bg-blue-50 border-blue-500 text-blue-600"
-                                                : "bg-gray-50 border-transparent text-gray-500"
+                                                ? "bg-tg-button/10 border-tg-button text-tg-button"
+                                                : "bg-tg-secondary border-transparent text-tg-hint"
                                         )}
                                     >
                                         <span>💵</span> Cash
@@ -309,8 +306,8 @@ const AdminPaymentModal: React.FC<AdminPaymentModalProps> = ({ isOpen, onClose, 
                                         className={cn(
                                             "flex-1 py-3 rounded-xl border transition-all flex items-center justify-center gap-2",
                                             method === 'card'
-                                                ? "bg-blue-50 border-blue-500 text-blue-600"
-                                                : "bg-gray-50 border-transparent text-gray-500"
+                                                ? "bg-tg-button/10 border-tg-button text-tg-button"
+                                                : "bg-tg-secondary border-transparent text-tg-hint"
                                         )}
                                     >
                                         <span>💳</span> Card
@@ -321,7 +318,7 @@ const AdminPaymentModal: React.FC<AdminPaymentModalProps> = ({ isOpen, onClose, 
 
                             {/* Amount */}
                             <div className="space-y-2">
-                                <label className="text-sm font-medium text-gray-500 ml-1">Amount Paid</label>
+                                <label className="text-sm font-medium text-tg-hint ml-1">Amount Paid</label>
                                 <div className="relative">
                                     <input
                                         type="number"
@@ -332,10 +329,12 @@ const AdminPaymentModal: React.FC<AdminPaymentModalProps> = ({ isOpen, onClose, 
                                         }}
                                         placeholder="0"
                                         className={cn(
-                                            "w-full bg-gray-50 text-black p-3.5 rounded-xl border outline-none focus:ring-2 transition-all text-lg font-semibold",
+                                            "w-full bg-tg-secondary text-tg-text p-3.5 rounded-xl border outline-none focus:ring-2 transition-all text-lg font-semibold",
                                             amount && !isAmountMatching
-                                                ? "border-red-300 focus:ring-red-500/20"
-                                                : "border-transparent focus:ring-blue-500/20"
+                                                ? "border-red-300 focus:ring-red-500/20 text-red-500"
+                                                : amount && isAmountMatching
+                                                    ? "border-green-300 focus:ring-green-500/20 text-green-500"
+                                                    : "border-transparent focus:ring-tg-button/20"
                                         )}
                                     />
                                     {amount && isAmountMatching && (
@@ -369,7 +368,7 @@ const AdminPaymentModal: React.FC<AdminPaymentModalProps> = ({ isOpen, onClose, 
                                     <button
                                         onClick={handleSave}
                                         disabled={loading}
-                                        className="w-full py-3.5 rounded-xl bg-blue-500 text-white font-semibold active:scale-[0.98] transition-all shadow-lg shadow-blue-500/20"
+                                        className="w-full py-3.5 rounded-xl bg-tg-button text-white font-semibold active:scale-[0.98] transition-all shadow-lg shadow-tg-button/20"
                                     >
                                         Save Payment
                                     </button>

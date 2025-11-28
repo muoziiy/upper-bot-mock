@@ -5,7 +5,7 @@ import { Section } from '../../components/ui/Section';
 import { ListItem } from '../../components/ui/ListItem';
 
 const AdminDashboard: React.FC = () => {
-    const { user } = useTelegram();
+    const { } = useTelegram();
     const navigate = useNavigate();
     const [studentCount, setStudentCount] = React.useState<number | null>(null);
 
@@ -25,24 +25,15 @@ const AdminDashboard: React.FC = () => {
     }, []);
 
     return (
-        <div className="page-content pt-4">
-            <h1 className="text-2xl font-bold mb-4 px-4 text-tg-text">Admin Dashboard</h1>
-            <p className="text-tg-hint mb-4 px-4">Welcome, {user?.first_name}!</p>
+        <div className="min-h-screen bg-tg-secondary pt-4 pb-10">
+            <h1 className="text-2xl font-bold mb-6 px-4 text-black dark:text-white">Admin Dashboard</h1>
 
-            <Section>
+            <Section title="Management">
                 <ListItem
                     icon="👨‍🎓"
                     title="Students"
                     subtitle={studentCount !== null ? `${studentCount} Total Students` : 'Manage Students'}
-                    value={studentCount !== null ? String(studentCount) : undefined}
                     onClick={() => navigate('/admin/students')}
-                    showChevron
-                />
-                <ListItem
-                    icon="📊"
-                    title="Stats"
-                    subtitle="Payments & General Stats"
-                    onClick={() => navigate('/admin/stats')}
                     showChevron
                 />
                 <ListItem
@@ -59,11 +50,31 @@ const AdminDashboard: React.FC = () => {
                     onClick={() => navigate('/admin/teachers')}
                     showChevron
                 />
+            </Section>
+
+            <Section title="Analytics">
+                <ListItem
+                    icon="📊"
+                    title="Statistics"
+                    subtitle="Payments & General Stats"
+                    onClick={() => navigate('/admin/stats')}
+                    showChevron
+                />
+            </Section>
+
+            <Section title="Tools">
                 <ListItem
                     icon="⚡"
-                    title="Actions"
-                    subtitle="Quick Actions"
+                    title="Quick Actions"
+                    subtitle="Common Tasks"
                     onClick={() => navigate('/admin/actions')}
+                    showChevron
+                />
+                <ListItem
+                    icon="📚"
+                    title="Subjects"
+                    subtitle="Manage Subjects"
+                    onClick={() => navigate('/admin/subjects')}
                     showChevron
                     isLast
                 />

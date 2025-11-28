@@ -52,8 +52,8 @@ const AdminStats: React.FC = () => {
     }
 
     return (
-        <div className="page-content pt-4 pb-20">
-            <h1 className="text-2xl font-bold mb-4 px-4 text-tg-text">Statistics</h1>
+        <div className="min-h-screen bg-tg-secondary pt-4 pb-20">
+            <h1 className="text-2xl font-bold mb-6 px-4 text-black dark:text-white">Statistics</h1>
 
             <div className="px-4 mb-6">
                 <SegmentedControl

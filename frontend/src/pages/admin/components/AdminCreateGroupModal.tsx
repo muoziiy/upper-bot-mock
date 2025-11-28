@@ -191,7 +191,7 @@ const AdminCreateGroupModal: React.FC<AdminCreateGroupModalProps> = ({ isOpen, o
                                                     setTeacherId(t.id);
                                                     setIsTeacherSelectOpen(false);
                                                 }}
-                                                className="w-full text-left px-4 py-3 hover:bg-tg-secondary/50 flex items-center justify-between border-b border-tg-hint/5 last:border-none"
+                                                className="w-full text-left px-4 py-3 hover:bg-tg-secondary/50 flex items-center justify-between border-b border-tg-hint/5 last:border-none text-tg-text"
                                             >
                                                 <span>{t.first_name} {t.surname}</span>
                                                 {teacherId === t.id && <Check size={16} className="text-tg-button" />}
