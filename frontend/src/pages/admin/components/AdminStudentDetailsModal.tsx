@@ -1,7 +1,6 @@
 import React, { useEffect } from 'react';
 import { useTelegram } from '../../../context/TelegramContext';
 import { Section } from '../../../components/ui/Section';
-import { ListItem } from '../../../components/ui/ListItem';
 import { X, CreditCard, Users, Calendar, Clock } from 'lucide-react';
 import { cn } from '../../../lib/utils';
 
