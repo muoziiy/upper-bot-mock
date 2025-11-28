@@ -1,9 +1,11 @@
+
 import React, { useState, useEffect } from 'react';
 import { Section } from '../../components/ui/Section';
 import { ListItem } from '../../components/ui/ListItem';
 import { Search, Plus } from 'lucide-react';
 import AdminCreateGroupModal from './components/AdminCreateGroupModal';
 import { useTelegram } from '../../context/TelegramContext';
+import { useAdminData } from '../../hooks/useAdminData';
 
 interface Group {
     id: string;
@@ -19,17 +21,12 @@ interface Group {
 
 const AdminGroups: React.FC = () => {
     const { webApp } = useTelegram();
-    const [groups, setGroups] = useState<Group[]>([]);
-    const [loading, setLoading] = useState(true);
+    const { groups, loading, refresh } = useAdminData();
     const [searchQuery, setSearchQuery] = useState('');
 
     // Modal State
     const [showModal, setShowModal] = useState(false);
     const [selectedGroup, setSelectedGroup] = useState<Group | null>(null);
-
-    useEffect(() => {
-        fetchGroups();
-    }, []);
 
     // Handle Native Back Button
     useEffect(() => {
@@ -45,21 +42,6 @@ const AdminGroups: React.FC = () => {
             };
         }
     }, [webApp]);
-
-    const fetchGroups = async () => {
-        setLoading(true);
-        try {
-            const res = await fetch(`${import.meta.env.VITE_API_URL}/admin/groups/list`);
-            if (res.ok) {
-                const data = await res.json();
-                setGroups(data);
-            }
-        } catch (e) {
-            console.error('Failed to fetch groups', e);
-        } finally {
-            setLoading(false);
-        }
-    };
 
     const handleCreate = () => {
         setSelectedGroup(null);
@@ -128,7 +110,7 @@ const AdminGroups: React.FC = () => {
             <AdminCreateGroupModal
                 isOpen={showModal}
                 onClose={() => setShowModal(false)}
-                onSuccess={fetchGroups}
+                onSuccess={refresh}
                 group={selectedGroup}
             />
         </div>

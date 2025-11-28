@@ -50,6 +50,8 @@ const AdminStats: React.FC = () => {
     });
     const [financialStats, setFinancialStats] = useState({
         totalRevenue: 0,
+        totalOutgoing: 0,
+        netIncome: 0,
         pendingPayments: 0,
         recentTransactions: [] as any[]
     });
@@ -117,7 +119,7 @@ const AdminStats: React.FC = () => {
                 <SegmentedControl
                     options={[
                         { label: 'General', value: 'general' },
-                        { label: 'Payments', value: 'payments' },
+                        { label: 'Financial', value: 'financial' },
                     ]}
                     value={activeTab}
                     onChange={setActiveTab}
@@ -185,28 +187,42 @@ const AdminStats: React.FC = () => {
                     initial="hidden"
                     animate="show"
                 >
-                    <motion.div variants={item} className="px-4">
-                        <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-3">
-                            <p className="text-xs text-yellow-500">
-                                Note: These stats reflect data from the 'payments' table. Ensure payments are recorded correctly.
-                            </p>
-                        </div>
-                    </motion.div>
-
                     <div className="px-4 grid grid-cols-2 gap-4">
+                        {/* Net Income */}
+                        <motion.div variants={item} className="col-span-2 bg-gradient-to-br from-green-500/10 to-emerald-500/10 border border-green-500/20 p-6 rounded-2xl shadow-sm flex flex-col items-center justify-center gap-2">
+                            <span className="text-sm font-medium text-green-600 uppercase tracking-wide">Net Income</span>
+                            <span className="text-3xl font-bold text-green-700 dark:text-green-400">
+                                <CountUp end={financialStats.netIncome} prefix="$" />
+                            </span>
+                        </motion.div>
+
+                        {/* Incoming */}
                         <motion.div variants={item} className="bg-white dark:bg-black/20 p-4 rounded-2xl shadow-sm flex flex-col items-center justify-center gap-2">
-                            <span className="text-4xl">💰</span>
+                            <span className="text-2xl">📥</span>
                             <span className="text-lg font-bold text-tg-text break-all text-center">
                                 <CountUp end={financialStats.totalRevenue} prefix="$" />
                             </span>
-                            <span className="text-xs text-tg-hint font-medium uppercase tracking-wide">Total Revenue</span>
+                            <span className="text-xs text-tg-hint font-medium uppercase tracking-wide">Incoming</span>
                         </motion.div>
+
+                        {/* Outgoing */}
                         <motion.div variants={item} className="bg-white dark:bg-black/20 p-4 rounded-2xl shadow-sm flex flex-col items-center justify-center gap-2">
-                            <span className="text-4xl">⏳</span>
-                            <span className="text-lg font-bold text-orange-500 break-all text-center">
+                            <span className="text-2xl">📤</span>
+                            <span className="text-lg font-bold text-red-500 break-all text-center">
+                                <CountUp end={financialStats.totalOutgoing} prefix="$" />
+                            </span>
+                            <span className="text-xs text-tg-hint font-medium uppercase tracking-wide">Outgoing</span>
+                        </motion.div>
+
+                        {/* Pending */}
+                        <motion.div variants={item} className="col-span-2 bg-white dark:bg-black/20 p-4 rounded-2xl shadow-sm flex items-center justify-between px-6">
+                            <div className="flex items-center gap-3">
+                                <span className="text-2xl">⏳</span>
+                                <span className="text-sm font-medium text-tg-hint uppercase tracking-wide">Pending Payments</span>
+                            </div>
+                            <span className="text-lg font-bold text-orange-500">
                                 <CountUp end={financialStats.pendingPayments} prefix="$" />
                             </span>
-                            <span className="text-xs text-tg-hint font-medium uppercase tracking-wide">Pending</span>
                         </motion.div>
                     </div>
 
@@ -216,14 +232,14 @@ const AdminStats: React.FC = () => {
                                 {financialStats.recentTransactions.map((tx, index) => (
                                     <ListItem
                                         key={tx.id}
-                                        title={`${tx.users?.first_name || 'Unknown'} ${tx.users?.surname || ''}`}
-                                        subtitle={tx.description || 'Payment'}
+                                        title={tx.user}
+                                        subtitle={tx.description}
                                         value={
-                                            <span className={tx.status === 'completed' ? 'text-green-500' : 'text-orange-500'}>
-                                                {tx.status === 'completed' ? '+' : ''}${tx.amount}
+                                            <span className={tx.type === 'incoming' ? 'text-green-500' : 'text-red-500'}>
+                                                {tx.type === 'incoming' ? '+' : '-'}${tx.amount.toLocaleString()}
                                             </span>
                                         }
-                                        rightElement={<span className="text-xs text-tg-hint">{new Date(tx.transaction_date).toLocaleDateString()}</span>}
+                                        rightElement={<span className="text-xs text-tg-hint">{new Date(tx.date).toLocaleDateString()}</span>}
                                         isLast={index === financialStats.recentTransactions.length - 1}
                                     />
                                 ))}

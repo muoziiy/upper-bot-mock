@@ -4,25 +4,13 @@ import { useTelegram } from '../../context/TelegramContext';
 import { Section } from '../../components/ui/Section';
 import { ListItem } from '../../components/ui/ListItem';
 
+import { useAdminData } from '../../hooks/useAdminData';
+
 const AdminDashboard: React.FC = () => {
     const { } = useTelegram();
     const navigate = useNavigate();
-    const [studentCount, setStudentCount] = React.useState<number | null>(null);
-
-    React.useEffect(() => {
-        const fetchCount = async () => {
-            try {
-                const res = await fetch(`${import.meta.env.VITE_API_URL}/admin/stats/general`);
-                if (res.ok) {
-                    const data = await res.json();
-                    setStudentCount(data.totalStudents);
-                }
-            } catch (e) {
-                console.error('Failed to fetch student count', e);
-            }
-        };
-        fetchCount();
-    }, []);
+    const { students } = useAdminData(); // Prefetch data
+    const studentCount = students.length;
 
     return (
         <div className="min-h-screen bg-tg-secondary pt-4 pb-10">

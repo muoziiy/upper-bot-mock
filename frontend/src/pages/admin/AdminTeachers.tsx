@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Search } from 'lucide-react';
 import { Section } from '../../components/ui/Section';
 import { ListItem } from '../../components/ui/ListItem';
+import { useAdminData } from '../../hooks/useAdminData';
 
 interface Teacher {
     id: string;
@@ -12,32 +13,9 @@ interface Teacher {
 }
 
 const AdminTeachers: React.FC = () => {
-    const [teachers, setTeachers] = useState<Teacher[]>([]);
-    const [loading, setLoading] = useState(true);
+    const { teachers: rawTeachers, loading } = useAdminData();
+    const teachers = rawTeachers as Teacher[];
     const [searchQuery, setSearchQuery] = useState('');
-
-    // Fetch teachers
-    const fetchTeachers = async () => {
-        setLoading(true);
-        try {
-            const res = await fetch(`${import.meta.env.VITE_API_URL}/admin/teachers`);
-            if (res.ok) {
-                const data = await res.json();
-                setTeachers(data);
-            }
-        } catch (e) {
-            console.error('Failed to fetch teachers', e);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    useEffect(() => {
-        const timer = setTimeout(() => {
-            fetchTeachers();
-        }, 300);
-        return () => clearTimeout(timer);
-    }, [searchQuery]);
 
     // Filter teachers based on search
     const filteredTeachers = teachers.filter(teacher => {

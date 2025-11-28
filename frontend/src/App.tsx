@@ -15,8 +15,9 @@ const AdminGroups = React.lazy(() => import('./pages/admin/AdminGroups'));
 const AdminTeachers = React.lazy(() => import('./pages/admin/AdminTeachers'));
 const AdminActions = React.lazy(() => import('./pages/admin/AdminActions'));
 const AdminSubjects = React.lazy(() => import('./pages/admin/AdminSubjects'));
-const AdminStudents = React.lazy(() => import('./pages/admin/AdminStudents')); // New
-const AdminProfile = React.lazy(() => import('./pages/admin/AdminProfile')); // New
+const AdminStudents = React.lazy(() => import('./pages/admin/AdminStudents'));
+const AdminStudentDetails = React.lazy(() => import('./pages/admin/AdminStudentDetails')); // New Page
+const AdminProfile = React.lazy(() => import('./pages/admin/AdminProfile'));
 const Onboarding = React.lazy(() => import('./pages/Onboarding'));
 const GuestDashboard = React.lazy(() => import('./pages/GuestDashboard'));
 const WaitingPage = React.lazy(() => import('./pages/WaitingPage'));
@@ -57,7 +58,7 @@ const AppContent: React.FC = () => {
       case 'teacher': return '/teacher';
       case 'parent': return '/parent';
       case 'admin':
-      case 'super_admin': return '/admin';
+      case 'super_admin': return '/admin/stats';
       case 'guest': return '/guest';
       case 'waiting_user':
       case 'waiting_staff': return '/waiting';
@@ -99,7 +100,8 @@ const AppContent: React.FC = () => {
     { path: "/admin/teachers", element: <AdminTeachers /> },
     { path: "/admin/actions", element: <AdminActions /> },
     { path: "/admin/subjects", element: <AdminSubjects /> },
-    { path: "/admin/students", element: <AdminStudents /> }, // New
+    { path: "/admin/students", element: <AdminStudents /> },
+    { path: "/admin/students/:id", element: <AdminStudentDetails /> }, // New Page
     { path: "/admin/profile", element: <AdminProfile /> },
   ]);
 

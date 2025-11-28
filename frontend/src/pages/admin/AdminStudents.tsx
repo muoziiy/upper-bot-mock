@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Search, Filter } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { Section } from '../../components/ui/Section';
@@ -90,9 +91,10 @@ const AdminStudents: React.FC = () => {
         return () => clearTimeout(timer);
     }, [searchQuery, filters]);
 
+    const navigate = useNavigate();
+
     const handleStudentClick = (student: Student) => {
-        setSelectedStudent(student);
-        setShowDetailsModal(true);
+        navigate(`/admin/students/${student.id}`);
     };
 
     const handleAction = (action: 'payment' | 'groups' | 'attendance') => {

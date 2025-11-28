@@ -233,40 +233,105 @@ router.get('/stats/financial', async (req, res) => {
         startOfMonth.setDate(1);
         startOfMonth.setHours(0, 0, 0, 0);
 
-        // 1. Total Revenue (This Month) - Completed payments
+        // 1. Total Revenue (Incoming from Students) - Completed payments
         const { data: revenueData, error: revenueError } = await supabase
-            .from('payments')
+            .from('payment_records')
             .select('amount')
-            .eq('status', 'completed')
-            .gte('transaction_date', startOfMonth.toISOString());
+            .eq('status', 'completed');
 
         if (revenueError) throw revenueError;
+        const totalRevenue = revenueData?.reduce((sum, record) => sum + Number(record.amount), 0) || 0;
 
-        const totalRevenue = revenueData?.reduce((sum, p) => sum + Number(p.amount), 0) || 0;
-
-        // 2. Pending Payments
+        // 2. Pending Payments (Incoming)
         const { data: pendingData, error: pendingError } = await supabase
-            .from('payments')
+            .from('payment_records')
             .select('amount')
             .eq('status', 'pending');
 
         if (pendingError) throw pendingError;
+        const pendingPayments = pendingData?.reduce((sum, record) => sum + Number(record.amount), 0) || 0;
 
-        const pendingPayments = pendingData?.reduce((sum, p) => sum + Number(p.amount), 0) || 0;
+        // 3. Total Outgoing (Teacher Payments)
+        let totalOutgoing = 0;
+        try {
+            const { data: outgoingData, error: outgoingError } = await supabase
+                .from('teacher_payments')
+                .select('amount');
 
-        // 3. Recent Transactions (Limit 5)
-        const { data: recentTransactions, error: transactionsError } = await supabase
-            .from('payments')
-            .select('*, users(first_name, surname)')
-            .order('transaction_date', { ascending: false })
+            if (!outgoingError && outgoingData) {
+                totalOutgoing = outgoingData.reduce((sum, record) => sum + Number(record.amount), 0);
+            }
+        } catch (e) {
+            console.warn('teacher_payments table might not exist yet');
+        }
+
+        // 4. Recent Transactions (Merged)
+        // Fetch last 5 incoming
+        const { data: recentIncoming, error: incomingError } = await supabase
+            .from('payment_records')
+            .select(`
+                id,
+                amount,
+                payment_date,
+                status,
+                users (first_name, surname)
+            `)
+            .order('payment_date', { ascending: false })
             .limit(5);
 
-        if (transactionsError) throw transactionsError;
+        if (incomingError) throw incomingError;
+
+        // Fetch last 5 outgoing
+        let recentOutgoing: any[] = [];
+        try {
+            const { data: outgoing, error: outError } = await supabase
+                .from('teacher_payments')
+                .select(`
+                    id,
+                    amount,
+                    payment_date,
+                    status,
+                    users (first_name, surname)
+                `)
+                .order('payment_date', { ascending: false })
+                .limit(5);
+
+            if (!outError && outgoing) {
+                recentOutgoing = outgoing;
+            }
+        } catch (e) {
+            // Ignore
+        }
+
+        // Merge and sort
+        const recentTransactions = [
+            ...(recentIncoming || []).map(t => ({
+                id: t.id,
+                type: 'incoming',
+                amount: t.amount,
+                date: t.payment_date,
+                status: t.status,
+                user: t.users ? `${t.users.first_name} ${t.users.surname}` : 'Unknown',
+                description: 'Student Payment'
+            })),
+            ...recentOutgoing.map(t => ({
+                id: t.id,
+                type: 'outgoing',
+                amount: t.amount,
+                date: t.payment_date,
+                status: t.status,
+                user: t.users ? `${t.users.first_name} ${t.users.surname}` : 'Unknown',
+                description: 'Teacher Payout'
+            }))
+        ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+            .slice(0, 10);
 
         res.json({
             totalRevenue,
             pendingPayments,
-            recentTransactions: recentTransactions || []
+            totalOutgoing,
+            netIncome: totalRevenue - totalOutgoing,
+            recentTransactions
         });
 
     } catch (error) {
@@ -275,8 +340,7 @@ router.get('/stats/financial', async (req, res) => {
     }
 });
 
-// Get Students List (with Search)
-// SECURITY: Only returns safe fields (no telegram username or profile image)
+// Get all students with payment status
 router.get('/students', async (req, res) => {
     const { search } = req.query;
 
@@ -312,7 +376,6 @@ router.get('/students', async (req, res) => {
 
         if (search) {
             const searchStr = String(search);
-            // Search by name, surname, or student_id
             query = query.or(`first_name.ilike.%${searchStr}%,surname.ilike.%${searchStr}%,student_id.ilike.%${searchStr}%`);
         }
 
@@ -388,6 +451,96 @@ router.get('/students', async (req, res) => {
         res.json(students);
     } catch (error) {
         console.error('Error fetching students:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Get single student details
+router.get('/students/:id', async (req, res) => {
+    const { id } = req.params;
+
+    try {
+        // 1. Fetch student basic info
+        const { data: student, error: studentError } = await supabase
+            .from('users')
+            .select(`
+                id,
+                student_id,
+                telegram_id,
+                first_name,
+                surname,
+                age,
+                sex,
+                payment_day,
+                created_at
+            `)
+            .eq('id', id)
+            .single();
+
+        if (studentError) throw studentError;
+
+        // 2. Fetch groups
+        const { data: groupsData, error: groupsError } = await supabase
+            .from('group_members')
+            .select(`
+                joined_at,
+                groups (
+                    id,
+                    name,
+                    price,
+                    teacher:users!groups_teacher_id_fkey (
+                        first_name,
+                        surname
+                    )
+                )
+            `)
+            .eq('student_id', id);
+
+        if (groupsError) throw groupsError;
+
+        // 3. Fetch overdue status
+        const { data: overdueData } = await supabase
+            .rpc('get_overdue_students', { target_date: new Date().toISOString() });
+
+        const overdueInfo = overdueData?.find((d: any) => d.student_id === id);
+
+        // 4. Check if paid this month
+        const currentMonth = new Date().getMonth() + 1;
+        const currentYear = new Date().getFullYear();
+        const { data: paidData } = await supabase
+            .from('payment_records')
+            .select('id')
+            .eq('student_id', id)
+            .eq('status', 'completed')
+            .eq('month', currentMonth)
+            .eq('year', currentYear)
+            .limit(1);
+
+        const isPaid = paidData && paidData.length > 0;
+        const isOverdue = !!overdueInfo;
+
+        let status = 'unpaid';
+        if (isOverdue) status = 'overdue';
+        else if (isPaid) status = 'paid';
+
+        // Format groups
+        const groups = groupsData.map((gm: any) => ({
+            id: gm.groups.id,
+            name: gm.groups.name,
+            price: gm.groups.price,
+            teacher_name: gm.groups.teacher ? `${gm.groups.teacher.first_name} ${gm.groups.teacher.surname}` : null,
+            joined_at: gm.joined_at
+        }));
+
+        res.json({
+            ...student,
+            groups,
+            payment_status: status,
+            amount_due: overdueInfo?.total_amount_due || 0
+        });
+
+    } catch (error) {
+        console.error('Error fetching student details:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
 });
@@ -823,7 +976,7 @@ router.get('/teachers', async (req, res) => {
         // TODO: Add groups count if needed
         const teachers = data.map(teacher => ({
             ...teacher,
-            groups_count: 0 // Placeholder - can be calculated with join if needed
+            groups_count: 0 // Placeholder
         }));
 
         res.json(teachers);

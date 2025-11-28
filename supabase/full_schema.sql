@@ -179,6 +179,18 @@ CREATE TABLE IF NOT EXISTS payments (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- TEACHER PAYMENTS
+CREATE TABLE IF NOT EXISTS teacher_payments (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    teacher_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    amount DECIMAL(10, 2) NOT NULL,
+    payment_date DATE NOT NULL,
+    status TEXT DEFAULT 'completed',
+    notes TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
 -- ATTENDANCE RECORDS
 CREATE TABLE IF NOT EXISTS attendance_records (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -616,6 +628,12 @@ CREATE POLICY "admins_manage_payments" ON payment_records FOR ALL USING (
     EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND role IN ('admin', 'super_admin'))
 );
 CREATE POLICY "students_view_own_payments" ON payment_records FOR SELECT USING (student_id = auth.uid());
+
+-- TEACHER PAYMENTS
+CREATE POLICY "admins_manage_teacher_payments" ON teacher_payments FOR ALL USING (
+    EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND role IN ('admin', 'super_admin'))
+);
+CREATE POLICY "teachers_view_own_payments" ON teacher_payments FOR SELECT USING (teacher_id = auth.uid());
 
 -- ATTENDANCE
 CREATE POLICY "admins_manage_attendance" ON attendance_records FOR ALL USING (
