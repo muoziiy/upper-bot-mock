@@ -1,40 +1,132 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Check, ChevronDown } from 'lucide-react';
+import { Calendar, Check, ChevronDown, Trash2, Plus, AlertTriangle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../../../lib/utils';
 import { useTelegram } from '../../../context/TelegramContext';
+
+interface Payment {
+    id: string;
+    amount: number;
+    payment_date: string;
+    payment_method: string;
+    subject_name?: string; // or group name
+    group_id?: string;
+}
+
+interface Group {
+    id: string;
+    name: string;
+    price: number;
+}
 
 interface AdminPaymentModalProps {
     isOpen: boolean;
     onClose: () => void;
     studentId: string;
     studentName: string;
+    groups: Group[]; // Passed from parent
 }
 
-const AdminPaymentModal: React.FC<AdminPaymentModalProps> = ({ isOpen, onClose, studentId, studentName }) => {
+const AdminPaymentModal: React.FC<AdminPaymentModalProps> = ({ isOpen, onClose, studentId, studentName, groups }) => {
     const { webApp } = useTelegram();
+    const [view, setView] = useState<'history' | 'add'>('history');
+    const [payments, setPayments] = useState<Payment[]>([]);
     const [loading, setLoading] = useState(false);
-    const [amount, setAmount] = useState('');
+
+    // Add Payment Form State
     const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
-    const [method, setMethod] = useState<'cash' | 'card' | 'click' | 'payme'>('cash');
-    const [isMethodOpen, setIsMethodOpen] = useState(false);
+    const [selectedGroupId, setSelectedGroupId] = useState<string>('');
+    const [lessonsAttended, setLessonsAttended] = useState<string>('12');
+    const [amount, setAmount] = useState<string>('');
+    const [method, setMethod] = useState<'cash' | 'card'>('cash');
+    const [showConfirmation, setShowConfirmation] = useState(false);
 
     // Handle Native Back Button
     useEffect(() => {
-        if (isOpen && webApp) {
+        if (isOpen) {
             webApp.BackButton.show();
-            const handleBack = () => onClose();
+            const handleBack = () => {
+                if (view === 'add') {
+                    setView('history');
+                } else {
+                    onClose();
+                }
+            };
             webApp.BackButton.onClick(handleBack);
             return () => {
                 webApp.BackButton.offClick(handleBack);
-                webApp.BackButton.hide();
+                if (view === 'history') webApp.BackButton.hide();
             };
         }
-    }, [isOpen, webApp, onClose]);
+    }, [isOpen, view, onClose, webApp]);
 
-    const handleSubmit = async () => {
-        if (!amount || !date) {
-            webApp?.showAlert('Please fill in Amount and Date');
+    // Fetch payments on open
+    useEffect(() => {
+        if (isOpen) {
+            fetchPayments();
+        }
+    }, [isOpen]);
+
+    // Set default group
+    useEffect(() => {
+        if (groups.length > 0 && !selectedGroupId) {
+            setSelectedGroupId(groups[0].id);
+        }
+    }, [groups]);
+
+    const fetchPayments = async () => {
+        try {
+            const res = await fetch(`${import.meta.env.VITE_API_URL}/admin/students/${studentId}/payments`);
+            if (res.ok) {
+                const data = await res.json();
+                setPayments(data);
+            }
+        } catch (e) {
+            console.error('Failed to fetch payments', e);
+        }
+    };
+
+    const handleDelete = async (paymentId: string) => {
+        webApp.showConfirm('Are you sure you want to delete this payment?', async (confirm) => {
+            if (confirm) {
+                try {
+                    const res = await fetch(`${import.meta.env.VITE_API_URL}/admin/students/${studentId}/payments/${paymentId}`, {
+                        method: 'DELETE'
+                    });
+                    if (res.ok) {
+                        fetchPayments();
+                        webApp.showAlert('Payment deleted');
+                    }
+                } catch (e) {
+                    webApp.showAlert('Failed to delete payment');
+                }
+            }
+        });
+    };
+
+    const calculateExpectedAmount = () => {
+        const group = groups.find(g => g.id === selectedGroupId);
+        if (!group || !lessonsAttended) return 0;
+        const lessons = parseInt(lessonsAttended);
+        if (isNaN(lessons)) return 0;
+        // Logic: Price is for 12 lessons usually.
+        // If price is monthly, we might just assume full price?
+        // User said: "calculate how much the user should pay based on the number of lessons"
+        // Assuming price is for 12 lessons standard
+        return Math.round((group.price / 12) * lessons);
+    };
+
+    const expectedAmount = calculateExpectedAmount();
+    const isAmountMatching = parseInt(amount?.replace(/,/g, '') || '0') === expectedAmount;
+
+    const handleSave = async () => {
+        if (!amount || !selectedGroupId) {
+            webApp.showAlert('Please fill in all fields');
+            return;
+        }
+
+        if (!isAmountMatching && !showConfirmation) {
+            setShowConfirmation(true);
             return;
         }
 
@@ -47,6 +139,8 @@ const AdminPaymentModal: React.FC<AdminPaymentModalProps> = ({ isOpen, onClose, 
                     amount: parseFloat(amount),
                     payment_date: date,
                     payment_method: method,
+                    group_id: selectedGroupId,
+                    lessons_attended: parseInt(lessonsAttended),
                     status: 'completed',
                     month: new Date(date).getMonth() + 1,
                     year: new Date(date).getFullYear()
@@ -54,17 +148,21 @@ const AdminPaymentModal: React.FC<AdminPaymentModalProps> = ({ isOpen, onClose, 
             });
 
             if (res.ok) {
-                webApp?.showPopup({
+                webApp.showPopup({
                     title: 'Success',
-                    message: 'Payment recorded successfully',
+                    message: 'Payment saved successfully',
                     buttons: [{ type: 'ok' }]
                 });
-                onClose();
+                fetchPayments();
+                setView('history');
+                // Reset form
+                setAmount('');
+                setShowConfirmation(false);
             } else {
-                throw new Error('Failed to record payment');
+                throw new Error('Failed');
             }
         } catch (e) {
-            webApp?.showAlert('Failed to record payment');
+            webApp.showAlert('Failed to save payment');
         } finally {
             setLoading(false);
         }
@@ -72,113 +170,214 @@ const AdminPaymentModal: React.FC<AdminPaymentModalProps> = ({ isOpen, onClose, 
 
     if (!isOpen) return null;
 
-    const methods = [
-        { id: 'cash', label: 'Cash', icon: '💵' },
-        { id: 'card', label: 'Card', icon: '💳' },
-        { id: 'click', label: 'Click', icon: '🔵' },
-        { id: 'payme', label: 'Payme', icon: '🟢' }
-    ];
-
-    const selectedMethod = methods.find(m => m.id === method);
-
     return (
-        <div className="fixed inset-0 z-[60] bg-tg-bg flex flex-col h-[100dvh]">
+        <div className="fixed inset-0 z-50 bg-white flex flex-col">
             {/* Header */}
-            <div className="px-4 py-3 border-b border-tg-hint/10 flex items-center justify-center relative bg-tg-bg z-10">
-                <h2 className="text-lg font-semibold text-tg-text">Record Payment</h2>
+            <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between bg-white">
+                <h2 className="text-lg font-semibold text-black">
+                    {view === 'add' ? 'Add Payment' : `Payments - ${studentName}`}
+                </h2>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-4 space-y-6">
-                <div className="text-center mb-6">
-                    <div className="w-16 h-16 bg-tg-secondary rounded-full flex items-center justify-center mx-auto mb-3 text-3xl">
-                        💰
-                    </div>
-                    <h3 className="text-xl font-bold text-tg-text">{studentName}</h3>
-                    <p className="text-tg-hint text-sm">New Payment Record</p>
-                </div>
+            {/* Content */}
+            <div className="flex-1 overflow-y-auto p-4 bg-white">
+                <AnimatePresence mode="wait">
+                    {view === 'history' ? (
+                        <motion.div
+                            key="history"
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0, x: 20 }}
+                            className="space-y-4"
+                        >
+                            {/* Add Button */}
+                            <button
+                                onClick={() => setView('add')}
+                                className="w-full py-3 rounded-xl bg-blue-500 text-white font-semibold flex items-center justify-center gap-2 active:scale-95 transition-transform"
+                            >
+                                <Plus size={20} />
+                                Add Payment
+                            </button>
 
-                {/* Amount */}
-                <div className="space-y-2">
-                    <label className="text-sm font-medium text-tg-hint ml-1">Amount (UZS)</label>
-                    <input
-                        type="number"
-                        value={amount}
-                        onChange={(e) => setAmount(e.target.value)}
-                        placeholder="0"
-                        className="w-full bg-tg-secondary text-tg-text p-3.5 rounded-xl border-none outline-none focus:ring-2 focus:ring-tg-button/50 transition-all placeholder:text-tg-hint/50 text-lg font-medium"
-                    />
-                </div>
-
-                {/* Date */}
-                <div className="space-y-2">
-                    <label className="text-sm font-medium text-tg-hint ml-1">Payment Date</label>
-                    <div className="relative">
-                        <Calendar className="absolute left-3.5 top-1/2 -translate-y-1/2 text-tg-hint" size={18} />
-                        <input
-                            type="date"
-                            value={date}
-                            onChange={(e) => setDate(e.target.value)}
-                            className="w-full bg-tg-secondary text-tg-text pl-11 p-3.5 rounded-xl border-none outline-none focus:ring-2 focus:ring-tg-button/50"
-                        />
-                    </div>
-                </div>
-
-                {/* Method Selector */}
-                <div className="space-y-2 relative">
-                    <label className="text-sm font-medium text-tg-hint ml-1">Payment Method</label>
-                    <button
-                        onClick={() => setIsMethodOpen(!isMethodOpen)}
-                        className="w-full bg-tg-secondary text-tg-text p-3.5 rounded-xl flex items-center justify-between active:scale-[0.99] transition-transform"
-                    >
-                        <div className="flex items-center gap-2">
-                            <span>{selectedMethod?.icon}</span>
-                            <span>{selectedMethod?.label}</span>
-                        </div>
-                        <ChevronDown size={18} className={cn("text-tg-hint transition-transform", isMethodOpen ? "rotate-180" : "")} />
-                    </button>
-
-                    <AnimatePresence>
-                        {isMethodOpen && (
-                            <>
-                                <div className="fixed inset-0 z-20" onClick={() => setIsMethodOpen(false)} />
-                                <motion.div
-                                    initial={{ opacity: 0, y: -10 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    exit={{ opacity: 0, y: -10 }}
-                                    className="absolute top-full left-0 right-0 mt-2 bg-tg-bg border border-tg-hint/10 rounded-xl shadow-xl z-30 overflow-hidden"
-                                >
-                                    {methods.map(m => (
-                                        <button
-                                            key={m.id}
-                                            onClick={() => {
-                                                setMethod(m.id as any);
-                                                setIsMethodOpen(false);
-                                            }}
-                                            className="w-full text-left px-4 py-3 hover:bg-tg-secondary/50 flex items-center justify-between border-b border-tg-hint/5 last:border-none"
-                                        >
-                                            <div className="flex items-center gap-2">
-                                                <span>{m.icon}</span>
-                                                <span>{m.label}</span>
+                            {/* List */}
+                            <div className="space-y-3">
+                                {payments.length > 0 ? (
+                                    payments.map((payment) => (
+                                        <div key={payment.id} className="bg-gray-50 p-4 rounded-xl border border-gray-100 flex justify-between items-center">
+                                            <div>
+                                                <div className="font-semibold text-black text-lg">
+                                                    {payment.amount.toLocaleString()} UZS
+                                                </div>
+                                                <div className="text-sm text-gray-500 flex items-center gap-2">
+                                                    <span>📅 {new Date(payment.payment_date).toLocaleDateString()}</span>
+                                                    <span>•</span>
+                                                    <span className="capitalize">{payment.payment_method}</span>
+                                                </div>
+                                                {payment.subject_name && (
+                                                    <div className="text-xs text-blue-500 mt-1 font-medium">
+                                                        {payment.subject_name}
+                                                    </div>
+                                                )}
                                             </div>
-                                            {method === m.id && <Check size={16} className="text-tg-button" />}
-                                        </button>
-                                    ))}
-                                </motion.div>
-                            </>
-                        )}
-                    </AnimatePresence>
-                </div>
-            </div>
+                                            <button
+                                                onClick={() => handleDelete(payment.id)}
+                                                className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                            >
+                                                <Trash2 size={20} />
+                                            </button>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <div className="text-center py-12 text-gray-400">
+                                        No payment history found.
+                                    </div>
+                                )}
+                            </div>
+                        </motion.div>
+                    ) : (
+                        <motion.div
+                            key="add"
+                            initial={{ opacity: 0, x: 20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0, x: -20 }}
+                            className="space-y-6"
+                        >
+                            {/* Date */}
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium text-gray-500 ml-1">Date</label>
+                                <div className="relative">
+                                    <Calendar className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                                    <input
+                                        type="date"
+                                        value={date}
+                                        onChange={(e) => setDate(e.target.value)}
+                                        className="w-full bg-gray-50 text-black pl-11 p-3.5 rounded-xl border-none outline-none focus:ring-2 focus:ring-blue-500/20"
+                                    />
+                                </div>
+                            </div>
 
-            {/* Footer Action */}
-            <div className="p-4 border-t border-tg-hint/10 bg-tg-bg pb-8">
-                <button
-                    onClick={handleSubmit}
-                    disabled={loading}
-                    className="w-full py-3.5 rounded-xl bg-tg-button text-white font-semibold active:scale-[0.98] transition-all shadow-lg shadow-tg-button/20 disabled:opacity-70 disabled:scale-100"
-                >
-                    {loading ? 'Processing...' : 'Confirm Payment'}
-                </button>
+                            {/* Group */}
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium text-gray-500 ml-1">Group</label>
+                                <div className="relative">
+                                    <select
+                                        value={selectedGroupId}
+                                        onChange={(e) => setSelectedGroupId(e.target.value)}
+                                        className="w-full bg-gray-50 text-black p-3.5 rounded-xl border-none outline-none appearance-none focus:ring-2 focus:ring-blue-500/20"
+                                    >
+                                        <option value="" disabled>Select Group</option>
+                                        {groups.map(g => (
+                                            <option key={g.id} value={g.id}>{g.name} ({g.price.toLocaleString()} UZS)</option>
+                                        ))}
+                                    </select>
+                                    <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={18} />
+                                </div>
+                            </div>
+
+                            {/* Lessons Attended */}
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium text-gray-500 ml-1">Lessons Attended</label>
+                                <input
+                                    type="number"
+                                    value={lessonsAttended}
+                                    onChange={(e) => setLessonsAttended(e.target.value)}
+                                    className="w-full bg-gray-50 text-black p-3.5 rounded-xl border-none outline-none focus:ring-2 focus:ring-blue-500/20"
+                                />
+                                <p className="text-xs text-gray-500 ml-1">
+                                    💡 Expected: {expectedAmount.toLocaleString()} UZS ({lessonsAttended}/12 lessons)
+                                </p>
+                            </div>
+
+                            {/* Payment Method */}
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium text-gray-500 ml-1">Payment Method</label>
+                                <div className="flex gap-2">
+                                    <button
+                                        onClick={() => setMethod('cash')}
+                                        className={cn(
+                                            "flex-1 py-3 rounded-xl border transition-all flex items-center justify-center gap-2",
+                                            method === 'cash'
+                                                ? "bg-blue-50 border-blue-500 text-blue-600"
+                                                : "bg-gray-50 border-transparent text-gray-500"
+                                        )}
+                                    >
+                                        <span>💵</span> Cash
+                                        {method === 'cash' && <Check size={16} />}
+                                    </button>
+                                    <button
+                                        onClick={() => setMethod('card')}
+                                        className={cn(
+                                            "flex-1 py-3 rounded-xl border transition-all flex items-center justify-center gap-2",
+                                            method === 'card'
+                                                ? "bg-blue-50 border-blue-500 text-blue-600"
+                                                : "bg-gray-50 border-transparent text-gray-500"
+                                        )}
+                                    >
+                                        <span>💳</span> Card
+                                        {method === 'card' && <Check size={16} />}
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Amount */}
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium text-gray-500 ml-1">Amount Paid</label>
+                                <div className="relative">
+                                    <input
+                                        type="number"
+                                        value={amount}
+                                        onChange={(e) => {
+                                            setAmount(e.target.value);
+                                            setShowConfirmation(false);
+                                        }}
+                                        placeholder="0"
+                                        className={cn(
+                                            "w-full bg-gray-50 text-black p-3.5 rounded-xl border outline-none focus:ring-2 transition-all text-lg font-semibold",
+                                            amount && !isAmountMatching
+                                                ? "border-red-300 focus:ring-red-500/20"
+                                                : "border-transparent focus:ring-blue-500/20"
+                                        )}
+                                    />
+                                    {amount && isAmountMatching && (
+                                        <Check className="absolute right-3.5 top-1/2 -translate-y-1/2 text-green-500" size={20} />
+                                    )}
+                                </div>
+                                {amount && !isAmountMatching && (
+                                    <p className="text-xs text-red-500 flex items-center gap-1 ml-1">
+                                        <AlertTriangle size={12} />
+                                        Amount differs from expected {expectedAmount.toLocaleString()} UZS
+                                    </p>
+                                )}
+                            </div>
+
+                            {/* Save Button */}
+                            <div className="pt-4">
+                                {showConfirmation ? (
+                                    <div className="space-y-2 animate-in fade-in slide-in-from-bottom-2">
+                                        <p className="text-center text-red-500 text-sm font-medium">
+                                            ⚠️ Amount mismatch. Are you sure?
+                                        </p>
+                                        <button
+                                            onClick={handleSave}
+                                            disabled={loading}
+                                            className="w-full py-3.5 rounded-xl bg-red-500 text-white font-semibold active:scale-[0.98] transition-all"
+                                        >
+                                            Yes, Save Payment
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <button
+                                        onClick={handleSave}
+                                        disabled={loading}
+                                        className="w-full py-3.5 rounded-xl bg-blue-500 text-white font-semibold active:scale-[0.98] transition-all shadow-lg shadow-blue-500/20"
+                                    >
+                                        Save Payment
+                                    </button>
+                                )}
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
             </div>
         </div>
     );

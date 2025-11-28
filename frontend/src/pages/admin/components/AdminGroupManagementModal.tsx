@@ -1,14 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { X } from 'lucide-react';
-import { motion } from 'framer-motion';
-import { cn } from '../../../lib/utils';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useTelegram } from '../../../context/TelegramContext';
+import { Plus, Trash2 } from 'lucide-react';
 
 interface Group {
     id: string;
     name: string;
     price?: number;
-    payment_model?: string;
+    teacher_id?: string;
 }
 
 interface AdminGroupManagementModalProps {
@@ -16,7 +15,7 @@ interface AdminGroupManagementModalProps {
     onClose: () => void;
     studentId: string;
     studentName: string;
-    currentGroups: { id: string; name: string }[];
+    currentGroups: { id: string; name: string; price?: number }[];
     onUpdate: () => void;
 }
 
@@ -29,28 +28,51 @@ const AdminGroupManagementModal: React.FC<AdminGroupManagementModalProps> = ({
     onUpdate
 }) => {
     const { webApp } = useTelegram();
+    const [isAdding, setIsAdding] = useState(false);
     const [availableGroups, setAvailableGroups] = useState<Group[]>([]);
     const [loading, setLoading] = useState(false);
 
+    // Handle Native Back Button
     useEffect(() => {
         if (isOpen) {
+            webApp.BackButton.show();
+            const handleBack = () => {
+                if (isAdding) {
+                    setIsAdding(false);
+                } else {
+                    onClose();
+                }
+            };
+            webApp.BackButton.onClick(handleBack);
+            return () => {
+                webApp.BackButton.offClick(handleBack);
+                if (!isAdding) webApp.BackButton.hide();
+            };
+        }
+    }, [isOpen, isAdding, onClose, webApp]);
+
+    // Fetch available groups when adding
+    useEffect(() => {
+        if (isAdding) {
             fetchGroups();
         }
-    }, [isOpen]);
+    }, [isAdding]);
 
     const fetchGroups = async () => {
         try {
             const res = await fetch(`${import.meta.env.VITE_API_URL}/admin/groups/list`);
             if (res.ok) {
                 const data = await res.json();
-                setAvailableGroups(data);
+                // Filter out groups the student is already in
+                const filtered = data.filter((g: Group) => !currentGroups.some(cg => cg.id === g.id));
+                setAvailableGroups(filtered);
             }
         } catch (e) {
             console.error('Failed to fetch groups', e);
         }
     };
 
-    const handleToggleGroup = async (groupId: string, action: 'add' | 'remove') => {
+    const handleAction = async (groupId: string, action: 'add' | 'remove') => {
         setLoading(true);
         try {
             const res = await fetch(`${import.meta.env.VITE_API_URL}/admin/students/${studentId}/groups`, {
@@ -66,6 +88,7 @@ const AdminGroupManagementModal: React.FC<AdminGroupManagementModalProps> = ({
                     buttons: [{ type: 'ok' }]
                 });
                 onUpdate();
+                if (action === 'add') setIsAdding(false);
             } else {
                 throw new Error('Failed to update');
             }
@@ -79,54 +102,96 @@ const AdminGroupManagementModal: React.FC<AdminGroupManagementModalProps> = ({
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center bg-black/50 backdrop-blur-sm p-4">
-            <motion.div
-                initial={{ y: '100%' }}
-                animate={{ y: 0 }}
-                exit={{ y: '100%' }}
-                className="bg-tg-bg w-full max-w-md rounded-t-2xl sm:rounded-2xl overflow-hidden shadow-xl max-h-[80vh] flex flex-col"
-            >
-                <div className="flex items-center justify-between p-4 border-b border-tg-hint/10">
-                    <h2 className="text-lg font-semibold text-tg-text">Manage Groups</h2>
-                    <button onClick={onClose} className="p-2 hover:bg-tg-hint/10 rounded-full">
-                        <X size={20} className="text-tg-hint" />
-                    </button>
-                </div>
+        <div className="fixed inset-0 z-50 bg-white flex flex-col">
+            {/* Header */}
+            <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between bg-white">
+                <h2 className="text-lg font-semibold text-black">
+                    {isAdding ? 'Add Group' : `Groups - ${studentName}`}
+                </h2>
+            </div>
 
-                <div className="p-4 overflow-y-auto">
-                    <p className="text-sm text-tg-hint mb-4">Select groups for {studentName}</p>
-
-                    <div className="space-y-2">
-                        {availableGroups.map((group) => {
-                            const isAssigned = currentGroups.some(g => g.id === group.id);
-                            return (
-                                <div key={group.id} className="flex items-center justify-between p-3 bg-tg-secondary rounded-xl border border-tg-hint/10">
-                                    <div>
-                                        <span className="font-medium text-tg-text block">{group.name}</span>
-                                        {group.price && (
-                                            <span className="text-xs text-tg-hint">
-                                                {group.price.toLocaleString()} UZS • {group.payment_model === '12_lessons' ? '12 Lessons' : 'Monthly'}
-                                            </span>
-                                        )}
-                                    </div>
+            {/* Content */}
+            <div className="flex-1 overflow-y-auto p-4">
+                <AnimatePresence mode="wait">
+                    {isAdding ? (
+                        <motion.div
+                            key="adding"
+                            initial={{ opacity: 0, x: 20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0, x: -20 }}
+                            className="space-y-2"
+                        >
+                            <p className="text-sm text-gray-500 mb-4">Select a group to add:</p>
+                            {availableGroups.length > 0 ? (
+                                availableGroups.map((group) => (
                                     <button
-                                        onClick={() => handleToggleGroup(group.id, isAssigned ? 'remove' : 'add')}
+                                        key={group.id}
+                                        onClick={() => handleAction(group.id, 'add')}
                                         disabled={loading}
-                                        className={cn(
-                                            "px-3 py-1.5 rounded-lg text-xs font-bold transition-all",
-                                            isAssigned
-                                                ? "bg-red-500/10 text-red-500 hover:bg-red-500/20"
-                                                : "bg-green-500/10 text-green-500 hover:bg-green-500/20"
-                                        )}
+                                        className="w-full flex items-center justify-between p-4 bg-gray-50 rounded-xl active:bg-gray-100 transition-colors"
                                     >
-                                        {isAssigned ? 'Remove' : 'Add'}
+                                        <div className="text-left">
+                                            <span className="font-semibold text-black block">{group.name}</span>
+                                            <span className="text-xs text-gray-500">
+                                                {group.price ? `${group.price.toLocaleString()} UZS` : 'Free'}
+                                            </span>
+                                        </div>
+                                        <div className="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-500">
+                                            <Plus size={18} />
+                                        </div>
                                     </button>
-                                </div>
-                            );
-                        })}
-                    </div>
-                </div>
-            </motion.div>
+                                ))
+                            ) : (
+                                <p className="text-center text-gray-400 py-8">No available groups to add.</p>
+                            )}
+                        </motion.div>
+                    ) : (
+                        <motion.div
+                            key="list"
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0, x: 20 }}
+                            className="space-y-4"
+                        >
+                            {/* Add Button */}
+                            <button
+                                onClick={() => setIsAdding(true)}
+                                className="w-full py-3 rounded-xl bg-blue-500 text-white font-semibold flex items-center justify-center gap-2 active:scale-95 transition-transform"
+                            >
+                                <Plus size={20} />
+                                Add Group
+                            </button>
+
+                            {/* Current Groups List */}
+                            <div className="space-y-2">
+                                {currentGroups.length > 0 ? (
+                                    currentGroups.map((group) => (
+                                        <div key={group.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-100">
+                                            <div>
+                                                <span className="font-semibold text-black block">{group.name}</span>
+                                                <span className="text-xs text-gray-500">
+                                                    {group.price ? `${group.price.toLocaleString()} UZS` : 'Free'}
+                                                </span>
+                                            </div>
+                                            <button
+                                                onClick={() => handleAction(group.id, 'remove')}
+                                                disabled={loading}
+                                                className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                            >
+                                                <Trash2 size={20} />
+                                            </button>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <div className="text-center py-12">
+                                        <p className="text-gray-400">No groups assigned yet.</p>
+                                    </div>
+                                )}
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+            </div>
         </div>
     );
 };

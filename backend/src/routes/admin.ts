@@ -295,10 +295,15 @@ router.get('/students', async (req, res) => {
                 payment_day,
                 group_members (
                     group_id,
+                    created_at,
                     groups (
                         id,
                         name,
-                        price
+                        price,
+                        teacher:users!groups_teacher_id_fkey (
+                            first_name,
+                            surname
+                        )
                     )
                 )
             `)
@@ -337,10 +342,13 @@ router.get('/students', async (req, res) => {
 
             const groups = student.group_members?.map((gm: any) => {
                 const group = gm.groups;
+                const teacher = group.teacher;
                 return {
                     id: group.id,
                     name: group.name,
-                    price: group.price
+                    price: group.price,
+                    teacher_name: teacher ? `${teacher.first_name} ${teacher.surname}` : null,
+                    joined_at: gm.created_at
                 };
             }).filter((g: any) => g.name) || [];
 
