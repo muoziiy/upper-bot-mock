@@ -97,6 +97,19 @@ const AdminCreateGroupModal: React.FC<AdminCreateGroupModalProps> = ({ isOpen, o
         }
     };
 
+    const formatPrice = (value: string) => {
+        // Remove non-digits
+        const number = value.replace(/\D/g, '');
+        // Add spaces
+        return number.replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+    };
+
+    const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const rawValue = e.target.value.replace(/\s/g, '');
+        if (!/^\d*$/.test(rawValue)) return;
+        setPrice(rawValue);
+    };
+
     const handleSubmit = async () => {
         if (!name || !price) {
             webApp?.showAlert('Please fill in Name and Price');
@@ -198,128 +211,113 @@ const AdminCreateGroupModal: React.FC<AdminCreateGroupModalProps> = ({ isOpen, o
                     />
                 </div>
 
-    const formatPrice = (value: string) => {
-        // Remove non-digits
-        const number = value.replace(/\D/g, '');
-                // Add spaces
-                return number.replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
-    };
+                {/* Price */}
+                <div className="space-y-2">
+                    <label className="text-sm font-medium text-tg-hint ml-1">Price (UZS)</label>
+                    <input
+                        type="text"
+                        value={formatPrice(price)}
+                        onChange={handlePriceChange}
+                        placeholder="0"
+                        className="w-full bg-tg-secondary text-tg-text p-3.5 rounded-xl border-none outline-none focus:ring-2 focus:ring-tg-button/50 transition-all placeholder:text-tg-hint/50"
+                    />
+                </div>
 
-                const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const rawValue = e.target.value.replace(/\s/g, '');
-                    if (!/^\d*$/.test(rawValue)) return;
-                    setPrice(rawValue);
-    };
+                {/* Teacher Custom Select */}
+                <div className="space-y-2 relative">
+                    <label className="text-sm font-medium text-tg-hint ml-1">Teacher</label>
+                    <button
+                        onClick={() => setIsTeacherSelectOpen(!isTeacherSelectOpen)}
+                        className="w-full bg-tg-secondary text-tg-text p-3.5 rounded-xl flex items-center justify-between active:scale-[0.99] transition-transform"
+                    >
+                        <div className="flex items-center gap-2">
+                            <User size={18} className="text-tg-hint" />
+                            <span className={!selectedTeacher ? "text-tg-hint" : ""}>
+                                {selectedTeacher ? `${selectedTeacher.first_name} ${selectedTeacher.surname}` : "Select Teacher"}
+                            </span>
+                        </div>
+                        <ChevronDown size={18} className={cn("text-tg-hint transition-transform", isTeacherSelectOpen ? "rotate-180" : "")} />
+                    </button>
 
-                    // ...
+                    {/* Dropdown */}
+                    <AnimatePresence>
+                        {isTeacherSelectOpen && (
+                            <>
+                                <div className="fixed inset-0 z-20" onClick={() => setIsTeacherSelectOpen(false)} />
+                                <motion.div
+                                    initial={{ opacity: 0, y: -10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: -10 }}
+                                    className="absolute top-full left-0 right-0 mt-2 bg-tg-bg border border-tg-hint/10 rounded-xl shadow-xl z-30 max-h-60 overflow-y-auto"
+                                >
+                                    {teachers.length > 0 ? (
+                                        teachers.map(t => (
+                                            <button
+                                                key={t.id}
+                                                onClick={() => {
+                                                    setTeacherId(t.id);
+                                                    setIsTeacherSelectOpen(false);
+                                                }}
+                                                className="w-full text-left px-4 py-3 hover:bg-tg-secondary/50 flex items-center justify-between border-b border-tg-hint/5 last:border-none text-tg-text"
+                                            >
+                                                <span>{t.first_name} {t.surname}</span>
+                                                {teacherId === t.id && <Check size={16} className="text-tg-button" />}
+                                            </button>
+                                        ))
+                                    ) : (
+                                        <div className="p-4 text-center text-tg-hint text-sm">No teachers found</div>
+                                    )}
+                                </motion.div>
+                            </>
+                        )}
+                    </AnimatePresence>
+                </div>
 
-                    {/* Price */}
-                    <div className="space-y-2">
-                        <label className="text-sm font-medium text-tg-hint ml-1">Price (UZS)</label>
+                {/* Schedule */}
+                <div className="space-y-3">
+                    <label className="text-sm font-medium text-tg-hint ml-1">Schedule</label>
+
+                    {/* Custom Week Selector */}
+                    <div className="flex justify-between gap-1">
+                        {weekDays.map(day => (
+                            <button
+                                key={day}
+                                onClick={() => handleDayToggle(day)}
+                                className={cn(
+                                    "w-10 h-10 rounded-full text-xs font-bold flex items-center justify-center transition-all",
+                                    selectedDays.includes(day)
+                                        ? "bg-tg-button text-white shadow-lg shadow-tg-button/30 scale-105"
+                                        : "bg-tg-secondary text-tg-hint hover:bg-tg-secondary/80"
+                                )}
+                            >
+                                {day.charAt(0)}
+                            </button>
+                        ))}
+                    </div>
+
+                    {/* Time Selector */}
+                    <div className="relative">
+                        <Clock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-tg-hint" size={18} />
                         <input
-                            type="text"
-                            value={formatPrice(price)}
-                            onChange={handlePriceChange}
-                            placeholder="0"
-                            className="w-full bg-tg-secondary text-tg-text p-3.5 rounded-xl border-none outline-none focus:ring-2 focus:ring-tg-button/50 transition-all placeholder:text-tg-hint/50"
+                            type="time"
+                            value={time}
+                            onChange={(e) => setTime(e.target.value)}
+                            className="w-full bg-tg-secondary text-tg-text pl-11 p-3.5 rounded-xl border-none outline-none focus:ring-2 focus:ring-tg-button/50"
                         />
                     </div>
+                </div>
 
-                    {/* Teacher Custom Select */}
-                    <div className="space-y-2 relative">
-                        <label className="text-sm font-medium text-tg-hint ml-1">Teacher</label>
-                        <button
-                            onClick={() => setIsTeacherSelectOpen(!isTeacherSelectOpen)}
-                            className="w-full bg-tg-secondary text-tg-text p-3.5 rounded-xl flex items-center justify-between active:scale-[0.99] transition-transform"
-                        >
-                            <div className="flex items-center gap-2">
-                                <User size={18} className="text-tg-hint" />
-                                <span className={!selectedTeacher ? "text-tg-hint" : ""}>
-                                    {selectedTeacher ? `${selectedTeacher.first_name} ${selectedTeacher.surname}` : "Select Teacher"}
-                                </span>
-                            </div>
-                            <ChevronDown size={18} className={cn("text-tg-hint transition-transform", isTeacherSelectOpen ? "rotate-180" : "")} />
-                        </button>
-
-                        {/* Dropdown */}
-                        <AnimatePresence>
-                            {isTeacherSelectOpen && (
-                                <>
-                                    <div className="fixed inset-0 z-20" onClick={() => setIsTeacherSelectOpen(false)} />
-                                    <motion.div
-                                        initial={{ opacity: 0, y: -10 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        exit={{ opacity: 0, y: -10 }}
-                                        className="absolute top-full left-0 right-0 mt-2 bg-tg-bg border border-tg-hint/10 rounded-xl shadow-xl z-30 max-h-60 overflow-y-auto"
-                                    >
-                                        {teachers.length > 0 ? (
-                                            teachers.map(t => (
-                                                <button
-                                                    key={t.id}
-                                                    onClick={() => {
-                                                        setTeacherId(t.id);
-                                                        setIsTeacherSelectOpen(false);
-                                                    }}
-                                                    className="w-full text-left px-4 py-3 hover:bg-tg-secondary/50 flex items-center justify-between border-b border-tg-hint/5 last:border-none text-tg-text"
-                                                >
-                                                    <span>{t.first_name} {t.surname}</span>
-                                                    {teacherId === t.id && <Check size={16} className="text-tg-button" />}
-                                                </button>
-                                            ))
-                                        ) : (
-                                            <div className="p-4 text-center text-tg-hint text-sm">No teachers found</div>
-                                        )}
-                                    </motion.div>
-                                </>
-                            )}
-                        </AnimatePresence>
-                    </div>
-
-                    {/* Schedule */}
-                    <div className="space-y-3">
-                        <label className="text-sm font-medium text-tg-hint ml-1">Schedule</label>
-
-                        {/* Custom Week Selector */}
-                        <div className="flex justify-between gap-1">
-                            {weekDays.map(day => (
-                                <button
-                                    key={day}
-                                    onClick={() => handleDayToggle(day)}
-                                    className={cn(
-                                        "w-10 h-10 rounded-full text-xs font-bold flex items-center justify-center transition-all",
-                                        selectedDays.includes(day)
-                                            ? "bg-tg-button text-white shadow-lg shadow-tg-button/30 scale-105"
-                                            : "bg-tg-secondary text-tg-hint hover:bg-tg-secondary/80"
-                                    )}
-                                >
-                                    {day.charAt(0)}
-                                </button>
-                            ))}
-                        </div>
-
-                        {/* Time Selector */}
-                        <div className="relative">
-                            <Clock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-tg-hint" size={18} />
-                            <input
-                                type="time"
-                                value={time}
-                                onChange={(e) => setTime(e.target.value)}
-                                className="w-full bg-tg-secondary text-tg-text pl-11 p-3.5 rounded-xl border-none outline-none focus:ring-2 focus:ring-tg-button/50"
-                            />
-                        </div>
-                    </div>
-
-                    {/* Delete Button (Only in Edit Mode) */}
-                    {group && (
-                        <button
-                            onClick={handleDelete}
-                            disabled={loading}
-                            className="w-full py-3.5 rounded-xl bg-red-500/10 text-red-500 font-semibold active:scale-[0.98] transition-all flex items-center justify-center gap-2"
-                        >
-                            <Trash2 size={18} />
-                            Delete Group
-                        </button>
-                    )}
+                {/* Delete Button (Only in Edit Mode) */}
+                {group && (
+                    <button
+                        onClick={handleDelete}
+                        disabled={loading}
+                        className="w-full py-3.5 rounded-xl bg-red-500/10 text-red-500 font-semibold active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                    >
+                        <Trash2 size={18} />
+                        Delete Group
+                    </button>
+                )}
             </div>
 
             {/* Footer Action */}
