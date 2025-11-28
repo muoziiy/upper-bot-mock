@@ -5,7 +5,7 @@ import { cn } from '../../lib/utils';
 interface ListItemProps {
     icon?: React.ReactNode;
     title: string;
-    subtitle?: string;
+    subtitle?: React.ReactNode;
     value?: React.ReactNode;
     onClick?: () => void;
     rightElement?: React.ReactNode;
