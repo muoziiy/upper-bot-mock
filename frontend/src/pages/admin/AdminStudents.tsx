@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useTelegram } from '../../context/TelegramContext';
 import { Search, Filter, CreditCard, Users, Edit } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -29,7 +28,7 @@ interface Student {
 
 const AdminStudents: React.FC = () => {
     const { webApp } = useTelegram();
-    const navigate = useNavigate();
+    // const navigate = useNavigate(); // Not used anymore
     const [students, setStudents] = useState<Student[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
@@ -48,17 +47,8 @@ const AdminStudents: React.FC = () => {
     const [showGroupModal, setShowGroupModal] = useState(false);
 
     // Handle Native Back Button
-    useEffect(() => {
-        if (webApp) {
-            webApp.BackButton.show();
-            const handleBack = () => navigate(-1);
-            webApp.BackButton.onClick(handleBack);
-            return () => {
-                webApp.BackButton.offClick(handleBack);
-                webApp.BackButton.hide();
-            };
-        }
-    }, [webApp, navigate]);
+    // Native Back Button handled by BottomNav/Router now
+
 
     // Fetch students
     const fetchStudents = async () => {
@@ -74,7 +64,11 @@ const AdminStudents: React.FC = () => {
                 // Client-side filtering for now (until backend supports it)
                 let filtered = data;
                 if (filters.status !== 'all') {
-                    filtered = filtered.filter((s: Student) => s.payment_status === filters.status);
+                    if (filters.status === 'unpaid') {
+                        filtered = filtered.filter((s: Student) => s.payment_status === 'unpaid' || s.payment_status === 'overdue');
+                    } else {
+                        filtered = filtered.filter((s: Student) => s.payment_status === filters.status);
+                    }
                 }
                 setStudents(filtered);
             }

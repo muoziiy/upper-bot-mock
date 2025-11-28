@@ -58,7 +58,7 @@ const AdminFilterModal: React.FC<AdminFilterModalProps> = ({ isOpen, onClose, fi
                     <div className="space-y-3">
                         <label className="text-sm font-medium text-tg-hint uppercase">Payment Status</label>
                         <div className="flex flex-wrap gap-2">
-                            {['all', 'paid', 'unpaid', 'overdue'].map((status) => (
+                            {['all', 'paid', 'unpaid'].map((status) => (
                                 <button
                                     key={status}
                                     onClick={() => setLocalFilters({ ...localFilters, status: status as any })}

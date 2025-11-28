@@ -48,7 +48,7 @@ const AppContent: React.FC = () => {
   const role = dashboardData?.user.role || 'new_user'; // Default to new_user if not set
 
   // Routes where BottomNav should be hidden
-  const hideNavRoutes = ['/onboarding', '/guest', '/waiting', '/admin/students'];
+  const hideNavRoutes = ['/onboarding', '/guest', '/waiting'];
   const shouldShowNav = !hideNavRoutes.includes(location.pathname);
 
   const getHomeRoute = () => {
