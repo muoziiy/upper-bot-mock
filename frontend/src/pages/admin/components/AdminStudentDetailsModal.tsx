@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { useTelegram } from '../../../context/TelegramContext';
 import { Section } from '../../../components/ui/Section';
-import { X, CreditCard, Users, Calendar, Clock } from 'lucide-react';
+import { CreditCard, Users, Calendar, Clock } from 'lucide-react';
 import { cn } from '../../../lib/utils';
 
 interface Student {
@@ -47,11 +47,8 @@ const AdminStudentDetailsModal: React.FC<AdminStudentDetailsModalProps> = ({ isO
     return (
         <div className="fixed inset-0 z-50 bg-tg-secondary overflow-y-auto pb-10 animate-in slide-in-from-bottom-10 fade-in duration-200">
             {/* Header */}
-            <div className="bg-tg-bg sticky top-0 z-10 px-4 py-3 flex items-center justify-between border-b border-tg-hint/10">
+            <div className="bg-tg-bg sticky top-0 z-10 px-4 py-3 flex items-center justify-center border-b border-tg-hint/10">
                 <h2 className="text-lg font-semibold text-tg-text">Student Details</h2>
-                <button onClick={onClose} className="p-1 rounded-full bg-tg-secondary text-tg-hint hover:text-tg-text transition-colors">
-                    <X size={20} />
-                </button>
             </div>
 
             <div className="pt-4 px-4 space-y-6">

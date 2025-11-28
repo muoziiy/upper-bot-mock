@@ -175,14 +175,20 @@ const AdminStudents: React.FC = () => {
                     />
                     <AdminPaymentModal
                         isOpen={showPaymentModal}
-                        onClose={() => setShowPaymentModal(false)}
+                        onClose={() => {
+                            setShowPaymentModal(false);
+                            setShowDetailsModal(true);
+                        }}
                         studentId={selectedStudent.id}
                         studentName={`${selectedStudent.first_name} ${selectedStudent.surname}`}
                         groups={selectedStudent.groups}
                     />
                     <AdminGroupManagementModal
                         isOpen={showGroupModal}
-                        onClose={() => setShowGroupModal(false)}
+                        onClose={() => {
+                            setShowGroupModal(false);
+                            setShowDetailsModal(true);
+                        }}
                         studentId={selectedStudent.id}
                         studentName={`${selectedStudent.first_name} ${selectedStudent.surname}`}
                         currentGroups={selectedStudent.groups}
@@ -190,7 +196,10 @@ const AdminStudents: React.FC = () => {
                     />
                     <AdminAttendanceModal
                         isOpen={showAttendanceModal}
-                        onClose={() => setShowAttendanceModal(false)}
+                        onClose={() => {
+                            setShowAttendanceModal(false);
+                            setShowDetailsModal(true);
+                        }}
                         studentId={selectedStudent.id}
                         studentName={`${selectedStudent.first_name} ${selectedStudent.surname}`}
                     />
