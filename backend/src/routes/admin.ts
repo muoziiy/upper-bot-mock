@@ -327,6 +327,19 @@ router.get('/students', async (req, res) => {
             console.error('Error fetching overdue status:', overdueError);
         }
 
+        // 2b. Fetch completed payments for current month
+        const currentMonth = new Date().getMonth() + 1;
+        const currentYear = new Date().getFullYear();
+
+        const { data: paidData } = await supabase
+            .from('payment_records')
+            .select('student_id')
+            .eq('status', 'completed')
+            .eq('month', currentMonth)
+            .eq('year', currentYear);
+
+        const paidSet = new Set(paidData?.map((p: any) => p.student_id));
+
         // Create a map for quick lookup: student_id -> overdue_info
         const overdueMap = new Map<string, any>();
         if (overdueData) {
@@ -339,6 +352,11 @@ router.get('/students', async (req, res) => {
         const students = studentsData.map((student: any) => {
             const overdueInfo = overdueMap.get(student.id);
             const isOverdue = !!overdueInfo;
+            const isPaid = paidSet.has(student.id);
+
+            let status = 'unpaid';
+            if (isOverdue) status = 'overdue';
+            else if (isPaid) status = 'paid';
 
             const groups = student.group_members?.map((gm: any) => {
                 const group = gm.groups;
@@ -362,7 +380,7 @@ router.get('/students', async (req, res) => {
                 sex: student.sex,
                 payment_day: student.payment_day || 1,
                 groups: groups,
-                payment_status: isOverdue ? 'overdue' : 'paid',
+                payment_status: status,
                 amount_due: overdueInfo?.total_amount_due || 0
             };
         });
