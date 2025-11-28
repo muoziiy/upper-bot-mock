@@ -295,12 +295,12 @@ router.get('/students', async (req, res) => {
                 payment_day,
                 group_members (
                     group_id,
-                    created_at,
+                    joined_at,
                     groups (
                         id,
                         name,
                         price,
-                        teacher:users!groups_teacher_id_fkey (
+                        teacher:users (
                             first_name,
                             surname
                         )
@@ -348,7 +348,7 @@ router.get('/students', async (req, res) => {
                     name: group.name,
                     price: group.price,
                     teacher_name: teacher ? `${teacher.first_name} ${teacher.surname}` : null,
-                    joined_at: gm.created_at
+                    joined_at: gm.joined_at
                 };
             }).filter((g: any) => g.name) || [];
 
