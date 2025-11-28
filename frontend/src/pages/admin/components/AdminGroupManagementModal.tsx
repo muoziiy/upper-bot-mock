@@ -29,6 +29,7 @@ const AdminGroupManagementModal: React.FC<AdminGroupManagementModalProps> = ({
 }) => {
     const { webApp } = useTelegram();
     const [isAdding, setIsAdding] = useState(false);
+    const [joinDate, setJoinDate] = useState(new Date().toISOString().split('T')[0]);
     const [availableGroups, setAvailableGroups] = useState<Group[]>([]);
     const [loading, setLoading] = useState(false);
 
@@ -78,7 +79,7 @@ const AdminGroupManagementModal: React.FC<AdminGroupManagementModalProps> = ({
             const res = await fetch(`${import.meta.env.VITE_API_URL}/admin/students/${studentId}/groups`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ groupId, action })
+                body: JSON.stringify({ groupId, action, joinedAt: joinDate })
             });
 
             if (res.ok) {
@@ -121,29 +122,40 @@ const AdminGroupManagementModal: React.FC<AdminGroupManagementModalProps> = ({
                             exit={{ opacity: 0, x: -20 }}
                             className="space-y-2"
                         >
-                            <p className="text-sm text-tg-hint mb-4">Select a group to add:</p>
-                            {availableGroups.length > 0 ? (
-                                availableGroups.map((group) => (
-                                    <button
-                                        key={group.id}
-                                        onClick={() => handleAction(group.id, 'add')}
-                                        disabled={loading}
-                                        className="w-full flex items-center justify-between p-4 bg-tg-secondary rounded-xl active:bg-tg-secondary/80 transition-colors"
-                                    >
-                                        <div className="text-left">
-                                            <span className="font-semibold text-tg-text block">{group.name}</span>
-                                            <span className="text-xs text-tg-hint">
-                                                {group.price ? `${group.price.toLocaleString()} UZS` : 'Free'}
-                                            </span>
-                                        </div>
-                                        <div className="w-8 h-8 rounded-full bg-tg-button/10 flex items-center justify-center text-tg-button">
-                                            <Plus size={18} />
-                                        </div>
-                                    </button>
-                                ))
-                            ) : (
-                                <p className="text-center text-tg-hint py-8">No available groups to add.</p>
-                            )}
+                            <div className="space-y-4">
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-tg-hint ml-1">Join Date</label>
+                                    <input
+                                        type="date"
+                                        value={joinDate}
+                                        onChange={(e) => setJoinDate(e.target.value)}
+                                        className="w-full bg-tg-secondary text-tg-text p-3 rounded-xl border-none outline-none focus:ring-2 focus:ring-tg-button/20"
+                                    />
+                                </div>
+                                <p className="text-sm text-tg-hint mb-2">Select a group to add:</p>
+                                {availableGroups.length > 0 ? (
+                                    availableGroups.map((group) => (
+                                        <button
+                                            key={group.id}
+                                            onClick={() => handleAction(group.id, 'add')}
+                                            disabled={loading}
+                                            className="w-full flex items-center justify-between p-4 bg-tg-secondary rounded-xl active:bg-tg-secondary/80 transition-colors"
+                                        >
+                                            <div className="text-left">
+                                                <span className="font-semibold text-tg-text block">{group.name}</span>
+                                                <span className="text-xs text-tg-hint">
+                                                    {group.price ? `${group.price.toLocaleString()} UZS` : 'Free'}
+                                                </span>
+                                            </div>
+                                            <div className="w-8 h-8 rounded-full bg-tg-button/10 flex items-center justify-center text-tg-button">
+                                                <Plus size={18} />
+                                            </div>
+                                        </button>
+                                    ))
+                                ) : (
+                                    <p className="text-center text-tg-hint py-8">No available groups to add.</p>
+                                )}
+                            </div>
                         </motion.div>
                     ) : (
                         <motion.div

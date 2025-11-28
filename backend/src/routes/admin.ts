@@ -706,7 +706,8 @@ router.put('/students/:id/groups', async (req, res) => {
                     .from('group_members')
                     .insert({
                         student_id: id,
-                        group_id: groupId
+                        group_id: groupId,
+                        joined_at: req.body.joinedAt || new Date().toISOString()
                     });
                 if (error) throw error;
             }

@@ -560,8 +560,11 @@ BEGIN
         pr.student_id,
         SUM(pr.amount) as total_amount_due
     FROM payment_records pr
+    JOIN users u ON u.id = pr.student_id
     WHERE pr.status IN ('pending', 'unpaid')
     AND pr.payment_date < target_date
+    -- Only show overdue if the current day of month is greater than the student's payment day (or joined day)
+    AND EXTRACT(DAY FROM target_date) >= COALESCE(u.payment_day, 1)
     GROUP BY pr.student_id;
 END;
 $$ LANGUAGE plpgsql;
