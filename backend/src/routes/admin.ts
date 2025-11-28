@@ -305,24 +305,30 @@ router.get('/stats/financial', async (req, res) => {
 
         // Merge and sort
         const recentTransactions = [
-            ...(recentIncoming || []).map(t => ({
-                id: t.id,
-                type: 'incoming',
-                amount: t.amount,
-                date: t.payment_date,
-                status: t.status,
-                user: t.users ? `${t.users.first_name} ${t.users.surname}` : 'Unknown',
-                description: 'Student Payment'
-            })),
-            ...recentOutgoing.map(t => ({
-                id: t.id,
-                type: 'outgoing',
-                amount: t.amount,
-                date: t.payment_date,
-                status: t.status,
-                user: t.users ? `${t.users.first_name} ${t.users.surname}` : 'Unknown',
-                description: 'Teacher Payout'
-            }))
+            ...(recentIncoming || []).map((t: any) => {
+                const userObj = Array.isArray(t.users) ? t.users[0] : t.users;
+                return {
+                    id: t.id,
+                    type: 'incoming',
+                    amount: t.amount,
+                    date: t.payment_date,
+                    status: t.status,
+                    user: userObj ? `${userObj.first_name} ${userObj.surname}` : 'Unknown',
+                    description: 'Student Payment'
+                };
+            }),
+            ...recentOutgoing.map((t: any) => {
+                const userObj = Array.isArray(t.users) ? t.users[0] : t.users;
+                return {
+                    id: t.id,
+                    type: 'outgoing',
+                    amount: t.amount,
+                    date: t.payment_date,
+                    status: t.status,
+                    user: userObj ? `${userObj.first_name} ${userObj.surname}` : 'Unknown',
+                    description: 'Teacher Payout'
+                };
+            })
         ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
             .slice(0, 10);
 
