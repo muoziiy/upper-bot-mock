@@ -67,7 +67,7 @@ const ParentProfile: React.FC = () => {
                         )}
                     </div>
                     <div className="text-center">
-                        <h1 className="text-2xl font-bold">{dashboardData?.user.first_name}</h1>
+                        <h1 className="text-2xl font-bold">{dashboardData?.user.onboarding_first_name || dashboardData?.user.first_name}</h1>
                         <div className="flex items-center justify-center gap-2 text-sm text-tg-hint">
                             <span className="capitalize">{dashboardData?.user.role}</span>
                             <span>•</span>
@@ -105,7 +105,7 @@ const ParentProfile: React.FC = () => {
                                     </div>
                                     <div>
                                         <h3 className="text-lg font-semibold text-tg-text">
-                                            {child.first_name}
+                                            {child.onboarding_first_name || child.first_name}
                                         </h3>
                                         <p className="text-sm text-tg-hint capitalize">{child.role}</p>
                                     </div>

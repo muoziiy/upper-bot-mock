@@ -6,6 +6,7 @@ interface DashboardData {
     user: {
         id: string;
         first_name: string;
+        onboarding_first_name?: string;
         last_name?: string;
         role: string;
         student_id?: string;

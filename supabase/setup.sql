@@ -44,6 +44,7 @@ CREATE TABLE IF NOT EXISTS users (
     telegram_id BIGINT UNIQUE NOT NULL,
     username TEXT,
     first_name TEXT,
+    onboarding_first_name TEXT,
     last_name TEXT,
     surname TEXT,
     age INTEGER,

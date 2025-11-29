@@ -12,6 +12,7 @@ interface Student {
     id: string;
     student_id: string;
     first_name: string;
+    onboarding_first_name?: string;
     surname: string;
     age: number;
     sex: 'male' | 'female' | null;
@@ -110,7 +111,7 @@ const AdminStudentDetails: React.FC = () => {
                         )}
                     </div>
                     <h1 className="text-2xl font-bold text-tg-text text-center">
-                        {student.first_name}
+                        {student.onboarding_first_name || student.first_name}
                     </h1>
                     <p className="text-tg-hint font-medium mt-1">ID: {student.student_id}</p>
                 </div>

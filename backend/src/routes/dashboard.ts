@@ -16,7 +16,18 @@ router.get('/dashboard', async (req: Request, res: Response) => {
         // Fetch user data
         const { data: user } = await supabase
             .from('users')
-            .select('*')
+            .select(`
+                id,
+                telegram_id,
+                first_name,
+                onboarding_first_name,
+                last_name,
+                username,
+                role,
+                payment_day,
+                student_id,
+                subjects
+            `)
             .eq('telegram_id', userId)
             .single();
 

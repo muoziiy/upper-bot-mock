@@ -471,11 +471,14 @@ router.get('/students/:id', async (req, res) => {
                 student_id,
                 telegram_id,
                 first_name,
+                onboarding_first_name,
                 surname,
                 age,
                 sex,
                 payment_day,
-                created_at
+                created_at,
+                phone_number,
+                role
             `)
             .eq('id', id)
             .single();

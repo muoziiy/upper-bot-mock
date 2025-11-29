@@ -19,6 +19,9 @@ const AdminStudents = React.lazy(() => import('./pages/admin/AdminStudents'));
 const AdminStudentDetails = React.lazy(() => import('./pages/admin/AdminStudentDetails'));
 const AdminProfile = React.lazy(() => import('./pages/admin/AdminProfile'));
 const AdminBroadcast = React.lazy(() => import('./pages/admin/AdminBroadcast'));
+const AdminNotifications = React.lazy(() => import('./pages/admin/AdminNotifications'));
+const AdminBotSettings = React.lazy(() => import('./pages/admin/AdminBotSettings'));
+const AdminExportData = React.lazy(() => import('./pages/admin/AdminExportData'));
 const Onboarding = React.lazy(() => import('./pages/Onboarding'));
 const GuestDashboard = React.lazy(() => import('./pages/GuestDashboard'));
 const WaitingPage = React.lazy(() => import('./pages/WaitingPage'));
@@ -105,6 +108,9 @@ const AppContent: React.FC = () => {
     { path: "/admin/students/:id", element: <AdminStudentDetails /> }, // New Page
     { path: "/admin/profile", element: <AdminProfile /> },
     { path: "/admin/broadcast", element: <AdminBroadcast /> },
+    { path: "/admin/notifications", element: <AdminNotifications /> },
+    { path: "/admin/settings", element: <AdminBotSettings /> },
+    { path: "/admin/export", element: <AdminExportData /> },
   ]);
 
   if (loading) {

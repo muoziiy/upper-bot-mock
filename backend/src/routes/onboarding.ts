@@ -95,7 +95,7 @@ router.post('/student', async (req, res) => {
         const { error } = await supabase
             .from('users')
             .update({
-                first_name: name,
+                onboarding_first_name: name,
                 surname: surname,
                 age: age,
                 sex: sex,
@@ -149,7 +149,7 @@ router.post('/staff', async (req, res) => {
         const { error: userError } = await supabase
             .from('users')
             .update({
-                first_name: name,
+                onboarding_first_name: name,
                 surname: surname,
                 age: age,
                 sex: sex,

@@ -15,6 +15,7 @@ interface Student {
     id: string;
     student_id: string;
     first_name: string;
+    onboarding_first_name?: string;
     surname: string;
     age: number;
     sex: 'male' | 'female' | null;
@@ -154,7 +155,7 @@ const AdminStudents: React.FC = () => {
                             <ListItem
                                 key={student.id}
                                 icon={student.sex === 'female' ? '👩' : '👨'}
-                                title={`${student.first_name}`}
+                                title={`${student.onboarding_first_name || student.first_name}`}
                                 subtitle={`ID: ${student.student_id}`}
                                 rightElement={
                                     student.payment_status === 'overdue' ? (
