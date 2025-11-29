@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronRight, Globe, User } from 'lucide-react';
+import { ChevronRight, User } from 'lucide-react';
 import { useTelegram } from '../../context/TelegramContext';
 import { useTranslation } from 'react-i18next';
 
@@ -138,6 +138,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
                                     <div>
                                         <p className="text-xs text-tg-hint uppercase font-medium mb-2 px-4">
                                             {t('settings.preferences')}
+                                        </p>
                                     </div>
 
                                     {/* Account Section */}

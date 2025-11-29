@@ -656,6 +656,38 @@ router.put('/students/:id/payment-day', async (req, res) => {
     }
 });
 
+// Get student attendance history
+router.get('/students/:id/attendance', async (req, res) => {
+    const { id } = req.params;
+
+    try {
+        const { data, error } = await supabase
+            .from('attendance')
+            .select(`
+                id,
+                date,
+                status,
+                groups (name)
+            `)
+            .eq('student_id', id)
+            .order('date', { ascending: false });
+
+        if (error) throw error;
+
+        const attendance = data.map((record: any) => ({
+            id: record.id,
+            date: record.date,
+            status: record.status,
+            group_name: record.groups?.name
+        }));
+
+        res.json(attendance);
+    } catch (error) {
+        console.error('Error fetching student attendance:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
 // ==============================================================================
 // STUDENT PAYMENT MANAGEMENT ENDPOINTS
 // ==============================================================================

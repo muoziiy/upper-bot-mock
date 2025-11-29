@@ -1,9 +1,47 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useTelegram } from '../../context/TelegramContext';
 import { Section } from '../../components/ui/Section';
-    />
-            </Section >
+import { ListItem } from '../../components/ui/ListItem';
+import { useAppData } from '../../context/AppDataContext';
+import { useTranslation } from 'react-i18next';
+
+const AdminDashboard: React.FC = () => {
+    const navigate = useNavigate();
+    const { dashboardData } = useAppData();
+    const { t } = useTranslation();
+
+    return (
+        <div className="page-content pt-4 pb-20">
+            <header className="mb-6 px-4">
+                <h1 className="text-2xl font-bold text-tg-text">
+                    {t('dashboard.hello')} {dashboardData?.user.onboarding_first_name || dashboardData?.user.first_name}
+                </h1>
+                <p className="text-tg-hint">Admin Dashboard</p>
+            </header>
+
+            <Section title="Management">
+                <ListItem
+                    icon="👥"
+                    title="Students"
+                    subtitle="Manage Students"
+                    onClick={() => navigate('/admin/students')}
+                    showChevron
+                />
+                <ListItem
+                    icon="👨‍🏫"
+                    title="Teachers"
+                    subtitle="Manage Staff"
+                    onClick={() => navigate('/admin/teachers')}
+                    showChevron
+                />
+                <ListItem
+                    icon="🛡️"
+                    title="Admins"
+                    subtitle="Manage Admins"
+                    onClick={() => navigate('/admin/admins')}
+                    showChevron
+                />
+            </Section>
 
             <Section title="Analytics">
                 <ListItem
