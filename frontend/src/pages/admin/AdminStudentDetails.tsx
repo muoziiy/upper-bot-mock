@@ -27,13 +27,7 @@ interface Student {
     payment_status?: 'paid' | 'unpaid' | 'overdue';
 }
 
-interface PaymentRecord {
-    id: string;
-    amount: number;
-    payment_date: string;
-    status: 'completed' | 'pending';
-    subject_name?: string;
-}
+
 
 interface AttendanceRecord {
     id: string;
