@@ -23,6 +23,23 @@ const AdminCenterSettings: React.FC = () => {
         }
     }, [webApp, navigate]);
 
+    React.useEffect(() => {
+        const fetchSettings = async () => {
+            try {
+                const res = await fetch(`${import.meta.env.VITE_API_URL}/admin/settings`);
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.default_payment_type) {
+                        setSelectedType(data.default_payment_type);
+                    }
+                }
+            } catch (e) {
+                console.error('Failed to fetch settings', e);
+            }
+        };
+        fetchSettings();
+    }, []);
+
     const handleUpdatePaymentType = async (type: 'monthly_fixed' | 'monthly_rolling' | 'lesson_based') => {
         if (!window.confirm('Are you sure? This will update the payment system for ALL students. This process may take some time.')) {
             return;

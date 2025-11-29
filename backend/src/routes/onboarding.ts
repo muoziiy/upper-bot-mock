@@ -2,95 +2,9 @@ import express from 'express';
 import { supabase } from '../supabase';
 import bot from '../bot';
 import { logError, logWarning, logInfo, getRequestInfo } from '../logger';
+import { notifyAdminsOfNewRequest } from '../approval';
 
 const router = express.Router();
-
-// Helper to notify admins and track request
-const notifyAdmins = async (message: string, payload: { type: 'student' | 'staff', userId: number }) => {
-    try {
-        // 1. Create Registration Request Record
-        const { data: userData } = await supabase
-            .from('users')
-            .select('id')
-            .eq('telegram_id', payload.userId)
-            .single();
-
-        if (!userData) {
-            console.error('User not found for request creation');
-            return;
-        }
-
-        const { data: request, error: reqError } = await supabase
-            .from('registration_requests')
-            .insert({
-                user_id: userData.id,
-                role_requested: payload.type === 'student' ? 'student' : 'teacher',
-                status: 'pending'
-            })
-            .select()
-            .single();
-
-        if (reqError || !request) {
-            console.error('Failed to create registration request', reqError);
-            return;
-        }
-
-        // 2. Fetch Admins
-        const { data: admins, error } = await supabase
-            .from('users')
-            .select('telegram_id')
-            .in('role', ['admin', 'super_admin']);
-
-        if (error || !admins) {
-            console.error('Failed to fetch admins for notification', error);
-            return;
-        }
-
-        // 3. Send Messages and Track IDs
-        const sentMessages: { chat_id: number, message_id: number }[] = [];
-
-        for (const admin of admins) {
-            if (admin.telegram_id) {
-                try {
-                    const sentMsg = await bot.telegram.sendMessage(admin.telegram_id, message, {
-                        parse_mode: 'Markdown',
-                        reply_markup: {
-                            inline_keyboard: [
-                                [
-                                    { text: '✅ Approve', callback_data: `approve_${payload.type}_${request.id}` },
-                                    { text: '❌ Decline', callback_data: `decline_${payload.type}_${request.id}` }
-                                ]
-                            ]
-                        }
-                    });
-                    sentMessages.push({ chat_id: sentMsg.chat.id, message_id: sentMsg.message_id });
-                } catch (e) {
-                    console.error(`Failed to send notification to admin ${admin.telegram_id}`, e);
-                }
-            }
-        }
-
-        // 4. Update Request with Message IDs (using admin_notification_logs)
-        if (sentMessages.length > 0) {
-            const logs = sentMessages.map(msg => ({
-                request_id: request.id,
-                admin_chat_id: msg.chat_id,
-                message_id: msg.message_id
-            }));
-
-            const { error: logError } = await supabase
-                .from('admin_notification_logs')
-                .insert(logs);
-
-            if (logError) {
-                console.error('Failed to insert admin notification logs', logError);
-            }
-        }
-
-    } catch (e) {
-        console.error('Error in notifyAdmins', e);
-    }
-};
 
 // New Student Onboarding
 router.post('/student', async (req, res) => {
@@ -123,9 +37,15 @@ router.post('/student', async (req, res) => {
         });
 
         // Notify Admins (Non-blocking)
-        const message = `🆕 **New Student Request**\n\n👤 **Name:** ${name} ${surname}\n🎂 **Age:** ${age}\n🚻 **Sex:** ${sex}`;
+        const details = `👤 **Name:** ${name} ${surname}\n🎂 **Age:** ${age}\n🚻 **Sex:** ${sex}\n📞 **Phone:** ${phoneNumber}`;
+
         // Do not await to prevent blocking response if telegram fails
-        notifyAdmins(message, { type: 'student', userId }).catch(e => {
+        notifyAdminsOfNewRequest(bot, {
+            type: 'student',
+            userId,
+            name: `${name} ${surname}`,
+            details
+        }).catch(e => {
             logWarning('Failed to notify admins', {
                 action: 'notify_admins',
                 userId: userId,
@@ -197,8 +117,14 @@ router.post('/staff', async (req, res) => {
         });
 
         // Notify Admins
-        const message = `👨‍🏫 **New Staff Request**\n\n👤 **Name:** ${name} ${surname}\n🎂 **Age:** ${age}\n⚧ **Sex:** ${sex}\n📚 **Subjects:** ${subjects.length} selected\n📝 **Bio:** ${bio || 'N/A'}`;
-        await notifyAdmins(message, { type: 'staff', userId });
+        const details = `👤 **Name:** ${name} ${surname}\n🎂 **Age:** ${age}\n⚧ **Sex:** ${sex}\n📚 **Subjects:** ${subjects.length} selected\n📝 **Bio:** ${bio || 'N/A'}`;
+
+        await notifyAdminsOfNewRequest(bot, {
+            type: 'staff',
+            userId,
+            name: `${name} ${surname}`,
+            details
+        });
 
         res.json({ success: true, message: 'Staff onboarding submitted' });
     } catch (error) {

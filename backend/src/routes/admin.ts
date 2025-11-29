@@ -1044,8 +1044,24 @@ router.put('/students/:id/groups', async (req, res) => {
                         group_id: groupId,
                         joined_at: req.body.joinedAt || new Date().toISOString(),
                         anchor_day: anchor_day || new Date().getDate(),
-                        lessons_remaining: lessons_remaining || 0
+                        lessons_remaining: lessons_remaining || 0,
+                        payment_type: 'monthly_fixed' // Default fallback
                     });
+
+                // Fetch default payment type from settings to override
+                const { data: settings } = await supabase
+                    .from('education_center_settings')
+                    .select('default_payment_type')
+                    .single();
+
+                if (settings?.default_payment_type) {
+                    await supabase
+                        .from('group_members')
+                        .update({ payment_type: settings.default_payment_type })
+                        .eq('student_id', id)
+                        .eq('group_id', groupId);
+                }
+
                 if (error) throw error;
             }
         } else if (action === 'remove') {
@@ -1301,6 +1317,22 @@ router.get('/teachers', async (req, res) => {
     }
 });
 
+// Get Center Settings
+router.get('/settings', async (req, res) => {
+    try {
+        const { data, error } = await supabase
+            .from('education_center_settings')
+            .select('*')
+            .single();
+
+        if (error) throw error;
+        res.json(data);
+    } catch (error) {
+        // If not found, return defaults
+        res.json({ default_payment_type: 'monthly_fixed' });
+    }
+});
+
 // Bulk update payment settings
 router.post('/settings/payment-type', async (req, res) => {
     const { payment_type } = req.body;
@@ -1310,7 +1342,18 @@ router.post('/settings/payment-type', async (req, res) => {
     }
 
     try {
-        // Update all group_members to use this payment type
+        // 1. Update Settings Table
+        const { error: settingsError } = await supabase
+            .from('education_center_settings')
+            .update({ default_payment_type: payment_type, updated_at: new Date().toISOString() })
+            .neq('id', '00000000-0000-0000-0000-000000000000'); // Dummy condition to update all (should be only one)
+        // Better: use a known ID or just update all since it's a singleton
+
+        // Since we don't know the ID, and we have a unique index, we can upsert or just update all
+        // Let's try to update all rows (there should be only one)
+        await supabase.from('education_center_settings').update({ default_payment_type: payment_type }).gt('updated_at', '2000-01-01');
+
+        // 2. Update all group_members to use this payment type
         const { error } = await supabase
             .from('group_members')
             .update({ payment_type: payment_type })

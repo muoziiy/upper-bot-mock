@@ -664,3 +664,22 @@ CREATE TABLE IF NOT EXISTS admin_notification_logs (
     message_id BIGINT NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+-- ============================================
+-- 9. SETTINGS
+-- ============================================
+
+CREATE TABLE IF NOT EXISTS education_center_settings (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    default_payment_type payment_type DEFAULT 'monthly_fixed',
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Ensure only one row exists
+CREATE UNIQUE INDEX IF NOT EXISTS idx_settings_singleton ON education_center_settings ((TRUE));
+
+-- Insert default row if not exists
+INSERT INTO education_center_settings (default_payment_type)
+VALUES ('monthly_fixed')
+ON CONFLICT DO NOTHING;
+
