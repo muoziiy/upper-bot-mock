@@ -245,176 +245,54 @@ bot.action(/^(approve|decline)_admin:(.+)$/, async (ctx) => {
     } catch (error) {
         console.error('Error handling admin action:', error);
         ctx.answerCbQuery('An error occurred.');
-    }
-});
-
-// Enable graceful stop
-process.once('SIGINT', () => bot.stop('SIGINT'));
-process.once('SIGTERM', () => bot.stop('SIGTERM'));
-
-// Handle Student/Staff Approval/Decline Actions
-// Handle Student/Staff Approval/Decline Actions
-// Handle Student/Staff Approval/Decline Actions
-bot.action(/^(approve|decline)_(student|staff)_(.+)$/, async (ctx) => {
-    const action = ctx.match[1]; // 'approve' or 'decline'
-    const type = ctx.match[2]; // 'student' or 'staff'
-    const requestId = ctx.match[3]; // Now this is the UUID of the request
-    const adminTelegramId = ctx.from?.id;
-
-    if (!adminTelegramId) return;
-
-    try {
-        // 1. Verify Admin
-        const { data: adminUser } = await supabase
-            .from('users')
-            .select('id, role, first_name')
-            .eq('telegram_id', adminTelegramId)
-            .single();
-
-        if (!adminUser || !['admin', 'super_admin'].includes(adminUser.role)) {
-            return ctx.answerCbQuery('You are not authorized to perform this action.');
-        }
-
-        // 2. Fetch Request
-        const { data: request } = await supabase
-            .from('registration_requests')
-            .select('*, users(telegram_id, first_name)')
-            .eq('id', requestId)
-            .single();
-
-        if (!request) {
-            return ctx.answerCbQuery('Request not found.');
-        }
-
-        if (request.status !== 'pending') {
-            return ctx.answerCbQuery(`Request already ${request.status}.`);
-        }
-
-        // 3. Process Action
-        const newStatus = action === 'approve' ? 'approved' : 'declined';
-
-        // Update Request Status
-        await supabase
-            .from('registration_requests')
-            .update({
-                status: newStatus,
-                processed_by: adminUser.id,
-                updated_at: new Date().toISOString()
-            })
-            .eq('id', requestId);
-
-        // Update User Role if Approved
-        if (action === 'approve') {
-            const newRole = type === 'student' ? 'student' : 'teacher';
-            await supabase
+        try {
+            // 1. Verify Admin
+            const { data: adminUser } = await supabase
                 .from('users')
-                .update({ role: newRole, updated_at: new Date().toISOString() })
-                .eq('id', request.user_id);
-        } else {
-            // Ensure they stay as new_user/waiting if declined
-            // (Optional: maybe set to 'new_user' explicitly if they were 'waiting')
-        }
-
-        // 4. Synchronize Messages (Edit ALL admin messages)
-        const messages = request.notification_messages as { chat_id: number, message_id: number }[] || [];
-        const originalText = ctx.callbackQuery.message && 'text' in ctx.callbackQuery.message
-            ? ctx.callbackQuery.message.text
-            : `New ${type} Request`;
-
-        const cleanText = originalText.replace('🆕 **New Student Request**', '').replace('👨‍🏫 **New Staff Request**', '').trim();
-        const header = action === 'approve' ? `✅ **${type === 'student' ? 'Student' : 'Staff'} Request Approved**` : `❌ **${type === 'student' ? 'Student' : 'Staff'} Request Declined**`;
-        const footer = `\n\n👮‍♂️ **${action === 'approve' ? 'Approved' : 'Declined'} by:** ${adminUser.first_name}`;
-        const finalText = `${header}\n\n${cleanText}${footer}`;
-
-        // Update all messages
-        for (const msg of messages) {
-            try {
-                await ctx.telegram.editMessageText(
-                    msg.chat_id,
-                    msg.message_id,
-                    undefined,
-                    finalText,
-                    { parse_mode: 'Markdown' }
-                );
-            } catch (e) {
-                console.error(`Failed to edit message for chat ${msg.chat_id}`, e);
-            }
-        }
-
-        // 5. Notify User
-        if (request.users?.telegram_id) {
-            let userMsg = '';
-            if (action === 'approve') {
-                userMsg = type === 'student'
-                    ? '🎉 Your account has been approved! You can now access the full student dashboard.'
-                    : '🎉 Your teacher account has been approved! You can now access the teacher dashboard.';
-            } else {
-                userMsg = 'Your registration request has been declined. Please contact support or try again.';
-            }
-            await ctx.telegram.sendMessage(Number(request.users.telegram_id), userMsg);
-        }
-
-        await ctx.answerCbQuery('Action processed successfully.');
-
-    } catch (error) {
-        console.error('Error handling onboarding action:', error);
-        ctx.answerCbQuery('An error occurred.');
-    }
-});
-
-// Handle /check_unpaid command
-bot.command('check_unpaid', async (ctx) => {
-    const user = ctx.from;
-    if (!user) return;
-
-    try {
-        // 1. Verify Admin
-        const { data: adminUser } = await supabase
-            .from('users')
-            .select('role')
-            .eq('telegram_id', user.id)
-            .single();
-
-        if (!adminUser || !['admin', 'super_admin'].includes(adminUser.role)) {
-            return ctx.reply('You are not authorized to use this command.');
-        }
-
-        await ctx.reply('🔍 Checking for unpaid students...');
-
-        // 2. Call RPC to get overdue students
-        // We use the function created in migration: get_overdue_students(target_date)
-        const { data: overdueStudents, error } = await supabase
-            .rpc('get_overdue_students', { target_date: new Date().toISOString() });
-
-        if (error) {
-            console.error('Error fetching overdue students:', error);
-            return ctx.reply('Failed to fetch data. Please try again.');
-        }
-
-        if (!overdueStudents || overdueStudents.length === 0) {
-            return ctx.reply('✅ No unpaid students found!');
-        }
-
-        await ctx.reply(`Found ${overdueStudents.length} students with overdue payments.`);
-
-        // 3. Send info for each student
-        for (const record of overdueStudents) {
-            // Fetch student details
-            const { data: student } = await supabase
-                .from('users')
-                .select('first_name, surname, phone_number, username')
-                .eq('id', record.student_id)
+                .select('role')
+                .eq('telegram_id', user.id)
                 .single();
 
-            // Fetch group name
-            const { data: group } = await supabase
-                .from('groups')
-                .select('name')
-                .eq('id', record.group_id)
-                .single();
+            if (!adminUser || !['admin', 'super_admin'].includes(adminUser.role)) {
+                return ctx.reply('You are not authorized to use this command.');
+            }
 
-            if (student && group) {
-                const message = `
+            await ctx.reply('🔍 Checking for unpaid students...');
+
+            // 2. Call RPC to get overdue students
+            // We use the function created in migration: get_overdue_students(target_date)
+            const { data: overdueStudents, error } = await supabase
+                .rpc('get_overdue_students', { target_date: new Date().toISOString() });
+
+            if (error) {
+                console.error('Error fetching overdue students:', error);
+                return ctx.reply('Failed to fetch data. Please try again.');
+            }
+
+            if (!overdueStudents || overdueStudents.length === 0) {
+                return ctx.reply('✅ No unpaid students found!');
+            }
+
+            await ctx.reply(`Found ${overdueStudents.length} students with overdue payments.`);
+
+            // 3. Send info for each student
+            for (const record of overdueStudents) {
+                // Fetch student details
+                const { data: student } = await supabase
+                    .from('users')
+                    .select('first_name, surname, phone_number, username')
+                    .eq('id', record.student_id)
+                    .single();
+
+                // Fetch group name
+                const { data: group } = await supabase
+                    .from('groups')
+                    .select('name')
+                    .eq('id', record.group_id)
+                    .single();
+
+                if (student && group) {
+                    const message = `
 ⚠️ **Overdue Payment**
 
 👤 **Student:** ${student.first_name} ${student.surname || ''}
@@ -425,14 +303,14 @@ reason: ${record.reason === 'monthly_payment_overdue' ? 'Monthly Payment Missing
 
 @${student.username || 'NoUsername'}
 `;
-                await ctx.reply(message, { parse_mode: 'Markdown' });
+                    await ctx.reply(message, { parse_mode: 'Markdown' });
+                }
             }
+
+        } catch (error) {
+            console.error('Error in /check_unpaid:', error);
+            ctx.reply('An error occurred.');
         }
 
-    } catch (error) {
-        console.error('Error in /check_unpaid:', error);
-        ctx.reply('An error occurred.');
-    }
-});
 
-export default bot;
+        export default bot;
