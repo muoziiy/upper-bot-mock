@@ -10,6 +10,7 @@ import {
     sendBroadcastNotification
 } from '../services/notifications';
 import { checkStudentStatus } from '../utils/paymentLogic';
+import bot from '../bot';
 
 const router = express.Router();
 
@@ -73,35 +74,46 @@ router.post('/subjects', async (req, res) => {
     }
 });
 
-// Get admin requests (for Super Admin dashboard)
-router.get('/requests', async (req, res) => {
-    try {
-        const { data, error } = await supabase
-            .from('admin_requests')
-            .select('*, users(first_name, last_name, username, telegram_id)')
-            .order('created_at', { ascending: false });
-
-        if (error) throw error;
-
-        res.json(data);
-    } catch (error) {
-        console.error('Error fetching admin requests:', error);
-        res.status(500).json({ error: 'Internal server error' });
-    }
-});
-
 // Get pending student/staff requests (for Admin panel)
 router.get('/pending-requests', async (req, res) => {
     try {
         const { data, error } = await supabase
-            .from('users')
-            .select('id, first_name, surname, age, sex, role, created_at')
-            .in('role', ['guest', 'waiting_staff'])
+            .from('registration_requests')
+            .select(`
+                id,
+                status,
+                role_requested,
+                created_at,
+                users (
+                    id,
+                    first_name,
+                    onboarding_first_name,
+                    surname,
+                    age,
+                    sex,
+                    username
+                )
+            `)
+            .eq('status', 'pending')
             .order('created_at', { ascending: false });
 
         if (error) throw error;
 
-        res.json(data);
+        // Transform data to match frontend expectation
+        const formattedData = data.map((req: any) => ({
+            id: req.id, // Request ID
+            user_id: req.users.id,
+            first_name: req.users.first_name,
+            onboarding_first_name: req.users.onboarding_first_name,
+            surname: req.users.surname,
+            age: req.users.age,
+            sex: req.users.sex,
+            role: req.role_requested === 'teacher' ? 'waiting_staff' : 'guest', // Map back to role for UI
+            created_at: req.created_at,
+            users: req.users
+        }));
+
+        res.json(formattedData);
     } catch (error) {
         console.error('Error fetching pending requests:', error);
         res.status(500).json({ error: 'Internal server error' });
@@ -117,14 +129,56 @@ router.post('/approve-request', async (req, res) => {
     }
 
     try {
-        const newRole = type === 'student' ? 'student' : 'teacher';
+        // 1. Get the pending request
+        const { data: request, error: reqError } = await supabase
+            .from('registration_requests')
+            .select('id, status')
+            .eq('user_id', userId)
+            .eq('status', 'pending')
+            .single();
 
+        if (reqError || !request) {
+            return res.status(400).json({ error: 'Request not found or already processed' });
+        }
+
+        // 2. Update request status
+        const { error: updateReqError } = await supabase
+            .from('registration_requests')
+            .update({ status: 'approved', updated_at: new Date().toISOString() })
+            .eq('id', request.id);
+
+        if (updateReqError) throw updateReqError;
+
+        // 3. Update User Role
+        const newRole = type === 'student' ? 'student' : 'teacher';
         const { error } = await supabase
             .from('users')
             .update({ role: newRole, updated_at: new Date().toISOString() })
             .eq('id', userId);
 
         if (error) throw error;
+
+        // 4. Mass Update (Sync Magic)
+        const { data: logs } = await supabase
+            .from('admin_notification_logs')
+            .select('admin_chat_id, message_id')
+            .eq('request_id', request.id);
+
+        if (logs && logs.length > 0) {
+            for (const log of logs) {
+                try {
+                    await bot.telegram.editMessageText(
+                        log.admin_chat_id,
+                        Number(log.message_id),
+                        undefined,
+                        `✅ Request approved.`,
+                        { parse_mode: 'Markdown' } // Removes buttons by not including reply_markup
+                    );
+                } catch (e) {
+                    console.error(`Failed to update message for admin ${log.admin_chat_id}`, e);
+                }
+            }
+        }
 
         res.json({ success: true, message: 'Request approved' });
     } catch (error) {
@@ -142,13 +196,55 @@ router.post('/decline-request', async (req, res) => {
     }
 
     try {
-        // Set role back to new_user
+        // 1. Get the pending request
+        const { data: request, error: reqError } = await supabase
+            .from('registration_requests')
+            .select('id, status')
+            .eq('user_id', userId)
+            .eq('status', 'pending')
+            .single();
+
+        if (reqError || !request) {
+            return res.status(400).json({ error: 'Request not found or already processed' });
+        }
+
+        // 2. Update request status
+        const { error: updateReqError } = await supabase
+            .from('registration_requests')
+            .update({ status: 'declined', updated_at: new Date().toISOString() })
+            .eq('id', request.id);
+
+        if (updateReqError) throw updateReqError;
+
+        // 3. Update User Role (Revert to new_user)
         const { error } = await supabase
             .from('users')
             .update({ role: 'new_user', updated_at: new Date().toISOString() })
             .eq('id', userId);
 
         if (error) throw error;
+
+        // 4. Mass Update (Sync Magic)
+        const { data: logs } = await supabase
+            .from('admin_notification_logs')
+            .select('admin_chat_id, message_id')
+            .eq('request_id', request.id);
+
+        if (logs && logs.length > 0) {
+            for (const log of logs) {
+                try {
+                    await bot.telegram.editMessageText(
+                        log.admin_chat_id,
+                        Number(log.message_id),
+                        undefined,
+                        `❌ Request declined.`,
+                        { parse_mode: 'Markdown' }
+                    );
+                } catch (e) {
+                    console.error(`Failed to update message for admin ${log.admin_chat_id}`, e);
+                }
+            }
+        }
 
         res.json({ success: true, message: 'Request declined' });
     } catch (error) {

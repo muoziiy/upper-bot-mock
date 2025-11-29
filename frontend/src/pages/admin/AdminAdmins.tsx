@@ -6,11 +6,18 @@ import { ListItem } from '../../components/ui/ListItem';
 interface PendingRequest {
     id: string;
     first_name: string;
+    onboarding_first_name?: string;
     surname: string;
     age: number;
     sex: string;
     role: 'guest' | 'waiting_staff';
     created_at: string;
+    users?: {
+        first_name: string;
+        onboarding_first_name?: string;
+        username: string;
+    };
+    user_id?: string;
 }
 
 const AdminAdmins: React.FC = () => {
@@ -98,7 +105,7 @@ const AdminAdmins: React.FC = () => {
                     {pendingStudentStaff.map((req, index) => (
                         <ListItem
                             key={req.id}
-                            title={`${req.first_name} ${req.surname}`}
+                            title={`${req.onboarding_first_name || req.first_name} ${req.surname}`}
                             subtitle={`${req.role === 'guest' ? '🎓 Student' : '👨‍🏫 Staff'} • Age: ${req.age} • Sex: ${req.sex}`}
                             icon={req.role === 'guest' ? '🎓' : '👨‍🏫'}
                             rightElement={
@@ -131,7 +138,7 @@ const AdminAdmins: React.FC = () => {
                     {pendingAdminRequests.map((req, index) => (
                         <ListItem
                             key={req.id}
-                            title={req.users?.first_name || 'Unknown User'}
+                            title={req.users?.onboarding_first_name || req.users?.first_name || 'Unknown User'}
                             subtitle={`@${req.users?.username || 'no_username'} • ID: ${req.user_id}`}
                             icon="🔔"
                             rightElement={

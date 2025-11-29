@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useTelegram } from '../context/TelegramContext';
+import { useAppData } from '../context/AppDataContext';
 import { Settings2, DollarSign, Users, Calendar, Award, ChevronRight, LogOut } from 'lucide-react';
 import TeacherAccountSettingsModal from '../components/teacher/TeacherAccountSettingsModal';
 import TeacherPaymentHistoryModal from '../components/teacher/TeacherPaymentHistoryModal';
@@ -8,6 +9,7 @@ import TeacherPaymentHistoryModal from '../components/teacher/TeacherPaymentHist
 const TeacherProfile: React.FC = () => {
     const { t } = useTranslation();
     const { user, webApp } = useTelegram();
+    const { dashboardData } = useAppData();
     const [showAccountSettings, setShowAccountSettings] = useState(false);
     const [showPaymentHistory, setShowPaymentHistory] = useState(false);
 
@@ -40,14 +42,16 @@ const TeacherProfile: React.FC = () => {
                         />
                     ) : (
                         <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-4xl font-bold text-white">
-                            {user?.first_name?.[0] || 'T'}
+                            {dashboardData?.user.first_name?.[0] || user?.first_name?.[0] || 'T'}
                         </div>
                     )}
                 </div>
 
                 {/* Name */}
                 <div className="text-center">
-                    <h1 className="text-2xl font-bold">{user?.first_name || 'Teacher'} {user?.last_name || ''}</h1>
+                    <h1 className="text-2xl font-bold">
+                        {dashboardData?.user.onboarding_first_name || dashboardData?.user.first_name || user?.first_name || 'Teacher'} {dashboardData?.user.last_name || user?.last_name || ''}
+                    </h1>
                     <div className="flex items-center justify-center gap-2 text-sm text-tg-hint mt-1">
                         <span className="capitalize">{t('teacher_profile.role_teacher')}</span>
                         <span>•</span>

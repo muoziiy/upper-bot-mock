@@ -7,6 +7,7 @@ import { useAdminData } from '../../hooks/useAdminData';
 interface Teacher {
     id: string;
     first_name: string;
+    onboarding_first_name?: string;
     surname: string;
     subjects?: string[];
     groups_count?: number;
@@ -19,7 +20,7 @@ const AdminTeachers: React.FC = () => {
 
     // Filter teachers based on search
     const filteredTeachers = teachers.filter(teacher => {
-        const fullName = `${teacher.first_name} ${teacher.surname}`.toLowerCase();
+        const fullName = `${teacher.onboarding_first_name || teacher.first_name} ${teacher.surname}`.toLowerCase();
         return fullName.includes(searchQuery.toLowerCase());
     });
 
@@ -51,7 +52,7 @@ const AdminTeachers: React.FC = () => {
                             <ListItem
                                 key={teacher.id}
                                 icon="👨‍🏫"
-                                title={`${teacher.first_name} ${teacher.surname}`}
+                                title={`${teacher.onboarding_first_name || teacher.first_name} ${teacher.surname}`}
                                 subtitle={teacher.subjects?.join(', ') || 'No subjects'}
                                 rightElement={
                                     teacher.groups_count !== undefined ? (

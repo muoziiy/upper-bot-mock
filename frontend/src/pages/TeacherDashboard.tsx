@@ -76,7 +76,7 @@ const TeacherDashboard: React.FC = () => {
                         </motion.div>
                     </div>
                     <p className="text-tg-hint text-lg">
-                        {dashboardData?.user.first_name} {dashboardData?.user.last_name}
+                        {dashboardData?.user.onboarding_first_name || dashboardData?.user.first_name} {dashboardData?.user.last_name}
                     </p>
                 </header>
 

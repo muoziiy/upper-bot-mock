@@ -138,24 +138,6 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
                                     <div>
                                         <p className="text-xs text-tg-hint uppercase font-medium mb-2 px-4">
                                             {t('settings.preferences')}
-                                        </p>
-                                        <div className="bg-tg-bg rounded-xl overflow-hidden shadow-sm">
-                                            <button
-                                                onClick={() => navigateTo('language')}
-                                                className="w-full flex items-center justify-between p-4 hover:bg-tg-secondary/30 active:bg-tg-secondary/50 transition-colors"
-                                            >
-                                                <div className="flex items-center gap-3">
-                                                    <div className="bg-tg-button/10 p-2 rounded-lg">
-                                                        <Globe size={20} className="text-tg-button" />
-                                                    </div>
-                                                    <span className="text-tg-text font-medium">{t('settings.language')}</span>
-                                                </div>
-                                                <div className="flex items-center gap-2">
-                                                    <span className="text-tg-hint text-sm uppercase">{i18n.language}</span>
-                                                    <ChevronRight size={20} className="text-tg-hint" />
-                                                </div>
-                                            </button>
-                                        </div>
                                     </div>
 
                                     {/* Account Section */}

@@ -70,12 +70,21 @@ const notifyAdmins = async (message: string, payload: { type: 'student' | 'staff
             }
         }
 
-        // 4. Update Request with Message IDs
+        // 4. Update Request with Message IDs (using admin_notification_logs)
         if (sentMessages.length > 0) {
-            await supabase
-                .from('registration_requests')
-                .update({ notification_messages: sentMessages })
-                .eq('id', request.id);
+            const logs = sentMessages.map(msg => ({
+                request_id: request.id,
+                admin_chat_id: msg.chat_id,
+                message_id: msg.message_id
+            }));
+
+            const { error: logError } = await supabase
+                .from('admin_notification_logs')
+                .insert(logs);
+
+            if (logError) {
+                console.error('Failed to insert admin notification logs', logError);
+            }
         }
 
     } catch (e) {

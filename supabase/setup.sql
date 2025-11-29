@@ -642,3 +642,24 @@ CREATE POLICY "everyone_view_homework" ON homework FOR SELECT USING (true);
 INSERT INTO subjects (name) VALUES 
 ('Mathematics'), ('Physics'), ('English'), ('Chemistry'), ('Biology'), ('History'), ('Geography')
 ON CONFLICT (name) DO NOTHING;
+-- ============================================
+-- 8. REGISTRATION & NOTIFICATIONS (Synchronized Approval)
+-- ============================================
+
+CREATE TABLE IF NOT EXISTS registration_requests (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    role_requested TEXT NOT NULL, -- 'student' or 'teacher'
+    status TEXT DEFAULT 'pending', -- 'pending', 'approved', 'declined'
+    processed_by UUID REFERENCES users(id) ON DELETE SET NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS admin_notification_logs (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    request_id UUID REFERENCES registration_requests(id) ON DELETE CASCADE,
+    admin_chat_id BIGINT NOT NULL,
+    message_id BIGINT NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);

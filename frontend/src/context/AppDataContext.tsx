@@ -116,6 +116,7 @@ interface AdminRequest {
     created_at: string;
     users?: {
         first_name: string;
+        onboarding_first_name?: string;
         last_name?: string;
         username?: string;
         telegram_id?: string;

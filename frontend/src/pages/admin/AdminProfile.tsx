@@ -24,7 +24,7 @@ const AdminProfile: React.FC = () => {
                     )}
                 </div>
                 <h1 className="text-2xl font-bold text-black dark:text-white">
-                    {dashboardData?.user.first_name} {dashboardData?.user.last_name}
+                    {dashboardData?.user.onboarding_first_name || dashboardData?.user.first_name} {dashboardData?.user.last_name}
                 </h1>
                 <p className="text-tg-hint">Administrator</p>
             </div>
