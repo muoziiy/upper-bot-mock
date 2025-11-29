@@ -11,8 +11,8 @@ exports.sendTeacherGroupNotification = sendTeacherGroupNotification;
 exports.sendTeacherSubjectNotification = sendTeacherSubjectNotification;
 exports.sendBroadcastNotification = sendBroadcastNotification;
 const axios_1 = __importDefault(require("axios"));
-const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '';
-const TELEGRAM_API_URL = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}`;
+const config_1 = require("../config");
+const TELEGRAM_API_URL = `https://api.telegram.org/bot${config_1.config.botToken}`;
 // ============================================
 // STUDENT NOTIFICATIONS
 // ============================================

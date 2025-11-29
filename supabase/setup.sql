@@ -1,12 +1,8 @@
 -- ============================================
--- EDUCATION CENTER BOT - FULL CONSOLIDATED SCHEMA
+-- EDUCATION CENTER BOT - FULL SETUP SCHEMA
 -- ============================================
--- This script consolidates all previous schema files into a single, idempotent execution.
--- It includes:
--- 1. Core Tables (Users, Groups, Subjects, etc.)
--- 2. Enhanced Payment Records
--- 3. Scheduled Lessons & Homework
--- 4. All Enums, Functions, Triggers, and RLS Policies
+-- This script consolidates all schema definitions.
+-- Run this in the Supabase SQL Editor.
 
 -- Enable UUID extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
@@ -34,6 +30,10 @@ DO $$ BEGIN
     CREATE TYPE payment_status AS ENUM ('pending', 'completed', 'failed', 'refunded');
 EXCEPTION WHEN duplicate_object THEN null; END $$;
 
+DO $$ BEGIN
+    CREATE TYPE payment_type AS ENUM ('monthly_fixed', 'monthly_rolling', 'lesson_based');
+EXCEPTION WHEN duplicate_object THEN null; END $$;
+
 -- ============================================
 -- 2. TABLES & COLUMNS
 -- ============================================
@@ -58,29 +58,38 @@ CREATE TABLE IF NOT EXISTS users (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Add subjects column to users (from add_user_subjects_column.sql)
 ALTER TABLE users ADD COLUMN IF NOT EXISTS subjects UUID[] DEFAULT '{}';
-ALTER TABLE users ADD COLUMN IF NOT EXISTS payment_day INTEGER DEFAULT 1; -- Added based on backend code usage
+ALTER TABLE users ADD COLUMN IF NOT EXISTS payment_day INTEGER DEFAULT 1;
 
 -- GROUPS
 CREATE TABLE IF NOT EXISTS groups (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name TEXT NOT NULL,
     teacher_id UUID REFERENCES users(id) ON DELETE SET NULL,
-    price DECIMAL(10, 2) DEFAULT 0, -- Added price column based on usage
-    schedule JSONB DEFAULT '{}', -- Added schedule column based on usage
+    price DECIMAL(10, 2) DEFAULT 0,
+    schedule JSONB DEFAULT '{}',
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+-- Add payment_type column (Fix for backend error)
+DO $$ BEGIN
+    ALTER TABLE groups ADD COLUMN payment_type payment_type NOT NULL DEFAULT 'monthly_fixed';
+EXCEPTION WHEN duplicate_column THEN null; END $$;
 
 -- GROUP MEMBERS
 CREATE TABLE IF NOT EXISTS group_members (
     group_id UUID REFERENCES groups(id) ON DELETE CASCADE,
     student_id UUID REFERENCES users(id) ON DELETE CASCADE,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(), -- Renamed from joined_at to match usage in some places, or keep joined_at
-    joined_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(), -- Keeping both for compatibility if needed, or just one. Let's stick to joined_at as primary, but ensure created_at exists if backend uses it.
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    joined_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     PRIMARY KEY (group_id, student_id)
 );
+
+ALTER TABLE group_members ADD COLUMN IF NOT EXISTS anchor_day INTEGER CHECK (anchor_day BETWEEN 1 AND 31);
+ALTER TABLE group_members ADD COLUMN IF NOT EXISTS lessons_remaining INTEGER DEFAULT 0;
+ALTER TABLE group_members ADD COLUMN IF NOT EXISTS next_due_date DATE;
+ALTER TABLE group_members ADD COLUMN IF NOT EXISTS last_payment_date DATE;
 
 -- SUBJECTS
 CREATE TABLE IF NOT EXISTS subjects (
@@ -146,7 +155,7 @@ CREATE TABLE IF NOT EXISTS parent_children (
     UNIQUE(parent_id, student_id)
 );
 
--- PAYMENT RECORDS (Enhanced)
+-- PAYMENT RECORDS
 CREATE TABLE IF NOT EXISTS payment_records (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     student_id UUID REFERENCES users(id) ON DELETE CASCADE,
@@ -160,24 +169,10 @@ CREATE TABLE IF NOT EXISTS payment_records (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Add enhanced columns to payment_records
 ALTER TABLE payment_records ADD COLUMN IF NOT EXISTS subject_id UUID REFERENCES subjects(id) ON DELETE SET NULL;
 ALTER TABLE payment_records ADD COLUMN IF NOT EXISTS payment_method TEXT CHECK (payment_method IN ('cash', 'card'));
 ALTER TABLE payment_records ADD COLUMN IF NOT EXISTS notes TEXT;
-ALTER TABLE payment_records ADD COLUMN IF NOT EXISTS lessons_attended INTEGER DEFAULT 0; -- Added based on new modal requirement
-
--- PAYMENTS (New table from payments_migration.sql - keeping for compatibility if used separately)
-CREATE TABLE IF NOT EXISTS payments (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    student_id UUID REFERENCES users(id) ON DELETE SET NULL,
-    amount DECIMAL(10, 2) NOT NULL,
-    currency TEXT DEFAULT 'USD',
-    status payment_status DEFAULT 'pending',
-    description TEXT,
-    transaction_date TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
+ALTER TABLE payment_records ADD COLUMN IF NOT EXISTS lessons_attended INTEGER DEFAULT 0;
 
 -- TEACHER PAYMENTS
 CREATE TABLE IF NOT EXISTS teacher_payments (
@@ -380,7 +375,7 @@ CREATE TABLE IF NOT EXISTS exam_registrations (
     UNIQUE(exam_schedule_id, student_id)
 );
 
--- SCHEDULED LESSONS & HOMEWORK (from schema_update.sql)
+-- SCHEDULED LESSONS & HOMEWORK
 CREATE TABLE IF NOT EXISTS scheduled_lessons (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     title TEXT NOT NULL,
@@ -406,6 +401,17 @@ CREATE TABLE IF NOT EXISTS homework (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- BROADCAST HISTORY
+CREATE TABLE IF NOT EXISTS broadcast_history (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    sender_id UUID REFERENCES users(id) ON DELETE SET NULL,
+    message TEXT NOT NULL,
+    target_type TEXT NOT NULL, -- 'all_students', 'all_teachers', 'group', etc.
+    target_id UUID, -- group_id if target_type is 'group'
+    recipient_count INTEGER DEFAULT 0,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
 -- ============================================
 -- 3. INDEXES
 -- ============================================
@@ -416,6 +422,8 @@ CREATE INDEX IF NOT EXISTS idx_users_subjects ON users USING GIN (subjects);
 
 CREATE INDEX IF NOT EXISTS idx_groups_teacher_id ON groups(teacher_id);
 CREATE INDEX IF NOT EXISTS idx_group_members_student_id ON group_members(student_id);
+CREATE INDEX IF NOT EXISTS idx_group_members_next_due_date ON group_members(next_due_date);
+CREATE INDEX IF NOT EXISTS idx_group_members_lessons_remaining ON group_members(lessons_remaining);
 
 CREATE INDEX IF NOT EXISTS idx_exams_teacher_id ON exams(teacher_id);
 CREATE INDEX IF NOT EXISTS idx_exams_group_id ON exams(group_id);
@@ -521,44 +529,6 @@ $$ LANGUAGE plpgsql;
 
 DROP TRIGGER IF EXISTS trigger_update_streak ON user_activity;
 CREATE TRIGGER trigger_update_streak AFTER INSERT OR UPDATE ON user_activity FOR EACH ROW EXECUTE FUNCTION update_user_streak();
-
--- Get Student Payment Status
-CREATE OR REPLACE FUNCTION get_student_payment_status(
-    student_uuid UUID,
-    target_month INTEGER,
-    target_year INTEGER
-)
-RETURNS TEXT AS $$
-DECLARE
-    payment_count INTEGER;
-    overdue_count INTEGER;
-BEGIN
-    SELECT COUNT(*) INTO payment_count
-    FROM payment_records
-    WHERE student_id = student_uuid
-    AND month = target_month
-    AND year = target_year
-    AND status = 'completed'; -- Changed from 'paid' to 'completed' to match enum/usage
-
-    IF payment_count > 0 THEN
-        RETURN 'paid';
-    END IF;
-
-    SELECT COUNT(*) INTO overdue_count
-    FROM payment_records
-    WHERE student_id = student_uuid
-    AND month = target_month
-    AND year = target_year
-    AND status IN ('unpaid', 'pending')
-    AND payment_date < CURRENT_DATE;
-
-    IF overdue_count > 0 THEN
-        RETURN 'overdue';
-    END IF;
-
-    RETURN 'unpaid';
-END;
-$$ LANGUAGE plpgsql;
 
 -- Get Overdue Students (RPC)
 CREATE OR REPLACE FUNCTION get_overdue_students(target_date TIMESTAMP WITH TIME ZONE)

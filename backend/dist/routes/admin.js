@@ -1000,22 +1000,29 @@ router.post('/broadcast', async (req, res) => {
         }
         // 2. Send Messages
         let successCount = 0;
-        for (const recipient of recipients) {
-            if (recipient.telegram_id) {
-                try {
-                    await (0, notifications_1.sendBroadcastNotification)(recipient.telegram_id, message);
-                    successCount++;
-                }
-                catch (e) {
-                    console.error(`Failed to send to ${recipient.telegram_id}`, e);
-                }
-            }
+        const telegramIds = recipients
+            .map(r => r.telegram_id)
+            .filter(id => id); // Filter out null/undefined
+        if (telegramIds.length > 0) {
+            const result = await (0, notifications_1.sendBroadcastNotification)(telegramIds, message);
+            successCount = result.success;
         }
         // 3. Log History
+        // 3. Log History
+        let userUuid = null;
+        if (sender_id) {
+            const { data: userData } = await supabase_1.supabase
+                .from('users')
+                .select('id')
+                .eq('telegram_id', sender_id)
+                .single();
+            if (userData)
+                userUuid = userData.id;
+        }
         const { error: logError } = await supabase_1.supabase
             .from('broadcast_history')
             .insert({
-            sender_id: sender_id || null, // Should come from auth middleware in real app
+            sender_id: userUuid,
             message,
             target_type,
             target_id: target_id || null,

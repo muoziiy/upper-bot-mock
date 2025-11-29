@@ -1,7 +1,7 @@
 import axios from 'axios';
+import { config } from '../config';
 
-const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '';
-const TELEGRAM_API_URL = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}`;
+const TELEGRAM_API_URL = `https://api.telegram.org/bot${config.botToken}`;
 
 // ============================================
 // STUDENT NOTIFICATIONS

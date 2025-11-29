@@ -1097,10 +1097,21 @@ router.post('/broadcast', async (req, res) => {
         }
 
         // 3. Log History
+        // 3. Log History
+        let userUuid = null;
+        if (sender_id) {
+            const { data: userData } = await supabase
+                .from('users')
+                .select('id')
+                .eq('telegram_id', sender_id)
+                .single();
+            if (userData) userUuid = userData.id;
+        }
+
         const { error: logError } = await supabase
             .from('broadcast_history')
             .insert({
-                sender_id: sender_id || null, // Should come from auth middleware in real app
+                sender_id: userUuid,
                 message,
                 target_type,
                 target_id: target_id || null,

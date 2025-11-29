@@ -137,28 +137,28 @@ const AdminStats: React.FC = () => {
                         <motion.div variants={item} className="bg-white dark:bg-black/20 p-4 rounded-2xl shadow-sm flex flex-col items-center justify-center gap-2">
                             <span className="text-4xl">👨‍🎓</span>
                             <span className="text-2xl font-bold text-tg-text">
-                                <CountUp end={generalStats.totalStudents} />
+                                {generalStats.totalStudents}
                             </span>
                             <span className="text-xs text-tg-hint font-medium uppercase tracking-wide">Students</span>
                         </motion.div>
                         <motion.div variants={item} className="bg-white dark:bg-black/20 p-4 rounded-2xl shadow-sm flex flex-col items-center justify-center gap-2">
                             <span className="text-4xl">👩‍🏫</span>
                             <span className="text-2xl font-bold text-tg-text">
-                                <CountUp end={generalStats.totalTeachers} />
+                                {generalStats.totalTeachers}
                             </span>
                             <span className="text-xs text-tg-hint font-medium uppercase tracking-wide">Teachers</span>
                         </motion.div>
                         <motion.div variants={item} className="bg-white dark:bg-black/20 p-4 rounded-2xl shadow-sm flex flex-col items-center justify-center gap-2">
                             <span className="text-4xl">👥</span>
                             <span className="text-2xl font-bold text-tg-text">
-                                <CountUp end={generalStats.activeGroups} />
+                                {generalStats.activeGroups}
                             </span>
                             <span className="text-xs text-tg-hint font-medium uppercase tracking-wide">Active Groups</span>
                         </motion.div>
                         <motion.div variants={item} className="bg-white dark:bg-black/20 p-4 rounded-2xl shadow-sm flex flex-col items-center justify-center gap-2">
                             <span className="text-4xl">📚</span>
                             <span className="text-2xl font-bold text-tg-text">
-                                <CountUp end={generalStats.totalSubjects} />
+                                {generalStats.totalSubjects}
                             </span>
                             <span className="text-xs text-tg-hint font-medium uppercase tracking-wide">Courses</span>
                         </motion.div>
@@ -168,12 +168,12 @@ const AdminStats: React.FC = () => {
                         <Section title="Growth (This Month)">
                             <ListItem
                                 title="New Students"
-                                value={<span className="text-green-500">+<CountUp end={generalStats.newStudents} /></span>}
+                                value={<span className="text-green-500">+{generalStats.newStudents}</span>}
                                 icon="📈"
                             />
                             <ListItem
                                 title="New Groups"
-                                value={<span className="text-green-500">+<CountUp end={generalStats.newGroups} /></span>}
+                                value={<span className="text-green-500">+{generalStats.newGroups}</span>}
                                 icon="🆕"
                                 isLast
                             />
