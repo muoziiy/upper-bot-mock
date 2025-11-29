@@ -467,7 +467,9 @@ router.get('/students', async (req, res) => {
                     anchor_day,
                     lessons_remaining,
                     next_due_date,
+                    next_due_date,
                     last_payment_date,
+                    payment_type,
                     groups (
                         id,
                         name,
@@ -511,7 +513,7 @@ router.get('/students', async (req, res) => {
                 }, {
                     payment_type: group.payment_type,
                     price: group.price
-                });
+                }, gm.payment_type); // Pass the override from group_members
 
                 if (status === 'overdue') hasOverdue = true;
                 if (status === 'active') hasPaid = true;
@@ -520,7 +522,7 @@ router.get('/students', async (req, res) => {
                     id: group.id,
                     name: group.name,
                     price: group.price,
-                    payment_type: group.payment_type,
+                    payment_type: gm.payment_type || group.payment_type, // Use member specific or group default
                     teacher_name: teacher ? `${teacher.first_name} ${teacher.surname}` : null,
                     joined_at: gm.joined_at,
                     lessons_remaining: gm.lessons_remaining,
@@ -1295,6 +1297,30 @@ router.get('/teachers', async (req, res) => {
         res.json(teachers);
     } catch (error) {
         console.error('Error fetching teachers:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Bulk update payment settings
+router.post('/settings/payment-type', async (req, res) => {
+    const { payment_type } = req.body;
+
+    if (!['monthly_fixed', 'monthly_rolling', 'lesson_based'].includes(payment_type)) {
+        return res.status(400).json({ error: 'Invalid payment type' });
+    }
+
+    try {
+        // Update all group_members to use this payment type
+        const { error } = await supabase
+            .from('group_members')
+            .update({ payment_type: payment_type })
+            .neq('payment_type', payment_type); // Only update if different
+
+        if (error) throw error;
+
+        res.json({ success: true, message: 'Payment settings updated for all students' });
+    } catch (error) {
+        console.error('Error updating payment settings:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
 });

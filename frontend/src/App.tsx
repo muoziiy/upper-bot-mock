@@ -21,6 +21,7 @@ const AdminProfile = React.lazy(() => import('./pages/admin/AdminProfile'));
 const AdminBroadcast = React.lazy(() => import('./pages/admin/AdminBroadcast'));
 const AdminNotifications = React.lazy(() => import('./pages/admin/AdminNotifications'));
 const AdminBotSettings = React.lazy(() => import('./pages/admin/AdminBotSettings'));
+const AdminCenterSettings = React.lazy(() => import('./pages/admin/AdminCenterSettings'));
 const AdminExportData = React.lazy(() => import('./pages/admin/AdminExportData'));
 const AdminAdmins = React.lazy(() => import('./pages/admin/AdminAdmins'));
 const Onboarding = React.lazy(() => import('./pages/Onboarding'));
@@ -111,6 +112,7 @@ const AppContent: React.FC = () => {
     { path: "/admin/broadcast", element: <AdminBroadcast /> },
     { path: "/admin/notifications", element: <AdminNotifications /> },
     { path: "/admin/settings", element: <AdminBotSettings /> },
+    { path: "/admin/center-settings", element: <AdminCenterSettings /> },
     { path: "/admin/export", element: <AdminExportData /> },
     { path: "/admin/admins", element: <AdminAdmins /> },
   ]);

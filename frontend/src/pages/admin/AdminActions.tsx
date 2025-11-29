@@ -60,6 +60,13 @@ const AdminActions: React.FC = () => {
 
             <Section title="System">
                 <ListItem
+                    title="Education Center Settings"
+                    subtitle="Configure payment system"
+                    icon="🏫"
+                    onClick={() => navigate('/admin/center-settings')}
+                    showChevron
+                />
+                <ListItem
                     title="Bot Settings"
                     subtitle="Configure general bot settings"
                     icon="⚙️"

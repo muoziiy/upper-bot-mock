@@ -92,6 +92,7 @@ ALTER TABLE group_members ADD COLUMN IF NOT EXISTS lessons_remaining INTEGER DEF
 ALTER TABLE group_members ADD COLUMN IF NOT EXISTS next_due_date DATE;
 ALTER TABLE group_members ADD COLUMN IF NOT EXISTS last_payment_date DATE;
 ALTER TABLE group_members ADD COLUMN IF NOT EXISTS payment_status TEXT DEFAULT 'paid'; -- 'paid', 'overdue'
+ALTER TABLE group_members ADD COLUMN IF NOT EXISTS payment_type payment_type DEFAULT 'monthly_fixed';
 
 -- SUBJECTS
 CREATE TABLE IF NOT EXISTS subjects (

@@ -13,6 +13,7 @@ interface ListItemProps {
     className?: string;
     isLast?: boolean;
     destructive?: boolean;
+    disabled?: boolean;
 }
 
 export const ListItem: React.FC<ListItemProps> = ({
@@ -25,14 +26,16 @@ export const ListItem: React.FC<ListItemProps> = ({
     showChevron = false,
     className = '',
     isLast = false,
-    destructive = false
+    destructive = false,
+    disabled = false
 }) => {
     return (
         <div
-            onClick={onClick}
+            onClick={!disabled ? onClick : undefined}
             className={cn(
                 "relative flex items-center gap-3 px-4 py-3 transition-colors bg-white dark:bg-tg-secondary",
-                onClick && "cursor-pointer active:bg-gray-100 dark:active:bg-white/5",
+                onClick && !disabled && "cursor-pointer active:bg-gray-100 dark:active:bg-white/5",
+                disabled && "opacity-50 cursor-not-allowed",
                 className
             )}
         >

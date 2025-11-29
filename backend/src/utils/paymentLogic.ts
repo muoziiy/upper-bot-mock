@@ -22,7 +22,7 @@ export interface StudentEnrollment {
 export const calculateNextDueDate = (currentDueDate: Date, anchorDay: number): Date => {
     // 1. Move to next month
     const targetDate = addMonths(currentDueDate, 1);
-    
+
     // 2. Get max days in that target month
     const maxDays = getDaysInMonth(targetDate);
 
@@ -55,17 +55,19 @@ export const calculateInitialDueDate = (joinDate: Date, type: PaymentType, ancho
  * Returns 'active' or 'overdue' based on the logic.
  */
 export const checkStudentStatus = (
-    enrollment: StudentEnrollment, 
-    config: GroupConfig
+    enrollment: StudentEnrollment,
+    config: GroupConfig,
+    paymentTypeOverride?: PaymentType
 ): 'active' | 'overdue' => {
     const today = startOfDay(new Date());
+    const paymentType = paymentTypeOverride || config.payment_type;
 
     // --- 1. MONTHLY LOGIC ---
-    if (config.payment_type === 'monthly_fixed' || config.payment_type === 'monthly_rolling') {
+    if (paymentType === 'monthly_fixed' || paymentType === 'monthly_rolling') {
         if (!enrollment.next_due_date) return 'active'; // New student, no due date yet? Assume active.
-        
+
         const dueDate = startOfDay(new Date(enrollment.next_due_date));
-        
+
         if (isBefore(dueDate, today)) {
             // Due date has passed
             return 'overdue';
@@ -74,7 +76,7 @@ export const checkStudentStatus = (
     }
 
     // --- 2. LESSON LOGIC ---
-    if (config.payment_type === 'lesson_based') {
+    if (paymentType === 'lesson_based') {
         if ((enrollment.lessons_remaining || 0) <= 0) {
             return 'overdue';
         }
