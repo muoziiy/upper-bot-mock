@@ -11,6 +11,7 @@ import achievementsRoutes from './routes/achievements';
 import leaderboardRoutes from './routes/leaderboard';
 import journeyRoutes from './routes/journey';
 import onboardingRoutes from './routes/onboarding';
+import schedulerRoutes from './routes/scheduler';
 import bot from './bot';
 
 dotenv.config();
@@ -31,6 +32,7 @@ app.use('/api/students', journeyRoutes);
 app.use('/api/leaderboard', leaderboardRoutes);
 app.use('/api/teachers', teacherRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/cron', schedulerRoutes);
 
 app.get('/', (req, res) => {
     res.send('Education Center Bot API is running');

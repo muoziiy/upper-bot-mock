@@ -64,6 +64,25 @@ const Profile: React.FC = () => {
                             <span>{dashboardData?.user.first_name?.[0] || 'U'}</span>
                         )}
                     </div>
+                    {/* Paid Badge */}
+                    <div className="absolute -top-1 -right-1">
+                        {/* Logic: Check if ANY group is overdue? Or master status? 
+                            Let's assume dashboardData.user doesn't have master status yet, 
+                            we might need to calculate it or check groups.
+                            But wait, we updated backend to return rich groups with status.
+                            Let's check if any group is 'overdue'.
+                         */}
+                        {dashboardData?.groups?.some((g: any) => g.status === 'overdue') ? (
+                            <div className="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-md border-2 border-tg-secondary">
+                                Overdue
+                            </div>
+                        ) : (
+                            <div className="bg-green-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-md border-2 border-tg-secondary flex items-center gap-1">
+                                <span>Paid</span>
+                                <span>{dashboardData?.user.sex === 'female' ? '👧' : '👦'}</span>
+                            </div>
+                        )}
+                    </div>
                     <div className="text-center">
                         <h1 className="text-2xl font-bold">{dashboardData?.user.first_name} {dashboardData?.user.last_name}</h1>
                         <div className="flex items-center justify-center gap-2 text-sm text-tg-hint">
@@ -97,9 +116,21 @@ const Profile: React.FC = () => {
                         {dashboardData?.groups && dashboardData.groups.length > 0 ? (
                             dashboardData.groups.map((group: any) => (
                                 <div key={group.id} className="bg-tg-bg rounded-xl overflow-hidden shadow-sm">
-                                    {/* Group Header */}
                                     <div className="p-4 border-b border-tg-secondary/50 flex justify-between items-center">
-                                        <h3 className="text-lg font-semibold text-tg-text">{group.name}</h3>
+                                        <div>
+                                            <h3 className="text-lg font-semibold text-tg-text">{group.name}</h3>
+                                            <div className="text-xs text-tg-hint mt-0.5">
+                                                {group.payment_type === 'lesson_based' ? (
+                                                    <span className={group.lessons_remaining <= 2 ? "text-red-500 font-bold" : ""}>
+                                                        {group.lessons_remaining} Credits Left
+                                                    </span>
+                                                ) : group.next_due_date ? (
+                                                    <span className={new Date(group.next_due_date) < new Date() ? "text-red-500 font-bold" : ""}>
+                                                        Due: {new Date(group.next_due_date).toLocaleDateString()}
+                                                    </span>
+                                                ) : null}
+                                            </div>
+                                        </div>
                                         {group.price && (
                                             <span className="text-sm font-bold text-tg-button bg-tg-button/10 px-2 py-1 rounded-lg">
                                                 {group.price.toLocaleString()} UZS

@@ -9,6 +9,7 @@ interface DashboardData {
         last_name?: string;
         role: string;
         student_id?: string;
+        sex?: 'male' | 'female' | null;
     };
     streak: {
         current_streak: number;

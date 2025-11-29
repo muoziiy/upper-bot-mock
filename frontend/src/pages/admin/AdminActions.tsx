@@ -41,6 +41,7 @@ const AdminActions: React.FC = () => {
                     title="Send Broadcast"
                     subtitle="Message all users or specific groups"
                     icon="📢"
+                    onClick={() => window.location.href = '/admin/broadcast'}
                     showChevron
                 />
                 <ListItem

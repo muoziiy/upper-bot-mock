@@ -11,14 +11,17 @@ interface Student {
     surname: string;
     age: number;
     sex: 'male' | 'female' | null;
+    payment_status?: 'paid' | 'unpaid' | 'overdue';
     groups: {
         id: string;
         name: string;
         price: number;
         teacher_name?: string;
         joined_at?: string;
+        payment_type?: 'monthly_fixed' | 'monthly_rolling' | 'lesson_based';
+        lessons_remaining?: number;
+        next_due_date?: string;
     }[];
-    payment_status?: 'paid' | 'unpaid' | 'overdue';
 }
 
 interface AdminStudentDetailsModalProps {
@@ -35,11 +38,16 @@ const AdminStudentDetailsModal: React.FC<AdminStudentDetailsModalProps> = ({ isO
         if (isOpen) {
             webApp.BackButton.show();
             webApp.BackButton.onClick(onClose);
-            return () => {
-                webApp.BackButton.offClick(onClose);
-                webApp.BackButton.hide();
-            };
+        } else {
+            // Don't hide if we are just switching to a sub-modal? 
+            // Actually, if this modal closes, we should hide back button unless parent page needs it.
+            // But usually parent page (AdminStudents) doesn't use back button.
+            webApp.BackButton.hide();
+            webApp.BackButton.offClick(onClose);
         }
+        return () => {
+            webApp.BackButton.offClick(onClose);
+        };
     }, [isOpen, onClose, webApp]);
 
     if (!isOpen) return null;
@@ -93,6 +101,16 @@ const AdminStudentDetailsModal: React.FC<AdminStudentDetailsModalProps> = ({ isO
                                         <div className="flex items-center gap-1.5 text-xs text-tg-hint mt-1">
                                             <Clock size={12} />
                                             <span>Joined: {new Date(group.joined_at).toLocaleDateString()}</span>
+                                        </div>
+                                    )}
+                                    {group.payment_type === 'lesson_based' && (
+                                        <div className="flex items-center gap-1.5 text-xs font-medium text-tg-button mt-1">
+                                            <span>Credits: {group.lessons_remaining || 0}</span>
+                                        </div>
+                                    )}
+                                    {(group.payment_type === 'monthly_fixed' || group.payment_type === 'monthly_rolling') && group.next_due_date && (
+                                        <div className="flex items-center gap-1.5 text-xs font-medium text-tg-button mt-1">
+                                            <span>Due: {new Date(group.next_due_date).toLocaleDateString()}</span>
                                         </div>
                                     )}
                                 </div>

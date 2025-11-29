@@ -273,3 +273,41 @@ export async function sendTeacherSubjectNotification(
         throw error;
     }
 }
+
+// ============================================
+// BROADCAST NOTIFICATIONS
+// ============================================
+
+/**
+ * Send broadcast notification to multiple users
+ * @param telegramIds - Array of Telegram IDs
+ * @param message - Message to send
+ */
+export async function sendBroadcastNotification(
+    telegramIds: number[],
+    message: string
+) {
+    console.log(`Starting broadcast to ${telegramIds.length} users`);
+
+    let successCount = 0;
+    let failCount = 0;
+
+    // We'll process these sequentially to be nice to the API, 
+    // though for large lists a queue system would be better.
+    for (const telegramId of telegramIds) {
+        try {
+            await axios.post(`${TELEGRAM_API_URL}/sendMessage`, {
+                chat_id: telegramId,
+                text: message,
+                parse_mode: 'Markdown'
+            });
+            successCount++;
+        } catch (error) {
+            console.error(`Failed to send broadcast to ${telegramId}:`, error);
+            failCount++;
+        }
+    }
+
+    console.log(`Broadcast complete. Success: ${successCount}, Failed: ${failCount}`);
+    return { success: successCount, failed: failCount };
+}

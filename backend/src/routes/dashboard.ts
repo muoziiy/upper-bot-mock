@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { supabase } from '../supabase';
+import { checkStudentStatus, GroupConfig, StudentEnrollment } from '../utils/paymentLogic';
 
 const router = Router();
 
@@ -32,16 +33,20 @@ router.get('/dashboard', async (req: Request, res: Response) => {
                     id,
                     name,
                     price,
-                    payment_model,
+                    payment_type,
                     teacher_id
-                )
+                ),
+                anchor_day,
+                lessons_remaining,
+                next_due_date,
+                last_payment_date,
+                joined_at
             `)
             .eq('student_id', user.id);
 
         const groupIds = groupMembers?.map(g => g.group_id) || [];
 
         // Fetch Teachers for these groups
-        // Handle case where groups might be returned as array or object
         const teacherIds = groupMembers?.map((g: any) => {
             const group = Array.isArray(g.groups) ? g.groups[0] : g.groups;
             return group?.teacher_id;
@@ -51,7 +56,7 @@ router.get('/dashboard', async (req: Request, res: Response) => {
         if (teacherIds.length > 0) {
             const { data: teachers } = await supabase
                 .from('users')
-                .select('id, first_name, surname, email, phone_number') // Secure fields
+                .select('id, first_name, surname, email, phone_number')
                 .in('id', teacherIds);
 
             teachers?.forEach(t => teachersMap.set(t.id, t));
@@ -73,11 +78,29 @@ router.get('/dashboard', async (req: Request, res: Response) => {
             const teacher = teachersMap.get(group.teacher_id);
             const groupPayments = payments?.filter(p => p.group_id === group.id) || [];
 
+            const groupConfig: GroupConfig = {
+                payment_type: group.payment_type,
+                price: group.price
+            };
+
+            const enrollment: StudentEnrollment = {
+                joined_at: gm.joined_at,
+                anchor_day: gm.anchor_day,
+                lessons_remaining: gm.lessons_remaining,
+                next_due_date: gm.next_due_date,
+                last_payment_date: gm.last_payment_date
+            };
+
+            const status = checkStudentStatus(enrollment, groupConfig);
+
             return {
                 id: group.id,
                 name: group.name,
                 price: group.price,
-                payment_model: group.payment_model,
+                payment_type: group.payment_type,
+                status: status,
+                lessons_remaining: gm.lessons_remaining,
+                next_due_date: gm.next_due_date,
                 teacher: teacher ? {
                     id: teacher.id,
                     first_name: teacher.first_name,
@@ -85,11 +108,11 @@ router.get('/dashboard', async (req: Request, res: Response) => {
                     phone: teacher.phone_number
                 } : null,
                 payments: groupPayments,
-                attendance: [] // Placeholder until we confirm attendance schema
+                attendance: []
             };
         }).filter(Boolean) || [];
 
-        // 2. Fetch Scheduled Lessons (Real Data)
+        // 2. Fetch Scheduled Lessons
         let lessons: any[] = [];
         if (groupIds.length > 0) {
             const { data: fetchedLessons } = await supabase
@@ -104,7 +127,7 @@ router.get('/dashboard', async (req: Request, res: Response) => {
             lessons = fetchedLessons || [];
         }
 
-        // 3. Fetch Homework (Real Data)
+        // 3. Fetch Homework
         let homework: any[] = [];
         if (groupIds.length > 0) {
             const { data: fetchedHomework } = await supabase
@@ -119,7 +142,7 @@ router.get('/dashboard', async (req: Request, res: Response) => {
             homework = fetchedHomework || [];
         }
 
-        // 4. Fetch User's Assigned Subjects (from user.subjects column)
+        // 4. Fetch User's Assigned Subjects
         let subjects: any[] = [];
         if (user.subjects && Array.isArray(user.subjects) && user.subjects.length > 0) {
             const { data: fetchedSubjects } = await supabase
@@ -171,8 +194,8 @@ router.get('/dashboard', async (req: Request, res: Response) => {
             total_stats: totalStats,
             lessons: lessons,
             homework: homework,
-            subjects: subjects, // Filtered by user's assigned subjects
-            groups: richGroups // New field with rich group data
+            subjects: subjects,
+            groups: richGroups
         });
     } catch (error) {
         console.error('Dashboard error:', error);
