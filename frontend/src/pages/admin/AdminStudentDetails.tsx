@@ -47,7 +47,6 @@ const AdminStudentDetails: React.FC = () => {
     const navigate = useNavigate();
     const { webApp } = useTelegram();
     const [student, setStudent] = useState<Student | null>(null);
-    const [payments, setPayments] = useState<PaymentRecord[]>([]);
     const [attendance, setAttendance] = useState<AttendanceRecord[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -68,7 +67,6 @@ const AdminStudentDetails: React.FC = () => {
 
     useEffect(() => {
         fetchStudentDetails();
-        fetchPayments();
         fetchAttendance();
     }, [id]);
 
@@ -87,19 +85,6 @@ const AdminStudentDetails: React.FC = () => {
         }
     };
 
-    const fetchPayments = async () => {
-        if (!id) return;
-        try {
-            const res = await fetch(`${import.meta.env.VITE_API_URL}/admin/students/${id}/payments`);
-            if (res.ok) {
-                const data = await res.json();
-                setPayments(data);
-            }
-        } catch (e) {
-            console.error('Failed to fetch payments', e);
-        }
-    };
-
     const fetchAttendance = async () => {
         if (!id) return;
         try {
@@ -110,6 +95,22 @@ const AdminStudentDetails: React.FC = () => {
             }
         } catch (e) {
             console.error('Failed to fetch attendance', e);
+        }
+    };
+
+    const handleRemoveGroup = async (groupId: string) => {
+        if (!confirm('Are you sure you want to remove this student from the group?')) return;
+        try {
+            const res = await fetch(`${import.meta.env.VITE_API_URL}/admin/students/${id}/groups`, {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ groupId })
+            });
+            if (res.ok) {
+                fetchStudentDetails();
+            }
+        } catch (e) {
+            console.error('Failed to remove group', e);
         }
     };
 
