@@ -29,6 +29,7 @@ router.get('/dashboard', async (req: Request, res: Response) => {
             .from('group_members')
             .select(`
                 group_id,
+                payment_status,
                 groups (
                     id,
                     name,
@@ -78,27 +79,12 @@ router.get('/dashboard', async (req: Request, res: Response) => {
             const teacher = teachersMap.get(group.teacher_id);
             const groupPayments = payments?.filter(p => p.group_id === group.id) || [];
 
-            const groupConfig: GroupConfig = {
-                payment_type: group.payment_type,
-                price: group.price
-            };
-
-            const enrollment: StudentEnrollment = {
-                joined_at: gm.joined_at,
-                anchor_day: gm.anchor_day,
-                lessons_remaining: gm.lessons_remaining,
-                next_due_date: gm.next_due_date,
-                last_payment_date: gm.last_payment_date
-            };
-
-            const status = checkStudentStatus(enrollment, groupConfig);
-
             return {
                 id: group.id,
                 name: group.name,
                 price: group.price,
                 payment_type: group.payment_type,
-                status: status,
+                status: gm.payment_status || 'paid',
                 lessons_remaining: gm.lessons_remaining,
                 next_due_date: gm.next_due_date,
                 teacher: teacher ? {

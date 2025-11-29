@@ -110,7 +110,7 @@ const AdminStudentDetails: React.FC = () => {
                         )}
                     </div>
                     <h1 className="text-2xl font-bold text-tg-text text-center">
-                        {student.first_name} {student.surname}
+                        {student.first_name}
                     </h1>
                     <p className="text-tg-hint font-medium mt-1">ID: {student.student_id}</p>
                 </div>

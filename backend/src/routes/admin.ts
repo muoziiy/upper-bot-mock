@@ -487,6 +487,7 @@ router.get('/students/:id', async (req, res) => {
             .from('group_members')
             .select(`
                 joined_at,
+                payment_status,
                 groups (
                     id,
                     name,
@@ -501,30 +502,13 @@ router.get('/students/:id', async (req, res) => {
 
         if (groupsError) throw groupsError;
 
-        // 3. Fetch overdue status
-        const { data: overdueData } = await supabase
-            .rpc('get_overdue_students', { target_date: new Date().toISOString() });
-
-        const overdueInfo = overdueData?.find((d: any) => d.student_id === id);
-
-        // 4. Check if paid this month
-        const currentMonth = new Date().getMonth() + 1;
-        const currentYear = new Date().getFullYear();
-        const { data: paidData } = await supabase
-            .from('payment_records')
-            .select('id')
-            .eq('student_id', id)
-            .eq('status', 'completed')
-            .eq('month', currentMonth)
-            .eq('year', currentYear)
-            .limit(1);
-
-        const isPaid = paidData && paidData.length > 0;
-        const isOverdue = !!overdueInfo;
-
+        // Calculate status from group_members
         let status = 'unpaid';
-        if (isOverdue) status = 'overdue';
-        else if (isPaid) status = 'paid';
+        const hasOverdue = groupsData?.some((g: any) => g.payment_status === 'overdue');
+        const hasPaid = groupsData?.some((g: any) => g.payment_status === 'paid');
+
+        if (hasOverdue) status = 'overdue';
+        else if (hasPaid) status = 'paid';
 
         // Format groups
         const groups = groupsData.map((gm: any) => ({
@@ -532,14 +516,15 @@ router.get('/students/:id', async (req, res) => {
             name: gm.groups.name,
             price: gm.groups.price,
             teacher_name: gm.groups.teacher ? `${gm.groups.teacher.first_name} ${gm.groups.teacher.surname}` : null,
-            joined_at: gm.joined_at
+            joined_at: gm.joined_at,
+            payment_status: gm.payment_status
         }));
 
         res.json({
             ...student,
             groups,
             payment_status: status,
-            amount_due: overdueInfo?.total_amount_due || 0
+            amount_due: 0 // We can calculate this if needed, but for now 0
         });
 
     } catch (error) {
@@ -629,6 +614,12 @@ router.post('/students/:id/payments', async (req, res) => {
             .single();
 
         if (paymentError) throw paymentError;
+
+        // Update group_members payment_status to 'paid'
+        await supabase
+            .from('group_members')
+            .update({ payment_status: 'paid' })
+            .eq('student_id', id);
 
         // Get student's telegram_id for notification
         const { data: student, error: studentError } = await supabase

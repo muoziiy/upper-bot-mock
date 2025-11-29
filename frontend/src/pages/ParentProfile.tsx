@@ -67,7 +67,7 @@ const ParentProfile: React.FC = () => {
                         )}
                     </div>
                     <div className="text-center">
-                        <h1 className="text-2xl font-bold">{dashboardData?.user.first_name} {dashboardData?.user.last_name}</h1>
+                        <h1 className="text-2xl font-bold">{dashboardData?.user.first_name}</h1>
                         <div className="flex items-center justify-center gap-2 text-sm text-tg-hint">
                             <span className="capitalize">{dashboardData?.user.role}</span>
                             <span>•</span>
@@ -99,15 +99,27 @@ const ParentProfile: React.FC = () => {
                         {parentData?.children && parentData.children.map(child => (
                             <div key={child.id} className="bg-tg-bg rounded-xl overflow-hidden shadow-sm">
                                 {/* Child Header */}
-                                <div className="p-4 border-b border-tg-secondary/50 flex items-center gap-3">
+                                <div className="p-4 border-b border-tg-secondary/50 flex items-center gap-3 relative">
                                     <div className="w-12 h-12 rounded-full bg-gradient-to-br from-tg-button to-tg-accent flex items-center justify-center text-white text-lg font-bold">
                                         {child.first_name?.[0] || '?'}
                                     </div>
                                     <div>
                                         <h3 className="text-lg font-semibold text-tg-text">
-                                            {child.first_name} {child.last_name}
+                                            {child.first_name}
                                         </h3>
                                         <p className="text-sm text-tg-hint capitalize">{child.role}</p>
+                                    </div>
+                                    {/* Payment Status Badge */}
+                                    <div className="absolute top-4 right-4">
+                                        {child.payment_status === 'overdue' ? (
+                                            <div className="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-md border-2 border-tg-secondary">
+                                                Overdue
+                                            </div>
+                                        ) : child.payment_status === 'paid' ? (
+                                            <div className="bg-green-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-md border-2 border-tg-secondary">
+                                                Paid
+                                            </div>
+                                        ) : null}
                                     </div>
                                 </div>
 

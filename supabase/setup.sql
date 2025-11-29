@@ -90,6 +90,7 @@ ALTER TABLE group_members ADD COLUMN IF NOT EXISTS anchor_day INTEGER CHECK (anc
 ALTER TABLE group_members ADD COLUMN IF NOT EXISTS lessons_remaining INTEGER DEFAULT 0;
 ALTER TABLE group_members ADD COLUMN IF NOT EXISTS next_due_date DATE;
 ALTER TABLE group_members ADD COLUMN IF NOT EXISTS last_payment_date DATE;
+ALTER TABLE group_members ADD COLUMN IF NOT EXISTS payment_status TEXT DEFAULT 'paid'; -- 'paid', 'overdue'
 
 -- SUBJECTS
 CREATE TABLE IF NOT EXISTS subjects (

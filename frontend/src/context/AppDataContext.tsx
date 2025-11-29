@@ -226,6 +226,19 @@ export const AppDataProvider: React.FC<{ children: ReactNode }> = ({ children })
                         console.error('Failed to fetch admin requests', e);
                     }
                 }
+
+                // Fetch Parent Data if user is parent
+                if (data.user?.role === 'parent') {
+                    try {
+                        const parentRes = await fetch(`${apiUrl}/students/parent-dashboard`, { headers });
+                        if (parentRes.ok) {
+                            const pData = await parentRes.json();
+                            setParentData(pData);
+                        }
+                    } catch (e) {
+                        console.error('Failed to fetch parent data', e);
+                    }
+                }
             }
 
             // Mock Teacher Data (Injecting it always for now to support development)
@@ -277,61 +290,7 @@ export const AppDataProvider: React.FC<{ children: ReactNode }> = ({ children })
                 ]
             });
 
-            // Mock Parent Data
-            setParentData({
-                parent: {
-                    id: user.id.toString(),
-                    first_name: user.first_name || 'Parent',
-                    last_name: user.last_name || ''
-                },
-                children: [
-                    {
-                        id: 'child1',
-                        first_name: 'Alice',
-                        last_name: 'Smith',
-                        role: 'student',
-                        userLevel: {
-                            user_id: 'child1',
-                            current_level: 'intermediate',
-                            progress_percentage: 75,
-                            level_started_at: new Date().toISOString(),
-                            updated_at: new Date().toISOString()
-                        },
-                        lessons: [],
-                        exams: {
-                            upcoming: [],
-                            current: [],
-                            old: []
-                        },
-                        subjects: [
-                            { name: 'English Language', group: 'English 101' },
-                            { name: 'Mathematics', group: 'Math Advanced' }
-                        ]
-                    },
-                    {
-                        id: 'child2',
-                        first_name: 'Bob',
-                        last_name: 'Smith',
-                        role: 'student',
-                        userLevel: {
-                            user_id: 'child2',
-                            current_level: 'beginner',
-                            progress_percentage: 45,
-                            level_started_at: new Date().toISOString(),
-                            updated_at: new Date().toISOString()
-                        },
-                        lessons: [],
-                        exams: {
-                            upcoming: [],
-                            current: [],
-                            old: []
-                        },
-                        subjects: [
-                            { name: 'Physics', group: 'Physics Basics' }
-                        ]
-                    }
-                ]
-            });
+
 
             if (leaderboardRes.ok) {
                 // const data = await leaderboardRes.json();
