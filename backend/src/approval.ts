@@ -129,7 +129,12 @@ export const setupApprovalHandlers = (bot: Telegraf) => {
                 .from('registration_requests')
                 .select('*, users(telegram_id, first_name)')
                 .eq('id', requestId)
+                .eq('id', requestId)
                 .single();
+
+            if (!request) {
+                return ctx.answerCbQuery('⚠️ Request not found.');
+            }
 
             // 3. PROCESS THE ACTION
             const newStatus = action === 'approve' ? 'approved' : 'declined';
