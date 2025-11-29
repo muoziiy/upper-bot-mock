@@ -155,7 +155,7 @@ const AdminStudents: React.FC = () => {
                             <ListItem
                                 key={student.id}
                                 icon={student.sex === 'female' ? '👩' : '👨'}
-                                title={`${student.onboarding_first_name || student.first_name}`}
+                                title={`${student.onboarding_first_name || student.first_name} ${student.surname}`}
                                 subtitle={`ID: ${student.student_id}`}
                                 rightElement={
                                     student.payment_status === 'overdue' ? (

@@ -113,11 +113,22 @@ const AdminStudentDetails: React.FC = () => {
         }
     };
 
-    const handleRemoveGroup = async (groupId: string) => {
-        if (!confirm('Are you sure you want to remove this student from the group?')) return;
-        // Implement remove logic here
-        console.log('Remove group', groupId);
+    const handleUpdateJoinedDate = async (groupId: string, date: string) => {
+        try {
+            const res = await fetch(`${import.meta.env.VITE_API_URL}/admin/students/${id}/groups`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ groupId, action: 'update_date', joinedAt: date })
+            });
+            if (res.ok) {
+                fetchStudentDetails();
+            }
+        } catch (e) {
+            console.error('Failed to update date', e);
+        }
     };
+
+    const [expandedGroup, setExpandedGroup] = useState<string | null>(null);
 
     if (loading) {
         return <div className="min-h-screen bg-tg-secondary flex items-center justify-center text-tg-hint">Loading...</div>;
@@ -172,8 +183,12 @@ const AdminStudentDetails: React.FC = () => {
                     <Section>
                         {student.groups.length > 0 ? (
                             student.groups.map((group, idx) => (
-                                <div key={group.id} className={cn("p-4 bg-tg-bg flex flex-col gap-2", idx !== student.groups.length - 1 && "border-b border-tg-hint/10")}>
-                                    <div className="flex justify-between items-start">
+                                <div key={group.id} className={cn("bg-tg-bg flex flex-col", idx !== student.groups.length - 1 && "border-b border-tg-hint/10")}>
+                                    {/* Group Header (Clickable) */}
+                                    <div
+                                        className="p-4 flex justify-between items-start cursor-pointer active:bg-black/5 dark:active:bg-white/5 transition-colors"
+                                        onClick={() => setExpandedGroup(expandedGroup === group.id ? null : group.id)}
+                                    >
                                         <div>
                                             <span className="font-semibold text-tg-text block">{group.name}</span>
                                             <span className="text-sm text-tg-hint">{group.teacher_name || 'No Teacher'}</span>
@@ -197,58 +212,53 @@ const AdminStudentDetails: React.FC = () => {
                                         </div>
                                     </div>
 
-                                    <div className="flex justify-between items-center mt-1">
-                                        {group.joined_at && (
-                                            <div className="flex items-center gap-1.5 text-xs text-tg-hint">
-                                                <Clock size={12} />
-                                                <span>Joined: {new Date(group.joined_at).toLocaleDateString()}</span>
+                                    {/* Expanded Details */}
+                                    {expandedGroup === group.id && (
+                                        <div className="px-4 pb-4 pt-0 animate-in slide-in-from-top-2 duration-200">
+                                            <div className="bg-tg-secondary/50 rounded-lg p-3 space-y-3">
+                                                {/* Actions Row */}
+                                                <div className="flex gap-2">
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setShowPaymentModal(true); // TODO: Pre-select this group in modal
+                                                        }}
+                                                        className="flex-1 bg-green-500 text-white py-2 rounded-lg text-sm font-medium shadow-sm active:scale-95 transition-transform"
+                                                    >
+                                                        Add Payment
+                                                    </button>
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleRemoveGroup(group.id);
+                                                        }}
+                                                        className="bg-red-500/10 text-red-500 px-3 rounded-lg active:bg-red-500/20 transition-colors"
+                                                    >
+                                                        <Trash2 size={18} />
+                                                    </button>
+                                                </div>
+
+                                                {/* Joined Date Edit */}
+                                                <div className="flex items-center justify-between bg-tg-bg p-2 rounded-md border border-tg-hint/10">
+                                                    <div className="flex items-center gap-2 text-tg-hint text-sm">
+                                                        <Clock size={14} />
+                                                        <span>Joined:</span>
+                                                    </div>
+                                                    <input
+                                                        type="date"
+                                                        value={group.joined_at ? new Date(group.joined_at).toISOString().split('T')[0] : ''}
+                                                        onChange={(e) => handleUpdateJoinedDate(group.id, e.target.value)}
+                                                        className="bg-transparent text-tg-text text-sm font-medium outline-none text-right"
+                                                    />
+                                                </div>
                                             </div>
-                                        )}
-                                        <button
-                                            onClick={() => handleRemoveGroup(group.id)}
-                                            className="text-red-500 p-1 rounded-full hover:bg-red-500/10 transition-colors"
-                                        >
-                                            <Trash2 size={16} />
-                                        </button>
-                                    </div>
+                                        </div>
+                                    )}
                                 </div>
                             ))
                         ) : (
                             <div className="p-4 text-center text-tg-hint">
                                 No active groups
-                            </div>
-                        )}
-                    </Section>
-                </div>
-
-                {/* Payments Section */}
-                <div className="space-y-2">
-                    <div className="flex justify-between items-center px-2">
-                        <h3 className="text-sm font-medium text-tg-hint uppercase">Recent Payments</h3>
-                        <button
-                            onClick={() => setShowPaymentModal(true)}
-                            className="text-tg-button text-sm font-medium flex items-center gap-1"
-                        >
-                            <Plus size={16} /> Record
-                        </button>
-                    </div>
-                    <Section>
-                        {payments.length > 0 ? (
-                            payments.slice(0, 5).map((payment, idx) => (
-                                <div key={payment.id} className={cn("p-4 bg-tg-bg flex justify-between items-center", idx !== payments.length - 1 && "border-b border-tg-hint/10")}>
-                                    <div className="flex flex-col">
-                                        <span className="font-medium text-tg-text">{payment.subject_name || 'Tuition'}</span>
-                                        <span className="text-xs text-tg-hint">{new Date(payment.payment_date).toLocaleDateString()}</span>
-                                    </div>
-                                    <div className="flex flex-col items-end">
-                                        <span className="font-semibold text-tg-text text-green-500">+{payment.amount.toLocaleString()}</span>
-                                        <span className="text-xs text-tg-hint capitalize">{payment.status}</span>
-                                    </div>
-                                </div>
-                            ))
-                        ) : (
-                            <div className="p-4 text-center text-tg-hint">
-                                No payment history
                             </div>
                         )}
                     </Section>
@@ -281,7 +291,7 @@ const AdminStudentDetails: React.FC = () => {
                 </div>
             </div>
 
-            {/* Modals (Still used for Add actions) */}
+            {/* Modals */}
             <AdminPaymentModal
                 isOpen={showPaymentModal}
                 onClose={() => setShowPaymentModal(false)}
