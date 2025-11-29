@@ -315,6 +315,116 @@ reason: ${record.reason === 'monthly_payment_overdue' ? 'Monthly Payment Missing
             ctx.reply('An error occurred.');
         }
     }
+
+});
+
+// Handle Student/Staff Approval/Decline Actions
+bot.action(/^(approve|decline)_(student|staff)_(\d+)$/, async (ctx) => {
+    const action = ctx.match[1]; // 'approve' or 'decline'
+    const type = ctx.match[2];   // 'student' or 'staff'
+    const requestId = ctx.match[3];
+    const adminTelegramId = ctx.from?.id;
+
+    if (!adminTelegramId) return;
+
+    try {
+        // 1. Verify Admin
+        const { data: adminUser } = await supabase
+            .from('users')
+            .select('role')
+            .eq('telegram_id', adminTelegramId)
+            .single();
+
+        if (!adminUser || !['admin', 'super_admin'].includes(adminUser.role)) {
+            return ctx.answerCbQuery('You are not authorized to perform this action.');
+        }
+
+        // 2. Get Request
+        const { data: request } = await supabase
+            .from('registration_requests')
+            .select('*, users(telegram_id, first_name)')
+            .eq('id', requestId)
+            .single();
+
+        if (!request) {
+            return ctx.answerCbQuery('Request not found.');
+        }
+
+        if (request.status !== 'pending') {
+            return ctx.editMessageText(`Request already ${request.status}.`);
+        }
+
+        // 3. Process Action
+        if (action === 'approve') {
+            // Update request
+            await supabase
+                .from('registration_requests')
+                .update({ status: 'approved', updated_at: new Date().toISOString() })
+                .eq('id', requestId);
+
+            // Update user role
+            const newRole = type === 'student' ? 'student' : 'teacher';
+            await supabase
+                .from('users')
+                .update({ role: newRole, updated_at: new Date().toISOString() })
+                .eq('id', request.user_id);
+
+            await ctx.editMessageText(`✅ Request approved by you.`);
+
+            // Notify User
+            if (request.users?.telegram_id) {
+                await ctx.telegram.sendMessage(Number(request.users.telegram_id), '🎉 Your registration has been approved! You can now access the app.');
+            }
+
+        } else {
+            // Decline
+            await supabase
+                .from('registration_requests')
+                .update({ status: 'declined', updated_at: new Date().toISOString() })
+                .eq('id', requestId);
+
+            // Revert user role to new_user
+            await supabase
+                .from('users')
+                .update({ role: 'new_user', updated_at: new Date().toISOString() })
+                .eq('id', request.user_id);
+
+            await ctx.editMessageText(`❌ Request declined by you.`);
+
+            // Notify User
+            if (request.users?.telegram_id) {
+                await ctx.telegram.sendMessage(Number(request.users.telegram_id), 'Your registration request has been declined.');
+            }
+        }
+
+        // 4. Sync other admin messages (Best effort)
+        const { data: logs } = await supabase
+            .from('admin_notification_logs')
+            .select('admin_chat_id, message_id')
+            .eq('request_id', requestId);
+
+        if (logs) {
+            for (const log of logs) {
+                // Skip the current message which we just edited
+                if (log.admin_chat_id === ctx.chat?.id && log.message_id === ctx.callbackQuery.message?.message_id) continue;
+
+                try {
+                    await ctx.telegram.editMessageText(
+                        log.admin_chat_id,
+                        Number(log.message_id),
+                        undefined,
+                        action === 'approve' ? `✅ Request approved.` : `❌ Request declined.`
+                    );
+                } catch (e) {
+                    // Ignore errors (message might be too old or deleted)
+                }
+            }
+        }
+
+    } catch (error) {
+        console.error('Error handling student/staff action:', error);
+        ctx.answerCbQuery('An error occurred.');
+    }
 });
 
 export default bot;
