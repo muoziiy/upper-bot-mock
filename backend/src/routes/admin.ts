@@ -456,7 +456,6 @@ router.get('/students', async (req, res) => {
                 id,
                 student_id,
                 telegram_id,
-                telegram_id,
                 first_name,
                 onboarding_first_name,
                 surname,
@@ -539,7 +538,6 @@ router.get('/students', async (req, res) => {
             return {
                 id: student.id,
                 student_id: student.student_id,
-                telegram_id: student.telegram_id,
                 telegram_id: student.telegram_id,
                 first_name: student.first_name,
                 onboarding_first_name: student.onboarding_first_name,
