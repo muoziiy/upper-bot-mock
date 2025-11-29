@@ -197,6 +197,11 @@ const AdminBroadcast: React.FC = () => {
                                 placeholder="Type your broadcast message here..."
                                 className="w-full h-32 bg-tg-secondary text-tg-text p-3 rounded-xl resize-none border-none outline-none focus:ring-2 focus:ring-tg-button placeholder:text-tg-hint"
                             />
+                            <div className="mt-2 text-xs text-tg-hint flex gap-4">
+                                <span><b>*bold*</b></span>
+                                <span><i>_italic_</i></span>
+                                <span><span className="font-mono">`monospace`</span></span>
+                            </div>
                         </div>
                     </Section>
 

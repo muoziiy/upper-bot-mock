@@ -5,7 +5,7 @@ import { ListItem } from '../../components/ui/ListItem';
 import { motion } from 'framer-motion';
 
 // Simple CountUp Component
-const CountUp: React.FC<{ end: number; duration?: number; prefix?: string }> = ({ end, duration = 1.5, prefix = '' }) => {
+const CountUp: React.FC<{ end: number; duration?: number; prefix?: string; suffix?: string }> = ({ end, duration = 0.8, prefix = '', suffix = '' }) => {
     const [count, setCount] = useState(0);
 
     useEffect(() => {
@@ -34,7 +34,7 @@ const CountUp: React.FC<{ end: number; duration?: number; prefix?: string }> = (
         return () => cancelAnimationFrame(animationFrame);
     }, [end, duration]);
 
-    return <span>{prefix}{count.toLocaleString()}</span>;
+    return <span>{prefix}{count.toLocaleString()}{suffix}</span>;
 };
 
 const AdminStats: React.FC = () => {
@@ -192,7 +192,7 @@ const AdminStats: React.FC = () => {
                         <motion.div variants={item} className="col-span-2 bg-gradient-to-br from-green-500/10 to-emerald-500/10 border border-green-500/20 p-6 rounded-2xl shadow-sm flex flex-col items-center justify-center gap-2">
                             <span className="text-sm font-medium text-green-600 uppercase tracking-wide">Net Income</span>
                             <span className="text-3xl font-bold text-green-700 dark:text-green-400">
-                                <CountUp end={financialStats.netIncome} prefix="$" />
+                                <CountUp end={financialStats.netIncome} suffix=" UZS" />
                             </span>
                         </motion.div>
 
@@ -200,7 +200,7 @@ const AdminStats: React.FC = () => {
                         <motion.div variants={item} className="bg-white dark:bg-black/20 p-4 rounded-2xl shadow-sm flex flex-col items-center justify-center gap-2">
                             <span className="text-2xl">📥</span>
                             <span className="text-lg font-bold text-tg-text break-all text-center">
-                                <CountUp end={financialStats.totalRevenue} prefix="$" />
+                                <CountUp end={financialStats.totalRevenue} suffix=" UZS" />
                             </span>
                             <span className="text-xs text-tg-hint font-medium uppercase tracking-wide">Incoming</span>
                         </motion.div>
@@ -209,7 +209,7 @@ const AdminStats: React.FC = () => {
                         <motion.div variants={item} className="bg-white dark:bg-black/20 p-4 rounded-2xl shadow-sm flex flex-col items-center justify-center gap-2">
                             <span className="text-2xl">📤</span>
                             <span className="text-lg font-bold text-red-500 break-all text-center">
-                                <CountUp end={financialStats.totalOutgoing} prefix="$" />
+                                <CountUp end={financialStats.totalOutgoing} suffix=" UZS" />
                             </span>
                             <span className="text-xs text-tg-hint font-medium uppercase tracking-wide">Outgoing</span>
                         </motion.div>
@@ -221,7 +221,7 @@ const AdminStats: React.FC = () => {
                                 <span className="text-sm font-medium text-tg-hint uppercase tracking-wide">Pending Payments</span>
                             </div>
                             <span className="text-lg font-bold text-orange-500">
-                                <CountUp end={financialStats.pendingPayments} prefix="$" />
+                                <CountUp end={financialStats.pendingPayments} suffix=" UZS" />
                             </span>
                         </motion.div>
                     </div>
@@ -236,7 +236,7 @@ const AdminStats: React.FC = () => {
                                         subtitle={tx.description}
                                         value={
                                             <span className={tx.type === 'incoming' ? 'text-green-500' : 'text-red-500'}>
-                                                {tx.type === 'incoming' ? '+' : '-'}${tx.amount.toLocaleString()}
+                                                {tx.type === 'incoming' ? '+' : '-'}{tx.amount.toLocaleString()} UZS
                                             </span>
                                         }
                                         rightElement={<span className="text-xs text-tg-hint">{new Date(tx.date).toLocaleDateString()}</span>}

@@ -48,9 +48,12 @@ const AdminStudents: React.FC = () => {
     const [showGroupModal, setShowGroupModal] = useState(false);
     const [showAttendanceModal, setShowAttendanceModal] = useState(false);
 
+    const [error, setError] = useState<string | null>(null);
+
     // Fetch students
     const fetchStudents = async () => {
         setLoading(true);
+        setError(null);
         try {
             const queryParams = new URLSearchParams();
             if (searchQuery) queryParams.append('search', searchQuery);
@@ -76,9 +79,12 @@ const AdminStudents: React.FC = () => {
                         setSelectedStudent(updatedSelected);
                     }
                 }
+            } else {
+                setError('Failed to fetch students');
             }
         } catch (e) {
             console.error('Failed to fetch students', e);
+            setError('Error loading data');
         } finally {
             setLoading(false);
         }
@@ -133,7 +139,12 @@ const AdminStudents: React.FC = () => {
 
             {/* Student List */}
             <div className="pt-2">
-                {loading ? (
+                {error ? (
+                    <div className="text-center py-10 text-red-500">
+                        {error}
+                        <button onClick={fetchStudents} className="block mx-auto mt-2 text-tg-button text-sm">Retry</button>
+                    </div>
+                ) : loading ? (
                     <div className="flex justify-center py-10">
                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-tg-button"></div>
                     </div>

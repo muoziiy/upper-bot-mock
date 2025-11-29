@@ -1087,15 +1087,13 @@ router.post('/broadcast', async (req, res) => {
 
         // 2. Send Messages
         let successCount = 0;
-        for (const recipient of recipients) {
-            if (recipient.telegram_id) {
-                try {
-                    await sendBroadcastNotification(recipient.telegram_id, message);
-                    successCount++;
-                } catch (e) {
-                    console.error(`Failed to send to ${recipient.telegram_id}`, e);
-                }
-            }
+        const telegramIds = recipients
+            .map(r => r.telegram_id)
+            .filter(id => id); // Filter out null/undefined
+
+        if (telegramIds.length > 0) {
+            const result = await sendBroadcastNotification(telegramIds, message);
+            successCount = result.success;
         }
 
         // 3. Log History
