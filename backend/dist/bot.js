@@ -293,4 +293,67 @@ bot.action(/^(approve|decline)_(student|staff)_(.+)$/, async (ctx) => {
         ctx.answerCbQuery('An error occurred.');
     }
 });
+// Handle /check_unpaid command
+bot.command('check_unpaid', async (ctx) => {
+    const user = ctx.from;
+    if (!user)
+        return;
+    try {
+        // 1. Verify Admin
+        const { data: adminUser } = await supabase_1.supabase
+            .from('users')
+            .select('role')
+            .eq('telegram_id', user.id)
+            .single();
+        if (!adminUser || !['admin', 'super_admin'].includes(adminUser.role)) {
+            return ctx.reply('You are not authorized to use this command.');
+        }
+        await ctx.reply('🔍 Checking for unpaid students...');
+        // 2. Call RPC to get overdue students
+        // We use the function created in migration: get_overdue_students(target_date)
+        const { data: overdueStudents, error } = await supabase_1.supabase
+            .rpc('get_overdue_students', { target_date: new Date().toISOString() });
+        if (error) {
+            console.error('Error fetching overdue students:', error);
+            return ctx.reply('Failed to fetch data. Please try again.');
+        }
+        if (!overdueStudents || overdueStudents.length === 0) {
+            return ctx.reply('✅ No unpaid students found!');
+        }
+        await ctx.reply(`Found ${overdueStudents.length} students with overdue payments.`);
+        // 3. Send info for each student
+        for (const record of overdueStudents) {
+            // Fetch student details
+            const { data: student } = await supabase_1.supabase
+                .from('users')
+                .select('first_name, surname, phone_number, username')
+                .eq('id', record.student_id)
+                .single();
+            // Fetch group name
+            const { data: group } = await supabase_1.supabase
+                .from('groups')
+                .select('name')
+                .eq('id', record.group_id)
+                .single();
+            if (student && group) {
+                const message = `
+⚠️ **Overdue Payment**
+
+👤 **Student:** ${student.first_name} ${student.surname || ''}
+📞 **Phone:** ${student.phone_number || 'N/A'}
+🏫 **Group:** ${group.name}
+💰 **Amount Due:** ${record.amount_due.toLocaleString()} UZS
+reason: ${record.reason === 'monthly_payment_overdue' ? 'Monthly Payment Missing' : '12 Lessons Balance Empty'}
+
+@${student.username || 'NoUsername'}
+`;
+                await ctx.reply(message, { parse_mode: 'Markdown' });
+            }
+        }
+    }
+    catch (error) {
+        console.error('Error in /check_unpaid:', error);
+        ctx.reply('An error occurred.');
+    }
+});
 exports.default = bot;

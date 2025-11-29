@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const supabase_1 = require("../supabase");
 const notifications_1 = require("../services/notifications");
+const paymentLogic_1 = require("../utils/paymentLogic");
 const router = express_1.default.Router();
 // Get all users
 router.get('/users', async (req, res) => {
@@ -204,35 +205,105 @@ router.get('/stats/financial', async (req, res) => {
         const startOfMonth = new Date();
         startOfMonth.setDate(1);
         startOfMonth.setHours(0, 0, 0, 0);
-        // 1. Total Revenue (This Month) - Completed payments
+        // 1. Total Revenue (Incoming from Students) - Completed payments
         const { data: revenueData, error: revenueError } = await supabase_1.supabase
-            .from('payments')
+            .from('payment_records')
             .select('amount')
-            .eq('status', 'completed')
-            .gte('transaction_date', startOfMonth.toISOString());
+            .eq('status', 'completed');
         if (revenueError)
             throw revenueError;
-        const totalRevenue = revenueData?.reduce((sum, p) => sum + Number(p.amount), 0) || 0;
-        // 2. Pending Payments
+        const totalRevenue = revenueData?.reduce((sum, record) => sum + Number(record.amount), 0) || 0;
+        // 2. Pending Payments (Incoming)
         const { data: pendingData, error: pendingError } = await supabase_1.supabase
-            .from('payments')
+            .from('payment_records')
             .select('amount')
             .eq('status', 'pending');
         if (pendingError)
             throw pendingError;
-        const pendingPayments = pendingData?.reduce((sum, p) => sum + Number(p.amount), 0) || 0;
-        // 3. Recent Transactions (Limit 5)
-        const { data: recentTransactions, error: transactionsError } = await supabase_1.supabase
-            .from('payments')
-            .select('*, users(first_name, surname)')
-            .order('transaction_date', { ascending: false })
+        const pendingPayments = pendingData?.reduce((sum, record) => sum + Number(record.amount), 0) || 0;
+        // 3. Total Outgoing (Teacher Payments)
+        let totalOutgoing = 0;
+        try {
+            const { data: outgoingData, error: outgoingError } = await supabase_1.supabase
+                .from('teacher_payments')
+                .select('amount');
+            if (!outgoingError && outgoingData) {
+                totalOutgoing = outgoingData.reduce((sum, record) => sum + Number(record.amount), 0);
+            }
+        }
+        catch (e) {
+            console.warn('teacher_payments table might not exist yet');
+        }
+        // 4. Recent Transactions (Merged)
+        // Fetch last 5 incoming
+        const { data: recentIncoming, error: incomingError } = await supabase_1.supabase
+            .from('payment_records')
+            .select(`
+                id,
+                amount,
+                payment_date,
+                status,
+                users (first_name, surname)
+            `)
+            .order('payment_date', { ascending: false })
             .limit(5);
-        if (transactionsError)
-            throw transactionsError;
+        if (incomingError)
+            throw incomingError;
+        // Fetch last 5 outgoing
+        let recentOutgoing = [];
+        try {
+            const { data: outgoing, error: outError } = await supabase_1.supabase
+                .from('teacher_payments')
+                .select(`
+                    id,
+                    amount,
+                    payment_date,
+                    status,
+                    users (first_name, surname)
+                `)
+                .order('payment_date', { ascending: false })
+                .limit(5);
+            if (!outError && outgoing) {
+                recentOutgoing = outgoing;
+            }
+        }
+        catch (e) {
+            // Ignore
+        }
+        // Merge and sort
+        const recentTransactions = [
+            ...(recentIncoming || []).map((t) => {
+                const userObj = Array.isArray(t.users) ? t.users[0] : t.users;
+                return {
+                    id: t.id,
+                    type: 'incoming',
+                    amount: t.amount,
+                    date: t.payment_date,
+                    status: t.status,
+                    user: userObj ? `${userObj.first_name} ${userObj.surname}` : 'Unknown',
+                    description: 'Student Payment'
+                };
+            }),
+            ...recentOutgoing.map((t) => {
+                const userObj = Array.isArray(t.users) ? t.users[0] : t.users;
+                return {
+                    id: t.id,
+                    type: 'outgoing',
+                    amount: t.amount,
+                    date: t.payment_date,
+                    status: t.status,
+                    user: userObj ? `${userObj.first_name} ${userObj.surname}` : 'Unknown',
+                    description: 'Teacher Payout'
+                };
+            })
+        ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+            .slice(0, 10);
         res.json({
             totalRevenue,
             pendingPayments,
-            recentTransactions: recentTransactions || []
+            totalOutgoing,
+            netIncome: totalRevenue - totalOutgoing,
+            recentTransactions
         });
     }
     catch (error) {
@@ -240,11 +311,11 @@ router.get('/stats/financial', async (req, res) => {
         res.status(500).json({ error: 'Internal server error' });
     }
 });
-// Get Students List (with Search)
-// SECURITY: Only returns safe fields (no telegram username or profile image)
+// Get all students with payment status
 router.get('/students', async (req, res) => {
     const { search } = req.query;
     try {
+        // 1. Fetch base student data with payment_day
         let query = supabase_1.supabase
             .from('users')
             .select(`
@@ -255,9 +326,23 @@ router.get('/students', async (req, res) => {
                 surname,
                 age,
                 sex,
+                payment_day,
                 group_members (
+                    group_id,
+                    joined_at,
+                    anchor_day,
+                    lessons_remaining,
+                    next_due_date,
+                    last_payment_date,
                     groups (
-                        name
+                        id,
+                        name,
+                        price,
+                        payment_type,
+                        teacher:users!groups_teacher_id_fkey (
+                            first_name,
+                            surname
+                        )
                     )
                 )
             `)
@@ -265,28 +350,171 @@ router.get('/students', async (req, res) => {
             .order('created_at', { ascending: false });
         if (search) {
             const searchStr = String(search);
-            // Search by name, surname, or student_id
             query = query.or(`first_name.ilike.%${searchStr}%,surname.ilike.%${searchStr}%,student_id.ilike.%${searchStr}%`);
         }
-        const { data, error } = await query;
-        if (error)
-            throw error;
-        // Transform data to flatten groups
-        // CRITICAL: Never expose username or profile picture
-        const students = data.map((student) => ({
-            id: student.id,
-            student_id: student.student_id,
-            telegram_id: student.telegram_id, // Needed for notifications only
-            first_name: student.first_name,
-            surname: student.surname,
-            age: student.age,
-            sex: student.sex,
-            groups: student.group_members?.map((gm) => gm.groups?.name).filter(Boolean) || []
-        }));
+        const { data: studentsData, error: studentsError } = await query;
+        if (studentsError)
+            throw studentsError;
+        // 2. Calculate status for each student using JS logic
+        const students = studentsData.map((student) => {
+            let overallStatus = 'unpaid'; // Default
+            let hasOverdue = false;
+            let hasPaid = false;
+            const groups = student.group_members?.map((gm) => {
+                const group = gm.groups;
+                const teacher = group.teacher;
+                // Calculate status for this group
+                const status = (0, paymentLogic_1.checkStudentStatus)({
+                    joined_at: gm.joined_at,
+                    anchor_day: gm.anchor_day,
+                    lessons_remaining: gm.lessons_remaining,
+                    next_due_date: gm.next_due_date,
+                    last_payment_date: gm.last_payment_date
+                }, {
+                    payment_type: group.payment_type,
+                    price: group.price
+                });
+                if (status === 'overdue')
+                    hasOverdue = true;
+                if (status === 'active')
+                    hasPaid = true;
+                return {
+                    id: group.id,
+                    name: group.name,
+                    price: group.price,
+                    payment_type: group.payment_type,
+                    teacher_name: teacher ? `${teacher.first_name} ${teacher.surname}` : null,
+                    joined_at: gm.joined_at,
+                    lessons_remaining: gm.lessons_remaining,
+                    next_due_date: gm.next_due_date,
+                    status: status
+                };
+            }).filter((g) => g.name) || [];
+            if (hasOverdue)
+                overallStatus = 'overdue';
+            else if (hasPaid)
+                overallStatus = 'paid';
+            return {
+                id: student.id,
+                student_id: student.student_id,
+                telegram_id: student.telegram_id,
+                first_name: student.first_name,
+                surname: student.surname,
+                age: student.age,
+                sex: student.sex,
+                payment_day: student.payment_day || 1,
+                groups: groups,
+                payment_status: overallStatus,
+                amount_due: 0 // We can calculate this if needed, but for now 0
+            };
+        });
         res.json(students);
     }
     catch (error) {
         console.error('Error fetching students:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+// Get single student details
+router.get('/students/:id', async (req, res) => {
+    const { id } = req.params;
+    try {
+        // 1. Fetch student basic info
+        const { data: student, error: studentError } = await supabase_1.supabase
+            .from('users')
+            .select(`
+                id,
+                student_id,
+                telegram_id,
+                first_name,
+                surname,
+                age,
+                sex,
+                payment_day,
+                created_at
+            `)
+            .eq('id', id)
+            .single();
+        if (studentError)
+            throw studentError;
+        // 2. Fetch groups
+        const { data: groupsData, error: groupsError } = await supabase_1.supabase
+            .from('group_members')
+            .select(`
+                joined_at,
+                groups (
+                    id,
+                    name,
+                    price,
+                    teacher:users!groups_teacher_id_fkey (
+                        first_name,
+                        surname
+                    )
+                )
+            `)
+            .eq('student_id', id);
+        if (groupsError)
+            throw groupsError;
+        // 3. Fetch overdue status
+        const { data: overdueData } = await supabase_1.supabase
+            .rpc('get_overdue_students', { target_date: new Date().toISOString() });
+        const overdueInfo = overdueData?.find((d) => d.student_id === id);
+        // 4. Check if paid this month
+        const currentMonth = new Date().getMonth() + 1;
+        const currentYear = new Date().getFullYear();
+        const { data: paidData } = await supabase_1.supabase
+            .from('payment_records')
+            .select('id')
+            .eq('student_id', id)
+            .eq('status', 'completed')
+            .eq('month', currentMonth)
+            .eq('year', currentYear)
+            .limit(1);
+        const isPaid = paidData && paidData.length > 0;
+        const isOverdue = !!overdueInfo;
+        let status = 'unpaid';
+        if (isOverdue)
+            status = 'overdue';
+        else if (isPaid)
+            status = 'paid';
+        // Format groups
+        const groups = groupsData.map((gm) => ({
+            id: gm.groups.id,
+            name: gm.groups.name,
+            price: gm.groups.price,
+            teacher_name: gm.groups.teacher ? `${gm.groups.teacher.first_name} ${gm.groups.teacher.surname}` : null,
+            joined_at: gm.joined_at
+        }));
+        res.json({
+            ...student,
+            groups,
+            payment_status: status,
+            amount_due: overdueInfo?.total_amount_due || 0
+        });
+    }
+    catch (error) {
+        console.error('Error fetching student details:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+// Update Student Payment Day
+router.put('/students/:id/payment-day', async (req, res) => {
+    const { id } = req.params;
+    const { payment_day } = req.body;
+    if (!payment_day || payment_day < 1 || payment_day > 31) {
+        return res.status(400).json({ error: 'Invalid payment day' });
+    }
+    try {
+        const { error } = await supabase_1.supabase
+            .from('users')
+            .update({ payment_day })
+            .eq('id', id);
+        if (error)
+            throw error;
+        res.json({ success: true });
+    }
+    catch (error) {
+        console.error('Error updating payment day:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
 });
@@ -498,13 +726,96 @@ router.get('/groups/list', async (req, res) => {
     try {
         const { data, error } = await supabase_1.supabase
             .from('groups')
-            .select('id, name')
+            .select(`
+                id, 
+                name, 
+                price, 
+                schedule, 
+                teacher_id,
+                teacher:users!groups_teacher_id_fkey (
+                    first_name,
+                    surname
+                )
+            `)
             .order('name');
+        if (error)
+            throw error;
+        // Flatten teacher name
+        const groups = data.map((g) => ({
+            ...g,
+            teacher_name: g.teacher ? `${g.teacher.first_name} ${g.teacher.surname}` : 'No Teacher'
+        }));
+        res.json(groups);
+    }
+    catch (error) {
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+// Create Group
+router.post('/groups', async (req, res) => {
+    const { name, teacher_id, price, schedule, payment_type } = req.body;
+    try {
+        const { data, error } = await supabase_1.supabase
+            .from('groups')
+            .insert({
+            name,
+            teacher_id: teacher_id || null,
+            price: price || 0,
+            schedule: schedule || {},
+            payment_type: payment_type || 'monthly_fixed'
+        })
+            .select()
+            .single();
         if (error)
             throw error;
         res.json(data);
     }
     catch (error) {
+        console.error('Error creating group:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+// Update Group
+router.put('/groups/:id', async (req, res) => {
+    const { id } = req.params;
+    const { name, teacher_id, price, schedule, payment_type } = req.body;
+    try {
+        const { data, error } = await supabase_1.supabase
+            .from('groups')
+            .update({
+            name,
+            teacher_id: teacher_id || null,
+            price: price || 0,
+            schedule: schedule || {},
+            payment_type: payment_type,
+            updated_at: new Date().toISOString()
+        })
+            .eq('id', id)
+            .select()
+            .single();
+        if (error)
+            throw error;
+        res.json(data);
+    }
+    catch (error) {
+        console.error('Error updating group:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+// Delete Group
+router.delete('/groups/:id', async (req, res) => {
+    const { id } = req.params;
+    try {
+        const { error } = await supabase_1.supabase
+            .from('groups')
+            .delete()
+            .eq('id', id);
+        if (error)
+            throw error;
+        res.json({ success: true });
+    }
+    catch (error) {
+        console.error('Error deleting group:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
 });
@@ -514,7 +825,7 @@ router.get('/groups/list', async (req, res) => {
 // Update student groups (Add/Remove)
 router.put('/students/:id/groups', async (req, res) => {
     const { id } = req.params;
-    const { groupId, action } = req.body; // action: 'add' | 'remove'
+    const { groupId, action, anchor_day, lessons_remaining } = req.body; // action: 'add' | 'remove'
     try {
         if (action === 'add') {
             // Check if already exists
@@ -527,7 +838,13 @@ router.put('/students/:id/groups', async (req, res) => {
             if (!existing) {
                 const { error } = await supabase_1.supabase
                     .from('group_members')
-                    .insert({ student_id: id, group_id: groupId });
+                    .insert({
+                    student_id: id,
+                    group_id: groupId,
+                    joined_at: req.body.joinedAt || new Date().toISOString(),
+                    anchor_day: anchor_day || new Date().getDate(),
+                    lessons_remaining: lessons_remaining || 0
+                });
                 if (error)
                     throw error;
             }
@@ -567,6 +884,195 @@ router.put('/students/:id/groups', async (req, res) => {
     }
     catch (error) {
         console.error('Error updating student groups:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+// Mark Attendance
+router.post('/attendance', async (req, res) => {
+    const { student_id, group_id, date, status } = req.body;
+    if (!student_id || !group_id || !date || !status) {
+        return res.status(400).json({ error: 'Missing required fields' });
+    }
+    try {
+        // 1. Record Attendance
+        const { error: attendanceError } = await supabase_1.supabase
+            .from('attendance')
+            .insert({
+            student_id,
+            group_id,
+            date,
+            status
+        });
+        if (attendanceError)
+            throw attendanceError;
+        // 2. Check Payment Type and Deduct Credits if needed
+        if (status === 'present') {
+            const { data: groupMember, error: gmError } = await supabase_1.supabase
+                .from('group_members')
+                .select(`
+                    lessons_remaining,
+                    groups (payment_type)
+                `)
+                .eq('student_id', student_id)
+                .eq('group_id', group_id)
+                .single();
+            if (gmError)
+                throw gmError;
+            // Type cast to handle nested object from join
+            const group = groupMember.groups;
+            if (group?.payment_type === 'lesson_based') {
+                const newCredits = (groupMember.lessons_remaining || 0) - 1;
+                // Update credits
+                await supabase_1.supabase
+                    .from('group_members')
+                    .update({ lessons_remaining: newCredits })
+                    .eq('student_id', student_id)
+                    .eq('group_id', group_id);
+                // Check for Low Balance
+                if (newCredits <= 2) {
+                    const { data: student } = await supabase_1.supabase
+                        .from('users')
+                        .select('telegram_id')
+                        .eq('id', student_id)
+                        .single();
+                    if (student?.telegram_id) {
+                        // Send a simple notification about low balance
+                        try {
+                            await (0, notifications_1.sendBroadcastNotification)([student.telegram_id], `⚠️ *Low Balance Warning*\n\nYou have ${newCredits} credits left for this group. Please top up soon.`);
+                        }
+                        catch (notifError) {
+                            console.error('Failed to send low balance notification:', notifError);
+                        }
+                    }
+                }
+            }
+        }
+        res.json({ success: true });
+    }
+    catch (error) {
+        console.error('Error marking attendance:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+// ==============================================================================
+// BROADCASTING
+// ==============================================================================
+// Send Broadcast
+router.post('/broadcast', async (req, res) => {
+    const { message, target_type, target_id, sender_id } = req.body;
+    if (!message || !target_type) {
+        return res.status(400).json({ error: 'Message and target_type are required' });
+    }
+    try {
+        let recipients = [];
+        // 1. Fetch Recipients
+        if (target_type === 'all_students') {
+            const { data } = await supabase_1.supabase.from('users').select('telegram_id').eq('role', 'student');
+            recipients = data || [];
+        }
+        else if (target_type === 'all_teachers') {
+            const { data } = await supabase_1.supabase.from('users').select('telegram_id').eq('role', 'teacher');
+            recipients = data || [];
+        }
+        else if (target_type === 'all_admins') {
+            const { data } = await supabase_1.supabase.from('users').select('telegram_id').eq('role', 'admin');
+            recipients = data || [];
+        }
+        else if (target_type === 'group' && target_id) {
+            const { data } = await supabase_1.supabase
+                .from('group_members')
+                .select('users(telegram_id)')
+                .eq('group_id', target_id);
+            recipients = data?.map((d) => d.users) || [];
+        }
+        else if (target_type === 'subject' && target_id) {
+            // This is trickier, need to find students in groups with this subject? 
+            // Or users with this subject assigned? Let's assume users with subject assigned for now.
+            // But subjects are array in users table... 
+            // Alternative: Find groups with this subject (if groups have subjects?)
+            // Groups don't have subject_id directly in the schema shown, but let's assume we use the user's subject list.
+            // For now, let's skip subject broadcasting or implement a simple version if possible.
+            // Let's stick to the ones we can easily query.
+            // If we want to broadcast to students studying a subject, we need to look at their groups -> teacher -> subject? 
+            // Or just broadcast to everyone for now if subject logic is complex.
+            // Let's implement 'group' and 'all' first reliably.
+            recipients = [];
+        }
+        // 2. Send Messages
+        let successCount = 0;
+        for (const recipient of recipients) {
+            if (recipient.telegram_id) {
+                try {
+                    await (0, notifications_1.sendBroadcastNotification)(recipient.telegram_id, message);
+                    successCount++;
+                }
+                catch (e) {
+                    console.error(`Failed to send to ${recipient.telegram_id}`, e);
+                }
+            }
+        }
+        // 3. Log History
+        const { error: logError } = await supabase_1.supabase
+            .from('broadcast_history')
+            .insert({
+            sender_id: sender_id || null, // Should come from auth middleware in real app
+            message,
+            target_type,
+            target_id: target_id || null,
+            recipient_count: successCount
+        });
+        if (logError)
+            throw logError;
+        res.json({ success: true, count: successCount });
+    }
+    catch (error) {
+        console.error('Error sending broadcast:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+// Get Broadcast History
+router.get('/broadcast/history', async (req, res) => {
+    try {
+        const { data, error } = await supabase_1.supabase
+            .from('broadcast_history')
+            .select(`
+                *,
+                sender:users!broadcast_history_sender_id_fkey(first_name, surname)
+            `)
+            .order('created_at', { ascending: false });
+        if (error)
+            throw error;
+        res.json(data);
+    }
+    catch (error) {
+        console.error('Error fetching broadcast history:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+// Get all teachers
+router.get('/teachers', async (req, res) => {
+    try {
+        const { data, error } = await supabase_1.supabase
+            .from('users')
+            .select(`
+                id,
+                first_name,
+                surname,
+                subjects
+            `)
+            .eq('role', 'teacher')
+            .order('first_name', { ascending: true });
+        if (error)
+            throw error;
+        // TODO: Add groups count if needed
+        const teachers = data.map(teacher => ({
+            ...teacher,
+            groups_count: 0 // Placeholder - can be calculated with join if needed
+        }));
+        res.json(teachers);
+    }
+    catch (error) {
+        console.error('Error fetching teachers:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
 });

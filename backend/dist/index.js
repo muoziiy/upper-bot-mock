@@ -16,6 +16,7 @@ const achievements_1 = __importDefault(require("./routes/achievements"));
 const leaderboard_1 = __importDefault(require("./routes/leaderboard"));
 const journey_1 = __importDefault(require("./routes/journey"));
 const onboarding_1 = __importDefault(require("./routes/onboarding"));
+const scheduler_1 = __importDefault(require("./routes/scheduler"));
 const bot_1 = __importDefault(require("./bot"));
 dotenv_1.default.config();
 const app = (0, express_1.default)();
@@ -32,6 +33,7 @@ app.use('/api/students', journey_1.default);
 app.use('/api/leaderboard', leaderboard_1.default);
 app.use('/api/teachers', teachers_1.default);
 app.use('/api/admin', admin_1.default);
+app.use('/api/cron', scheduler_1.default);
 app.get('/', (req, res) => {
     res.send('Education Center Bot API is running');
 });

@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const supabase_1 = require("../supabase");
+const paymentLogic_1 = require("../utils/paymentLogic");
 const router = (0, express_1.Router)();
 // GET /api/students/dashboard - Fetch dashboard data
 router.get('/dashboard', async (req, res) => {
@@ -19,13 +20,84 @@ router.get('/dashboard', async (req, res) => {
         if (!user) {
             return res.status(404).json({ error: 'User not found' });
         }
-        // 1. Get User's Groups
+        // 1. Get User's Groups with details
         const { data: groupMembers } = await supabase_1.supabase
             .from('group_members')
-            .select('group_id')
+            .select(`
+                group_id,
+                groups (
+                    id,
+                    name,
+                    price,
+                    payment_type,
+                    teacher_id
+                ),
+                anchor_day,
+                lessons_remaining,
+                next_due_date,
+                last_payment_date,
+                joined_at
+            `)
             .eq('student_id', user.id);
         const groupIds = groupMembers?.map(g => g.group_id) || [];
-        // 2. Fetch Scheduled Lessons (Real Data)
+        // Fetch Teachers for these groups
+        const teacherIds = groupMembers?.map((g) => {
+            const group = Array.isArray(g.groups) ? g.groups[0] : g.groups;
+            return group?.teacher_id;
+        }).filter(Boolean) || [];
+        let teachersMap = new Map();
+        if (teacherIds.length > 0) {
+            const { data: teachers } = await supabase_1.supabase
+                .from('users')
+                .select('id, first_name, surname, email, phone_number')
+                .in('id', teacherIds);
+            teachers?.forEach(t => teachersMap.set(t.id, t));
+        }
+        // Fetch Payments for these groups
+        const { data: payments } = await supabase_1.supabase
+            .from('payment_records')
+            .select('*')
+            .eq('student_id', user.id)
+            .in('group_id', groupIds)
+            .order('payment_date', { ascending: false });
+        // Construct rich groups data for Profile
+        const richGroups = groupMembers?.map((gm) => {
+            const group = Array.isArray(gm.groups) ? gm.groups[0] : gm.groups;
+            if (!group)
+                return null;
+            const teacher = teachersMap.get(group.teacher_id);
+            const groupPayments = payments?.filter(p => p.group_id === group.id) || [];
+            const groupConfig = {
+                payment_type: group.payment_type,
+                price: group.price
+            };
+            const enrollment = {
+                joined_at: gm.joined_at,
+                anchor_day: gm.anchor_day,
+                lessons_remaining: gm.lessons_remaining,
+                next_due_date: gm.next_due_date,
+                last_payment_date: gm.last_payment_date
+            };
+            const status = (0, paymentLogic_1.checkStudentStatus)(enrollment, groupConfig);
+            return {
+                id: group.id,
+                name: group.name,
+                price: group.price,
+                payment_type: group.payment_type,
+                status: status,
+                lessons_remaining: gm.lessons_remaining,
+                next_due_date: gm.next_due_date,
+                teacher: teacher ? {
+                    id: teacher.id,
+                    first_name: teacher.first_name,
+                    last_name: teacher.surname,
+                    phone: teacher.phone_number
+                } : null,
+                payments: groupPayments,
+                attendance: []
+            };
+        }).filter(Boolean) || [];
+        // 2. Fetch Scheduled Lessons
         let lessons = [];
         if (groupIds.length > 0) {
             const { data: fetchedLessons } = await supabase_1.supabase
@@ -39,7 +111,7 @@ router.get('/dashboard', async (req, res) => {
                 .order('scheduled_date', { ascending: true });
             lessons = fetchedLessons || [];
         }
-        // 3. Fetch Homework (Real Data)
+        // 3. Fetch Homework
         let homework = [];
         if (groupIds.length > 0) {
             const { data: fetchedHomework } = await supabase_1.supabase
@@ -53,7 +125,7 @@ router.get('/dashboard', async (req, res) => {
                 .order('created_at', { ascending: false });
             homework = fetchedHomework || [];
         }
-        // 4. Fetch User's Assigned Subjects (from user.subjects column)
+        // 4. Fetch User's Assigned Subjects
         let subjects = [];
         if (user.subjects && Array.isArray(user.subjects) && user.subjects.length > 0) {
             const { data: fetchedSubjects } = await supabase_1.supabase
@@ -62,7 +134,6 @@ router.get('/dashboard', async (req, res) => {
                 .in('id', user.subjects);
             subjects = fetchedSubjects || [];
         }
-        // If no subjects assigned to user, show empty list (strict filtering as requested)
         // 5. Fetch streak data
         const { data: streak } = await supabase_1.supabase
             .from('user_streaks')
@@ -91,13 +162,15 @@ router.get('/dashboard', async (req, res) => {
                 id: user.id,
                 first_name: user.first_name,
                 role: user.role,
+                student_id: user.student_id
             },
             streak: streak || { current_streak: 0, longest_streak: 0, total_active_days: 0 },
             today_activity: todayActivity || { study_minutes: 0, tests_completed: 0, questions_answered: 0 },
             total_stats: totalStats,
             lessons: lessons,
             homework: homework,
-            subjects: subjects, // Filtered by user's assigned subjects
+            subjects: subjects,
+            groups: richGroups
         });
     }
     catch (error) {

@@ -9,6 +9,7 @@ exports.sendStudentInfoNotification = sendStudentInfoNotification;
 exports.sendTeacherPayoutNotification = sendTeacherPayoutNotification;
 exports.sendTeacherGroupNotification = sendTeacherGroupNotification;
 exports.sendTeacherSubjectNotification = sendTeacherSubjectNotification;
+exports.sendBroadcastNotification = sendBroadcastNotification;
 const axios_1 = __importDefault(require("axios"));
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '';
 const TELEGRAM_API_URL = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}`;
@@ -217,4 +218,35 @@ async function sendTeacherSubjectNotification(telegramId, subjectChanges) {
         console.error(`Failed to send subject notification to teacher ${telegramId}:`, error);
         throw error;
     }
+}
+// ============================================
+// BROADCAST NOTIFICATIONS
+// ============================================
+/**
+ * Send broadcast notification to multiple users
+ * @param telegramIds - Array of Telegram IDs
+ * @param message - Message to send
+ */
+async function sendBroadcastNotification(telegramIds, message) {
+    console.log(`Starting broadcast to ${telegramIds.length} users`);
+    let successCount = 0;
+    let failCount = 0;
+    // We'll process these sequentially to be nice to the API, 
+    // though for large lists a queue system would be better.
+    for (const telegramId of telegramIds) {
+        try {
+            await axios_1.default.post(`${TELEGRAM_API_URL}/sendMessage`, {
+                chat_id: telegramId,
+                text: message,
+                parse_mode: 'Markdown'
+            });
+            successCount++;
+        }
+        catch (error) {
+            console.error(`Failed to send broadcast to ${telegramId}:`, error);
+            failCount++;
+        }
+    }
+    console.log(`Broadcast complete. Success: ${successCount}, Failed: ${failCount}`);
+    return { success: successCount, failed: failCount };
 }
