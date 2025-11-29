@@ -9,7 +9,7 @@ const AdminBotSettings: React.FC = () => {
     const navigate = useNavigate();
     const { webApp } = useTelegram();
     const [maintenanceMode, setMaintenanceMode] = useState(false);
-    const [language, setLanguage] = useState('English');
+    const [language] = useState('English');
 
     useEffect(() => {
         if (webApp) {
