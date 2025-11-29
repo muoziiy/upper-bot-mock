@@ -8,10 +8,33 @@ const supabase_1 = require("../supabase");
 const bot_1 = __importDefault(require("../bot"));
 const logger_1 = require("../logger");
 const router = express_1.default.Router();
-// Helper to notify admins
+// Helper to notify admins and track request
 const notifyAdmins = async (message, payload) => {
     try {
-        // Fetch all admins and super_admins
+        // 1. Create Registration Request Record
+        const { data: userData } = await supabase_1.supabase
+            .from('users')
+            .select('id')
+            .eq('telegram_id', payload.userId)
+            .single();
+        if (!userData) {
+            console.error('User not found for request creation');
+            return;
+        }
+        const { data: request, error: reqError } = await supabase_1.supabase
+            .from('registration_requests')
+            .insert({
+            user_id: userData.id,
+            role_requested: payload.type === 'student' ? 'student' : 'teacher',
+            status: 'pending'
+        })
+            .select()
+            .single();
+        if (reqError || !request) {
+            console.error('Failed to create registration request', reqError);
+            return;
+        }
+        // 2. Fetch Admins
         const { data: admins, error } = await supabase_1.supabase
             .from('users')
             .select('telegram_id')
@@ -20,25 +43,35 @@ const notifyAdmins = async (message, payload) => {
             console.error('Failed to fetch admins for notification', error);
             return;
         }
+        // 3. Send Messages and Track IDs
+        const sentMessages = [];
         for (const admin of admins) {
             if (admin.telegram_id) {
                 try {
-                    await bot_1.default.telegram.sendMessage(admin.telegram_id, message, {
+                    const sentMsg = await bot_1.default.telegram.sendMessage(admin.telegram_id, message, {
                         parse_mode: 'Markdown',
                         reply_markup: {
                             inline_keyboard: [
                                 [
-                                    { text: '✅ Approve', callback_data: `approve_${payload.type}_${payload.userId}` },
-                                    { text: '❌ Decline', callback_data: `decline_${payload.type}_${payload.userId}` }
+                                    { text: '✅ Approve', callback_data: `approve_${payload.type}_${request.id}` },
+                                    { text: '❌ Decline', callback_data: `decline_${payload.type}_${request.id}` }
                                 ]
                             ]
                         }
                     });
+                    sentMessages.push({ chat_id: sentMsg.chat.id, message_id: sentMsg.message_id });
                 }
                 catch (e) {
                     console.error(`Failed to send notification to admin ${admin.telegram_id}`, e);
                 }
             }
+        }
+        // 4. Update Request with Message IDs
+        if (sentMessages.length > 0) {
+            await supabase_1.supabase
+                .from('registration_requests')
+                .update({ notification_messages: sentMessages })
+                .eq('id', request.id);
         }
     }
     catch (e) {

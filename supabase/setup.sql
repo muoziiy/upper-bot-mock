@@ -208,6 +208,18 @@ CREATE TABLE IF NOT EXISTS admin_requests (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- REGISTRATION REQUESTS (For Sync & History)
+CREATE TABLE IF NOT EXISTS registration_requests (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    role_requested TEXT NOT NULL, -- 'student' or 'teacher'
+    status TEXT DEFAULT 'pending', -- 'pending', 'approved', 'declined'
+    notification_messages JSONB DEFAULT '[]', -- Array of { chat_id, message_id }
+    processed_by UUID REFERENCES users(id) ON DELETE SET NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
 -- USER ACTIVITY & STREAKS
 CREATE TABLE IF NOT EXISTS user_activity (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),

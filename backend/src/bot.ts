@@ -254,19 +254,20 @@ process.once('SIGTERM', () => bot.stop('SIGTERM'));
 
 // Handle Student/Staff Approval/Decline Actions
 // Handle Student/Staff Approval/Decline Actions
+// Handle Student/Staff Approval/Decline Actions
 bot.action(/^(approve|decline)_(student|staff)_(.+)$/, async (ctx) => {
     const action = ctx.match[1]; // 'approve' or 'decline'
     const type = ctx.match[2]; // 'student' or 'staff'
-    const userId = ctx.match[3];
+    const requestId = ctx.match[3]; // Now this is the UUID of the request
     const adminTelegramId = ctx.from?.id;
 
     if (!adminTelegramId) return;
 
     try {
-        // Verify the clicker is an Admin or Super Admin
+        // 1. Verify Admin
         const { data: adminUser } = await supabase
             .from('users')
-            .select('role')
+            .select('id, role, first_name')
             .eq('telegram_id', adminTelegramId)
             .single();
 
@@ -274,64 +275,86 @@ bot.action(/^(approve|decline)_(student|staff)_(.+)$/, async (ctx) => {
             return ctx.answerCbQuery('You are not authorized to perform this action.');
         }
 
-        // Get target user details
-        const { data: targetUser } = await supabase
-            .from('users')
-            .select('telegram_id, first_name, role')
-            .eq('telegram_id', userId) // userId in callback is telegram_id
+        // 2. Fetch Request
+        const { data: request } = await supabase
+            .from('registration_requests')
+            .select('*, users(telegram_id, first_name)')
+            .eq('id', requestId)
             .single();
 
-        if (!targetUser) {
-            return ctx.answerCbQuery('User not found.');
+        if (!request) {
+            return ctx.answerCbQuery('Request not found.');
         }
 
+        if (request.status !== 'pending') {
+            return ctx.answerCbQuery(`Request already ${request.status}.`);
+        }
+
+        // 3. Process Action
+        const newStatus = action === 'approve' ? 'approved' : 'declined';
+
+        // Update Request Status
+        await supabase
+            .from('registration_requests')
+            .update({
+                status: newStatus,
+                processed_by: adminUser.id,
+                updated_at: new Date().toISOString()
+            })
+            .eq('id', requestId);
+
+        // Update User Role if Approved
         if (action === 'approve') {
             const newRole = type === 'student' ? 'student' : 'teacher';
-
-            // Update user role
             await supabase
                 .from('users')
                 .update({ role: newRole, updated_at: new Date().toISOString() })
-                .eq('telegram_id', userId);
-
-            // Edit Admin Message
-            const originalText = ctx.callbackQuery.message && 'text' in ctx.callbackQuery.message
-                ? ctx.callbackQuery.message.text
-                : 'New Request';
-
-            // Remove the "New Student Request" header and append status
-            const cleanText = originalText.replace('🆕 **New Student Request**', '').trim();
-            await ctx.editMessageText(`✅ **Student Request Approved**\n\n${cleanText}\n\n👮‍♂️ **Approved by:** ${ctx.from.first_name}`, { parse_mode: 'Markdown' });
-
-            // Notify user
-            if (targetUser.telegram_id) {
-                const msg = type === 'student'
-                    ? '🎉 Your account has been approved! You can now access the full student dashboard.'
-                    : '🎉 Your teacher account has been approved! You can now access the teacher dashboard.';
-                await ctx.telegram.sendMessage(Number(targetUser.telegram_id), msg);
-            }
+                .eq('id', request.user_id);
         } else {
-            // Decline
-            const newRole = type === 'student' ? 'new_user' : 'new_user'; // Reset to new_user
+            // Ensure they stay as new_user/waiting if declined
+            // (Optional: maybe set to 'new_user' explicitly if they were 'waiting')
+        }
 
-            await supabase
-                .from('users')
-                .update({ role: newRole, updated_at: new Date().toISOString() })
-                .eq('telegram_id', userId);
+        // 4. Synchronize Messages (Edit ALL admin messages)
+        const messages = request.notification_messages as { chat_id: number, message_id: number }[] || [];
+        const originalText = ctx.callbackQuery.message && 'text' in ctx.callbackQuery.message
+            ? ctx.callbackQuery.message.text
+            : `New ${type} Request`;
 
-            // Edit Admin Message
-            const originalText = ctx.callbackQuery.message && 'text' in ctx.callbackQuery.message
-                ? ctx.callbackQuery.message.text
-                : 'New Request';
+        const cleanText = originalText.replace('🆕 **New Student Request**', '').replace('👨‍🏫 **New Staff Request**', '').trim();
+        const header = action === 'approve' ? `✅ **${type === 'student' ? 'Student' : 'Staff'} Request Approved**` : `❌ **${type === 'student' ? 'Student' : 'Staff'} Request Declined**`;
+        const footer = `\n\n👮‍♂️ **${action === 'approve' ? 'Approved' : 'Declined'} by:** ${adminUser.first_name}`;
+        const finalText = `${header}\n\n${cleanText}${footer}`;
 
-            const cleanText = originalText.replace('🆕 **New Student Request**', '').trim();
-            await ctx.editMessageText(`❌ **Student Request Declined**\n\n${cleanText}\n\n👮‍♂️ **Declined by:** ${ctx.from.first_name}`, { parse_mode: 'Markdown' });
-
-            // Notify user
-            if (targetUser.telegram_id) {
-                await ctx.telegram.sendMessage(Number(targetUser.telegram_id), 'Your registration request has been declined. Please contact support or try again.');
+        // Update all messages
+        for (const msg of messages) {
+            try {
+                await ctx.telegram.editMessageText(
+                    msg.chat_id,
+                    msg.message_id,
+                    undefined,
+                    finalText,
+                    { parse_mode: 'Markdown' }
+                );
+            } catch (e) {
+                console.error(`Failed to edit message for chat ${msg.chat_id}`, e);
             }
         }
+
+        // 5. Notify User
+        if (request.users?.telegram_id) {
+            let userMsg = '';
+            if (action === 'approve') {
+                userMsg = type === 'student'
+                    ? '🎉 Your account has been approved! You can now access the full student dashboard.'
+                    : '🎉 Your teacher account has been approved! You can now access the teacher dashboard.';
+            } else {
+                userMsg = 'Your registration request has been declined. Please contact support or try again.';
+            }
+            await ctx.telegram.sendMessage(Number(request.users.telegram_id), userMsg);
+        }
+
+        await ctx.answerCbQuery('Action processed successfully.');
 
     } catch (error) {
         console.error('Error handling onboarding action:', error);
