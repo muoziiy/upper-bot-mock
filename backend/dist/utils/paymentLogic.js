@@ -39,10 +39,11 @@ exports.calculateInitialDueDate = calculateInitialDueDate;
  * Master Status Checker
  * Returns 'active' or 'overdue' based on the logic.
  */
-const checkStudentStatus = (enrollment, config) => {
+const checkStudentStatus = (enrollment, config, paymentTypeOverride) => {
     const today = (0, date_fns_1.startOfDay)(new Date());
+    const paymentType = paymentTypeOverride || config.payment_type;
     // --- 1. MONTHLY LOGIC ---
-    if (config.payment_type === 'monthly_fixed' || config.payment_type === 'monthly_rolling') {
+    if (paymentType === 'monthly_fixed' || paymentType === 'monthly_rolling') {
         if (!enrollment.next_due_date)
             return 'active'; // New student, no due date yet? Assume active.
         const dueDate = (0, date_fns_1.startOfDay)(new Date(enrollment.next_due_date));
@@ -53,7 +54,7 @@ const checkStudentStatus = (enrollment, config) => {
         return 'active';
     }
     // --- 2. LESSON LOGIC ---
-    if (config.payment_type === 'lesson_based') {
+    if (paymentType === 'lesson_based') {
         if ((enrollment.lessons_remaining || 0) <= 0) {
             return 'overdue';
         }

@@ -652,7 +652,6 @@ router.put('/students/:id/payment-day', async (req, res) => {
             .eq('id', id);
 
         if (error) throw error;
-
         res.json({ success: true });
     } catch (error) {
         console.error('Error updating payment day:', error);
@@ -660,7 +659,7 @@ router.put('/students/:id/payment-day', async (req, res) => {
     }
 });
 
-// Get student attendance history
+// Get Student Attendance
 router.get('/students/:id/attendance', async (req, res) => {
     const { id } = req.params;
 
@@ -696,39 +695,10 @@ router.get('/students/:id/attendance', async (req, res) => {
 // STUDENT PAYMENT MANAGEMENT ENDPOINTS
 // ==============================================================================
 
-// Get all payments for a specific student
-router.get('/students/:id/payments', async (req, res) => {
-    const { id } = req.params;
-
-    try {
-        const { data, error } = await supabase
-            .from('payment_records')
-            .select(`
-                *,
-                subjects (name)
-            `)
-            .eq('student_id', id)
-            .order('payment_date', { ascending: false });
-
-        if (error) throw error;
-
-        // Transform to include subject name
-        const payments = data.map((payment: any) => ({
-            ...payment,
-            subject_name: payment.subjects?.name
-        }));
-
-        res.json(payments);
-    } catch (error) {
-        console.error('Error fetching student payments:', error);
-        res.status(500).json({ error: 'Internal server error' });
-    }
-});
-
-// Add new payment record (with notification)
+// Add Payment
 router.post('/students/:id/payments', async (req, res) => {
     const { id } = req.params;
-    const { subject_id, amount, payment_date, payment_method, status, month, year, notes } = req.body;
+    const { group_id, subject_id, amount, payment_date, payment_method, status, month, year, notes } = req.body;
 
     try {
         // Insert payment
@@ -736,6 +706,7 @@ router.post('/students/:id/payments', async (req, res) => {
             .from('payment_records')
             .insert({
                 student_id: id,
+                group_id,
                 subject_id,
                 amount,
                 payment_date,
@@ -750,11 +721,14 @@ router.post('/students/:id/payments', async (req, res) => {
 
         if (paymentError) throw paymentError;
 
-        // Update group_members payment_status to 'paid'
-        await supabase
-            .from('group_members')
-            .update({ payment_status: 'paid' })
-            .eq('student_id', id);
+        // Recalculate Status
+        if (group_id) {
+            await recalculateStudentGroupStatus(id, group_id);
+        }
+
+
+
+
 
         // Get student's telegram_id for notification
         const { data: student, error: studentError } = await supabase
@@ -773,7 +747,7 @@ router.post('/students/:id/payments', async (req, res) => {
                 amount: parseFloat(amount),
                 date: payment_date,
                 method: payment_method,
-                status
+                status: status as "pending" | "unpaid" | "paid"
             });
         } catch (notifError) {
             console.error('Failed to send payment notification:', notifError);
@@ -809,9 +783,15 @@ router.put('/students/:id/payments/:paymentId', async (req, res) => {
             .eq('id', paymentId)
             .eq('student_id', id)
             .select(`*, subjects(name)`)
+            .eq('id', id)
             .single();
 
         if (paymentError) throw paymentError;
+
+        // Recalculate Status
+        if (payment.group_id) {
+            await recalculateStudentGroupStatus(id, payment.group_id);
+        }
 
         // Get student's telegram_id for notification
         const { data: student, error: studentError } = await supabase
@@ -866,6 +846,11 @@ router.delete('/students/:id/payments/:paymentId', async (req, res) => {
             .eq('student_id', id);
 
         if (deleteError) throw deleteError;
+
+        // Recalculate Status
+        if (payment.group_id) {
+            await recalculateStudentGroupStatus(id, payment.group_id);
+        }
 
         // Get student's telegram_id for notification
         const { data: student, error: studentError } = await supabase
@@ -1182,6 +1167,8 @@ router.post('/attendance', async (req, res) => {
     }
 });
 
+
+
 // ==============================================================================
 // BROADCASTING
 // ==============================================================================
@@ -1234,7 +1221,7 @@ router.post('/broadcast', async (req, res) => {
             .filter(id => id); // Filter out null/undefined
 
         if (telegramIds.length > 0) {
-            const broadcastMessage = `${message}\n\n📢 *Broadcast Message*`;
+            const broadcastMessage = `${message} \n\n📢 * Broadcast Message * `;
             const result = await sendBroadcastNotification(telegramIds, broadcastMessage);
             successCount = result.success;
         }
@@ -1277,9 +1264,9 @@ router.get('/broadcast/history', async (req, res) => {
         const { data, error } = await supabase
             .from('broadcast_history')
             .select(`
-                *,
-                sender:users!broadcast_history_sender_id_fkey(first_name, surname)
-            `)
+                    *,
+                    sender: users!broadcast_history_sender_id_fkey(first_name, surname)
+                        `)
             .order('created_at', { ascending: false });
 
         if (error) throw error;
@@ -1297,10 +1284,10 @@ router.get('/teachers', async (req, res) => {
             .from('users')
             .select(`
                 id,
-                first_name,
-                surname,
-                subjects
-            `)
+                    first_name,
+                    surname,
+                    subjects
+                        `)
             .eq('role', 'teacher')
             .order('first_name', { ascending: true });
 
@@ -1369,5 +1356,174 @@ router.post('/settings/payment-type', async (req, res) => {
         res.status(500).json({ error: 'Internal server error' });
     }
 });
+
+// Delete student from group
+router.delete('/students/:id/groups', async (req, res) => {
+    const { id } = req.params;
+    const { groupId } = req.body;
+
+    try {
+        // Get group details for notification before deleting
+        const { data: group } = await supabase
+            .from('groups')
+            .select('name')
+            .eq('id', groupId)
+            .single();
+
+        const { error } = await supabase
+            .from('group_members')
+            .delete()
+            .eq('student_id', id)
+            .eq('group_id', groupId);
+
+        if (error) throw error;
+
+        // Recalculate is not needed if record is gone, but maybe we want to update logs?
+        // Actually, if we remove the student from group, we don't need to recalc status for that group member (it's gone).
+        // But we might want to notify.
+
+        // Get student's telegram_id for notification
+        const { data: student } = await supabase
+            .from('users')
+            .select('telegram_id')
+            .eq('id', id)
+            .single();
+
+        if (student && group) {
+            try {
+                await sendStudentGroupNotification(student.telegram_id, {
+                    added: [],
+                    removed: [group.name]
+                });
+            } catch (e) {
+                console.error('Failed to send group notification', e);
+            }
+        }
+
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Error removing student from group:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// ==============================================================================
+// HELPER: RECALCULATE STUDENT GROUP STATUS
+// ==============================================================================
+
+// ==============================================================================
+// HELPER: RECALCULATE STUDENT GROUP STATUS
+// ==============================================================================
+
+async function recalculateStudentGroupStatus(studentId: string, groupId: string) {
+    try {
+        // 1. Get Group Config & Member Data
+        const { data: groupMember, error: gmError } = await supabase
+            .from('group_members')
+            .select(`
+                    *,
+                    groups(price, payment_type)
+                        `)
+            .eq('group_id', groupId)
+            .eq('student_id', studentId)
+            .single();
+
+        if (gmError || !groupMember) return;
+
+        const paymentType = groupMember.payment_type || groupMember.groups.payment_type;
+
+        // 2. Fetch All Payments for this Group
+        const { data: payments } = await supabase
+            .from('payment_records')
+            .select('*')
+            .eq('student_id', studentId)
+            .eq('group_id', groupId)
+            .eq('status', 'completed'); // Only count completed payments
+
+        const validPayments = payments || [];
+
+        let updates: any = {};
+
+        // --- CALCULATION LOGIC ---
+
+        if (paymentType === 'lesson_based') {
+            // A. Lesson Based
+            // Total Paid Lessons
+            const totalPaidLessons = validPayments.reduce((sum, p) => sum + (p.lessons_attended || 0), 0);
+
+            // Total Used Lessons (Attendance)
+            const { count: totalUsedLessons } = await supabase
+                .from('attendance_records')
+                .select('*', { count: 'exact', head: true })
+                .eq('student_id', studentId)
+                .eq('group_id', groupId)
+                .in('status', ['present', 'late']);
+
+            const { count: allAttendance } = await supabase
+                .from('attendance_records')
+                .select('*', { count: 'exact', head: true })
+                .eq('student_id', studentId)
+                .eq('group_id', groupId);
+
+            const lessonsRemaining = totalPaidLessons - (allAttendance || 0);
+
+            updates.lessons_remaining = lessonsRemaining;
+            updates.payment_status = lessonsRemaining > 0 ? 'paid' : 'overdue';
+
+        } else {
+            // B. Monthly (Fixed or Rolling)
+            // Find the latest "paid until" date.
+            // Simplified: Look at the latest payment's month/year or explicit coverage.
+            // If we assume payments cover specific months, we find the latest covered month.
+
+            // Sort payments by date desc
+            validPayments.sort((a, b) => new Date(b.payment_date).getTime() - new Date(a.payment_date).getTime());
+
+            if (validPayments.length > 0) {
+                const lastPayment = validPayments[0];
+                // If we have month/year, use that.
+                if (lastPayment.month && lastPayment.year) {
+                    // Next due is the month AFTER the last paid month.
+                    // e.g. Paid for Oct 2023 -> Due Nov 1st 2023.
+                    const lastPaidDate = new Date(lastPayment.year, lastPayment.month - 1, 1); // Month is 1-indexed in DB? Usually.
+                    const nextDue = new Date(lastPaidDate);
+                    nextDue.setMonth(nextDue.getMonth() + 1);
+                    updates.next_due_date = nextDue.toISOString();
+                    updates.last_payment_date = lastPayment.payment_date;
+                } else {
+                    // Fallback: just add 1 month to payment date?
+                    const nextDue = new Date(lastPayment.payment_date);
+                    nextDue.setMonth(nextDue.getMonth() + 1);
+                    updates.next_due_date = nextDue.toISOString();
+                    updates.last_payment_date = lastPayment.payment_date;
+                }
+            } else {
+                // No payments? Revert to Joined Date logic?
+                // If never paid, due date is joined date (or next month if fixed).
+                // Let's leave it or set to joined_at.
+                // updates.next_due_date = groupMember.joined_at; 
+            }
+
+            // Check Status
+            if (updates.next_due_date) {
+                const today = new Date();
+                const dueDate = new Date(updates.next_due_date);
+                updates.payment_status = dueDate > today ? 'paid' : 'overdue';
+            }
+        }
+
+        // 3. Update Group Member
+        if (Object.keys(updates).length > 0) {
+            await supabase
+                .from('group_members')
+                .update(updates)
+                .eq('group_id', groupId)
+                .eq('student_id', studentId);
+        }
+
+    } catch (e) {
+        console.error('Error recalculating status:', e);
+    }
+};
 
 export default router;

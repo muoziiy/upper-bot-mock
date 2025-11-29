@@ -2,7 +2,6 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const supabase_1 = require("../supabase");
-const paymentLogic_1 = require("../utils/paymentLogic");
 const router = (0, express_1.Router)();
 // GET /api/students/dashboard - Fetch dashboard data
 router.get('/dashboard', async (req, res) => {
@@ -14,7 +13,18 @@ router.get('/dashboard', async (req, res) => {
         // Fetch user data
         const { data: user } = await supabase_1.supabase
             .from('users')
-            .select('*')
+            .select(`
+                id,
+                telegram_id,
+                first_name,
+                onboarding_first_name,
+                last_name,
+                username,
+                role,
+                payment_day,
+                student_id,
+                subjects
+            `)
             .eq('telegram_id', userId)
             .single();
         if (!user) {
@@ -25,6 +35,7 @@ router.get('/dashboard', async (req, res) => {
             .from('group_members')
             .select(`
                 group_id,
+                payment_status,
                 groups (
                     id,
                     name,
@@ -67,24 +78,12 @@ router.get('/dashboard', async (req, res) => {
                 return null;
             const teacher = teachersMap.get(group.teacher_id);
             const groupPayments = payments?.filter(p => p.group_id === group.id) || [];
-            const groupConfig = {
-                payment_type: group.payment_type,
-                price: group.price
-            };
-            const enrollment = {
-                joined_at: gm.joined_at,
-                anchor_day: gm.anchor_day,
-                lessons_remaining: gm.lessons_remaining,
-                next_due_date: gm.next_due_date,
-                last_payment_date: gm.last_payment_date
-            };
-            const status = (0, paymentLogic_1.checkStudentStatus)(enrollment, groupConfig);
             return {
                 id: group.id,
                 name: group.name,
                 price: group.price,
                 payment_type: group.payment_type,
-                status: status,
+                status: gm.payment_status || 'paid',
                 lessons_remaining: gm.lessons_remaining,
                 next_due_date: gm.next_due_date,
                 teacher: teacher ? {

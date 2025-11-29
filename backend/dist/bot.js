@@ -216,6 +216,9 @@ bot.action(/^(approve|decline)_admin:(.+)$/, async (ctx) => {
         ctx.answerCbQuery('An error occurred.');
         try {
             // 1. Verify Admin
+            const user = ctx.from;
+            if (!user)
+                return;
             const { data: adminUser } = await supabase_1.supabase
                 .from('users')
                 .select('role')
@@ -271,6 +274,10 @@ reason: ${record.reason === 'monthly_payment_overdue' ? 'Monthly Payment Missing
             console.error('Error in /check_unpaid:', error);
             ctx.reply('An error occurred.');
         }
-        export default bot;
     }
 });
+const approval_1 = require("./approval");
+// ... (existing code)
+// Initialize Approval Handlers
+(0, approval_1.setupApprovalHandlers)(bot);
+exports.default = bot;

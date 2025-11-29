@@ -71,6 +71,12 @@ router.get('/daily', async (req, res) => {
             // 3. Overdue (Day 1-10)
             else if ((0, date_fns_1.isBefore)(dueDate, today)) {
                 const daysOverdue = (0, date_fns_1.differenceInDays)(today, dueDate);
+                // Update status to overdue in DB
+                await supabase_1.supabase
+                    .from('group_members')
+                    .update({ payment_status: 'overdue' })
+                    .eq('group_id', group.id)
+                    .eq('student_id', user.id);
                 if (daysOverdue <= 10) {
                     await sendReminder(user.telegram_id, `⚠️ *Overdue Payment*\n\nYour payment for *${group.name}* was due on ${member.next_due_date}.\nYou are ${daysOverdue} days late. Please pay as soon as possible.`);
                     processed++;

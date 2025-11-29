@@ -7,6 +7,7 @@ const express_1 = __importDefault(require("express"));
 const supabase_1 = require("../supabase");
 const notifications_1 = require("../services/notifications");
 const paymentLogic_1 = require("../utils/paymentLogic");
+const bot_1 = __importDefault(require("../bot"));
 const router = express_1.default.Router();
 // Get all users
 router.get('/users', async (req, res) => {
@@ -62,33 +63,44 @@ router.post('/subjects', async (req, res) => {
         res.status(500).json({ error: 'Internal server error' });
     }
 });
-// Get admin requests (for Super Admin dashboard)
-router.get('/requests', async (req, res) => {
-    try {
-        const { data, error } = await supabase_1.supabase
-            .from('admin_requests')
-            .select('*, users(first_name, last_name, username, telegram_id)')
-            .order('created_at', { ascending: false });
-        if (error)
-            throw error;
-        res.json(data);
-    }
-    catch (error) {
-        console.error('Error fetching admin requests:', error);
-        res.status(500).json({ error: 'Internal server error' });
-    }
-});
 // Get pending student/staff requests (for Admin panel)
 router.get('/pending-requests', async (req, res) => {
     try {
         const { data, error } = await supabase_1.supabase
-            .from('users')
-            .select('id, first_name, surname, age, sex, role, created_at')
-            .in('role', ['guest', 'waiting_staff'])
+            .from('registration_requests')
+            .select(`
+                id,
+                status,
+                role_requested,
+                created_at,
+                users (
+                    id,
+                    first_name,
+                    onboarding_first_name,
+                    surname,
+                    age,
+                    sex,
+                    username
+                )
+            `)
+            .eq('status', 'pending')
             .order('created_at', { ascending: false });
         if (error)
             throw error;
-        res.json(data);
+        // Transform data to match frontend expectation
+        const formattedData = data.map((req) => ({
+            id: req.id, // Request ID
+            user_id: req.users.id,
+            first_name: req.users.first_name,
+            onboarding_first_name: req.users.onboarding_first_name,
+            surname: req.users.surname,
+            age: req.users.age,
+            sex: req.users.sex,
+            role: req.role_requested === 'teacher' ? 'waiting_staff' : 'guest', // Map back to role for UI
+            created_at: req.created_at,
+            users: req.users
+        }));
+        res.json(formattedData);
     }
     catch (error) {
         console.error('Error fetching pending requests:', error);
@@ -102,6 +114,24 @@ router.post('/approve-request', async (req, res) => {
         return res.status(400).json({ error: 'Missing userId or type' });
     }
     try {
+        // 1. Get the pending request
+        const { data: request, error: reqError } = await supabase_1.supabase
+            .from('registration_requests')
+            .select('id, status')
+            .eq('user_id', userId)
+            .eq('status', 'pending')
+            .single();
+        if (reqError || !request) {
+            return res.status(400).json({ error: 'Request not found or already processed' });
+        }
+        // 2. Update request status
+        const { error: updateReqError } = await supabase_1.supabase
+            .from('registration_requests')
+            .update({ status: 'approved', updated_at: new Date().toISOString() })
+            .eq('id', request.id);
+        if (updateReqError)
+            throw updateReqError;
+        // 3. Update User Role
         const newRole = type === 'student' ? 'student' : 'teacher';
         const { error } = await supabase_1.supabase
             .from('users')
@@ -109,6 +139,22 @@ router.post('/approve-request', async (req, res) => {
             .eq('id', userId);
         if (error)
             throw error;
+        // 4. Mass Update (Sync Magic)
+        const { data: logs } = await supabase_1.supabase
+            .from('admin_notification_logs')
+            .select('admin_chat_id, message_id')
+            .eq('request_id', request.id);
+        if (logs && logs.length > 0) {
+            for (const log of logs) {
+                try {
+                    await bot_1.default.telegram.editMessageText(log.admin_chat_id, Number(log.message_id), undefined, `✅ Request approved.`, { parse_mode: 'Markdown' } // Removes buttons by not including reply_markup
+                    );
+                }
+                catch (e) {
+                    console.error(`Failed to update message for admin ${log.admin_chat_id}`, e);
+                }
+            }
+        }
         res.json({ success: true, message: 'Request approved' });
     }
     catch (error) {
@@ -123,13 +169,45 @@ router.post('/decline-request', async (req, res) => {
         return res.status(400).json({ error: 'Missing userId' });
     }
     try {
-        // Set role back to new_user
+        // 1. Get the pending request
+        const { data: request, error: reqError } = await supabase_1.supabase
+            .from('registration_requests')
+            .select('id, status')
+            .eq('user_id', userId)
+            .eq('status', 'pending')
+            .single();
+        if (reqError || !request) {
+            return res.status(400).json({ error: 'Request not found or already processed' });
+        }
+        // 2. Update request status
+        const { error: updateReqError } = await supabase_1.supabase
+            .from('registration_requests')
+            .update({ status: 'declined', updated_at: new Date().toISOString() })
+            .eq('id', request.id);
+        if (updateReqError)
+            throw updateReqError;
+        // 3. Update User Role (Revert to new_user)
         const { error } = await supabase_1.supabase
             .from('users')
             .update({ role: 'new_user', updated_at: new Date().toISOString() })
             .eq('id', userId);
         if (error)
             throw error;
+        // 4. Mass Update (Sync Magic)
+        const { data: logs } = await supabase_1.supabase
+            .from('admin_notification_logs')
+            .select('admin_chat_id, message_id')
+            .eq('request_id', request.id);
+        if (logs && logs.length > 0) {
+            for (const log of logs) {
+                try {
+                    await bot_1.default.telegram.editMessageText(log.admin_chat_id, Number(log.message_id), undefined, `❌ Request declined.`, { parse_mode: 'Markdown' });
+                }
+                catch (e) {
+                    console.error(`Failed to update message for admin ${log.admin_chat_id}`, e);
+                }
+            }
+        }
         res.json({ success: true, message: 'Request declined' });
     }
     catch (error) {
@@ -323,6 +401,7 @@ router.get('/students', async (req, res) => {
                 student_id,
                 telegram_id,
                 first_name,
+                onboarding_first_name,
                 surname,
                 age,
                 sex,
@@ -333,7 +412,9 @@ router.get('/students', async (req, res) => {
                     anchor_day,
                     lessons_remaining,
                     next_due_date,
+                    next_due_date,
                     last_payment_date,
+                    payment_type,
                     groups (
                         id,
                         name,
@@ -373,7 +454,7 @@ router.get('/students', async (req, res) => {
                 }, {
                     payment_type: group.payment_type,
                     price: group.price
-                });
+                }, gm.payment_type); // Pass the override from group_members
                 if (status === 'overdue')
                     hasOverdue = true;
                 if (status === 'active')
@@ -382,7 +463,7 @@ router.get('/students', async (req, res) => {
                     id: group.id,
                     name: group.name,
                     price: group.price,
-                    payment_type: group.payment_type,
+                    payment_type: gm.payment_type || group.payment_type, // Use member specific or group default
                     teacher_name: teacher ? `${teacher.first_name} ${teacher.surname}` : null,
                     joined_at: gm.joined_at,
                     lessons_remaining: gm.lessons_remaining,
@@ -399,6 +480,7 @@ router.get('/students', async (req, res) => {
                 student_id: student.student_id,
                 telegram_id: student.telegram_id,
                 first_name: student.first_name,
+                onboarding_first_name: student.onboarding_first_name,
                 surname: student.surname,
                 age: student.age,
                 sex: student.sex,
@@ -427,11 +509,14 @@ router.get('/students/:id', async (req, res) => {
                 student_id,
                 telegram_id,
                 first_name,
+                onboarding_first_name,
                 surname,
                 age,
                 sex,
                 payment_day,
-                created_at
+                created_at,
+                phone_number,
+                role
             `)
             .eq('id', id)
             .single();
@@ -442,6 +527,7 @@ router.get('/students/:id', async (req, res) => {
             .from('group_members')
             .select(`
                 joined_at,
+                payment_status,
                 groups (
                     id,
                     name,
@@ -455,27 +541,13 @@ router.get('/students/:id', async (req, res) => {
             .eq('student_id', id);
         if (groupsError)
             throw groupsError;
-        // 3. Fetch overdue status
-        const { data: overdueData } = await supabase_1.supabase
-            .rpc('get_overdue_students', { target_date: new Date().toISOString() });
-        const overdueInfo = overdueData?.find((d) => d.student_id === id);
-        // 4. Check if paid this month
-        const currentMonth = new Date().getMonth() + 1;
-        const currentYear = new Date().getFullYear();
-        const { data: paidData } = await supabase_1.supabase
-            .from('payment_records')
-            .select('id')
-            .eq('student_id', id)
-            .eq('status', 'completed')
-            .eq('month', currentMonth)
-            .eq('year', currentYear)
-            .limit(1);
-        const isPaid = paidData && paidData.length > 0;
-        const isOverdue = !!overdueInfo;
+        // Calculate status from group_members
         let status = 'unpaid';
-        if (isOverdue)
+        const hasOverdue = groupsData?.some((g) => g.payment_status === 'overdue');
+        const hasPaid = groupsData?.some((g) => g.payment_status === 'paid');
+        if (hasOverdue)
             status = 'overdue';
-        else if (isPaid)
+        else if (hasPaid)
             status = 'paid';
         // Format groups
         const groups = groupsData.map((gm) => ({
@@ -483,13 +555,14 @@ router.get('/students/:id', async (req, res) => {
             name: gm.groups.name,
             price: gm.groups.price,
             teacher_name: gm.groups.teacher ? `${gm.groups.teacher.first_name} ${gm.groups.teacher.surname}` : null,
-            joined_at: gm.joined_at
+            joined_at: gm.joined_at,
+            payment_status: gm.payment_status
         }));
         res.json({
             ...student,
             groups,
             payment_status: status,
-            amount_due: overdueInfo?.total_amount_due || 0
+            amount_due: 0 // We can calculate this if needed, but for now 0
         });
     }
     catch (error) {
@@ -518,45 +591,49 @@ router.put('/students/:id/payment-day', async (req, res) => {
         res.status(500).json({ error: 'Internal server error' });
     }
 });
-// ==============================================================================
-// STUDENT PAYMENT MANAGEMENT ENDPOINTS
-// ==============================================================================
-// Get all payments for a specific student
-router.get('/students/:id/payments', async (req, res) => {
+// Get Student Attendance
+router.get('/students/:id/attendance', async (req, res) => {
     const { id } = req.params;
     try {
         const { data, error } = await supabase_1.supabase
-            .from('payment_records')
+            .from('attendance')
             .select(`
-                *,
-                subjects (name)
+                id,
+                date,
+                status,
+                groups (name)
             `)
             .eq('student_id', id)
-            .order('payment_date', { ascending: false });
+            .order('date', { ascending: false });
         if (error)
             throw error;
-        // Transform to include subject name
-        const payments = data.map((payment) => ({
-            ...payment,
-            subject_name: payment.subjects?.name
+        const attendance = data.map((record) => ({
+            id: record.id,
+            date: record.date,
+            status: record.status,
+            group_name: record.groups?.name
         }));
-        res.json(payments);
+        res.json(attendance);
     }
     catch (error) {
-        console.error('Error fetching student payments:', error);
+        console.error('Error fetching student attendance:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
 });
-// Add new payment record (with notification)
+// ==============================================================================
+// STUDENT PAYMENT MANAGEMENT ENDPOINTS
+// ==============================================================================
+// Add Payment
 router.post('/students/:id/payments', async (req, res) => {
     const { id } = req.params;
-    const { subject_id, amount, payment_date, payment_method, status, month, year, notes } = req.body;
+    const { group_id, subject_id, amount, payment_date, payment_method, status, month, year, notes } = req.body;
     try {
         // Insert payment
         const { data: payment, error: paymentError } = await supabase_1.supabase
             .from('payment_records')
             .insert({
             student_id: id,
+            group_id,
             subject_id,
             amount,
             payment_date,
@@ -570,6 +647,10 @@ router.post('/students/:id/payments', async (req, res) => {
             .single();
         if (paymentError)
             throw paymentError;
+        // Recalculate Status
+        if (group_id) {
+            await recalculateStudentGroupStatus(id, group_id);
+        }
         // Get student's telegram_id for notification
         const { data: student, error: studentError } = await supabase_1.supabase
             .from('users')
@@ -586,7 +667,7 @@ router.post('/students/:id/payments', async (req, res) => {
                 amount: parseFloat(amount),
                 date: payment_date,
                 method: payment_method,
-                status
+                status: status
             });
         }
         catch (notifError) {
@@ -621,9 +702,14 @@ router.put('/students/:id/payments/:paymentId', async (req, res) => {
             .eq('id', paymentId)
             .eq('student_id', id)
             .select(`*, subjects(name)`)
+            .eq('id', id)
             .single();
         if (paymentError)
             throw paymentError;
+        // Recalculate Status
+        if (payment.group_id) {
+            await recalculateStudentGroupStatus(id, payment.group_id);
+        }
         // Get student's telegram_id for notification
         const { data: student, error: studentError } = await supabase_1.supabase
             .from('users')
@@ -674,6 +760,10 @@ router.delete('/students/:id/payments/:paymentId', async (req, res) => {
             .eq('student_id', id);
         if (deleteError)
             throw deleteError;
+        // Recalculate Status
+        if (payment.group_id) {
+            await recalculateStudentGroupStatus(id, payment.group_id);
+        }
         // Get student's telegram_id for notification
         const { data: student, error: studentError } = await supabase_1.supabase
             .from('users')
@@ -843,8 +933,21 @@ router.put('/students/:id/groups', async (req, res) => {
                     group_id: groupId,
                     joined_at: req.body.joinedAt || new Date().toISOString(),
                     anchor_day: anchor_day || new Date().getDate(),
-                    lessons_remaining: lessons_remaining || 0
+                    lessons_remaining: lessons_remaining || 0,
+                    payment_type: 'monthly_fixed' // Default fallback
                 });
+                // Fetch default payment type from settings to override
+                const { data: settings } = await supabase_1.supabase
+                    .from('education_center_settings')
+                    .select('default_payment_type')
+                    .single();
+                if (settings?.default_payment_type) {
+                    await supabase_1.supabase
+                        .from('group_members')
+                        .update({ payment_type: settings.default_payment_type })
+                        .eq('student_id', id)
+                        .eq('group_id', groupId);
+                }
                 if (error)
                     throw error;
             }
@@ -1004,7 +1107,7 @@ router.post('/broadcast', async (req, res) => {
             .map(r => r.telegram_id)
             .filter(id => id); // Filter out null/undefined
         if (telegramIds.length > 0) {
-            const broadcastMessage = `${message}\n\n📢 *Broadcast Message*`;
+            const broadcastMessage = `${message} \n\n📢 * Broadcast Message * `;
             const result = await (0, notifications_1.sendBroadcastNotification)(telegramIds, broadcastMessage);
             successCount = result.success;
         }
@@ -1044,9 +1147,9 @@ router.get('/broadcast/history', async (req, res) => {
         const { data, error } = await supabase_1.supabase
             .from('broadcast_history')
             .select(`
-                *,
-                sender:users!broadcast_history_sender_id_fkey(first_name, surname)
-            `)
+                    *,
+                    sender: users!broadcast_history_sender_id_fkey(first_name, surname)
+                        `)
             .order('created_at', { ascending: false });
         if (error)
             throw error;
@@ -1064,10 +1167,10 @@ router.get('/teachers', async (req, res) => {
             .from('users')
             .select(`
                 id,
-                first_name,
-                surname,
-                subjects
-            `)
+                    first_name,
+                    surname,
+                    subjects
+                        `)
             .eq('role', 'teacher')
             .order('first_name', { ascending: true });
         if (error)
@@ -1084,4 +1187,200 @@ router.get('/teachers', async (req, res) => {
         res.status(500).json({ error: 'Internal server error' });
     }
 });
+// Get Center Settings
+router.get('/settings', async (req, res) => {
+    try {
+        const { data, error } = await supabase_1.supabase
+            .from('education_center_settings')
+            .select('*')
+            .single();
+        if (error)
+            throw error;
+        res.json(data);
+    }
+    catch (error) {
+        // If not found, return defaults
+        res.json({ default_payment_type: 'monthly_fixed' });
+    }
+});
+// Bulk update payment settings
+router.post('/settings/payment-type', async (req, res) => {
+    const { payment_type } = req.body;
+    if (!['monthly_fixed', 'monthly_rolling', 'lesson_based'].includes(payment_type)) {
+        return res.status(400).json({ error: 'Invalid payment type' });
+    }
+    try {
+        // 1. Update Settings Table
+        const { error: settingsError } = await supabase_1.supabase
+            .from('education_center_settings')
+            .update({ default_payment_type: payment_type, updated_at: new Date().toISOString() })
+            .neq('id', '00000000-0000-0000-0000-000000000000'); // Dummy condition to update all (should be only one)
+        // Better: use a known ID or just update all since it's a singleton
+        // Since we don't know the ID, and we have a unique index, we can upsert or just update all
+        // Let's try to update all rows (there should be only one)
+        await supabase_1.supabase.from('education_center_settings').update({ default_payment_type: payment_type }).gt('updated_at', '2000-01-01');
+        // 2. Update all group_members to use this payment type
+        const { error } = await supabase_1.supabase
+            .from('group_members')
+            .update({ payment_type: payment_type })
+            .neq('payment_type', payment_type); // Only update if different
+        if (error)
+            throw error;
+        res.json({ success: true, message: 'Payment settings updated for all students' });
+    }
+    catch (error) {
+        console.error('Error updating payment settings:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+// Delete student from group
+router.delete('/students/:id/groups', async (req, res) => {
+    const { id } = req.params;
+    const { groupId } = req.body;
+    try {
+        // Get group details for notification before deleting
+        const { data: group } = await supabase_1.supabase
+            .from('groups')
+            .select('name')
+            .eq('id', groupId)
+            .single();
+        const { error } = await supabase_1.supabase
+            .from('group_members')
+            .delete()
+            .eq('student_id', id)
+            .eq('group_id', groupId);
+        if (error)
+            throw error;
+        // Recalculate is not needed if record is gone, but maybe we want to update logs?
+        // Actually, if we remove the student from group, we don't need to recalc status for that group member (it's gone).
+        // But we might want to notify.
+        // Get student's telegram_id for notification
+        const { data: student } = await supabase_1.supabase
+            .from('users')
+            .select('telegram_id')
+            .eq('id', id)
+            .single();
+        if (student && group) {
+            try {
+                await (0, notifications_1.sendStudentGroupNotification)(student.telegram_id, {
+                    added: [],
+                    removed: [group.name]
+                });
+            }
+            catch (e) {
+                console.error('Failed to send group notification', e);
+            }
+        }
+        res.json({ success: true });
+    }
+    catch (error) {
+        console.error('Error removing student from group:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+// ==============================================================================
+// HELPER: RECALCULATE STUDENT GROUP STATUS
+// ==============================================================================
+// ==============================================================================
+// HELPER: RECALCULATE STUDENT GROUP STATUS
+// ==============================================================================
+async function recalculateStudentGroupStatus(studentId, groupId) {
+    try {
+        // 1. Get Group Config & Member Data
+        const { data: groupMember, error: gmError } = await supabase_1.supabase
+            .from('group_members')
+            .select(`
+                    *,
+                    groups(price, payment_type)
+                        `)
+            .eq('group_id', groupId)
+            .eq('student_id', studentId)
+            .single();
+        if (gmError || !groupMember)
+            return;
+        const paymentType = groupMember.payment_type || groupMember.groups.payment_type;
+        // 2. Fetch All Payments for this Group
+        const { data: payments } = await supabase_1.supabase
+            .from('payment_records')
+            .select('*')
+            .eq('student_id', studentId)
+            .eq('group_id', groupId)
+            .eq('status', 'completed'); // Only count completed payments
+        const validPayments = payments || [];
+        let updates = {};
+        // --- CALCULATION LOGIC ---
+        if (paymentType === 'lesson_based') {
+            // A. Lesson Based
+            // Total Paid Lessons
+            const totalPaidLessons = validPayments.reduce((sum, p) => sum + (p.lessons_attended || 0), 0);
+            // Total Used Lessons (Attendance)
+            const { count: totalUsedLessons } = await supabase_1.supabase
+                .from('attendance_records')
+                .select('*', { count: 'exact', head: true })
+                .eq('student_id', studentId)
+                .eq('group_id', groupId)
+                .in('status', ['present', 'late']);
+            const { count: allAttendance } = await supabase_1.supabase
+                .from('attendance_records')
+                .select('*', { count: 'exact', head: true })
+                .eq('student_id', studentId)
+                .eq('group_id', groupId);
+            const lessonsRemaining = totalPaidLessons - (allAttendance || 0);
+            updates.lessons_remaining = lessonsRemaining;
+            updates.payment_status = lessonsRemaining > 0 ? 'paid' : 'overdue';
+        }
+        else {
+            // B. Monthly (Fixed or Rolling)
+            // Find the latest "paid until" date.
+            // Simplified: Look at the latest payment's month/year or explicit coverage.
+            // If we assume payments cover specific months, we find the latest covered month.
+            // Sort payments by date desc
+            validPayments.sort((a, b) => new Date(b.payment_date).getTime() - new Date(a.payment_date).getTime());
+            if (validPayments.length > 0) {
+                const lastPayment = validPayments[0];
+                // If we have month/year, use that.
+                if (lastPayment.month && lastPayment.year) {
+                    // Next due is the month AFTER the last paid month.
+                    // e.g. Paid for Oct 2023 -> Due Nov 1st 2023.
+                    const lastPaidDate = new Date(lastPayment.year, lastPayment.month - 1, 1); // Month is 1-indexed in DB? Usually.
+                    const nextDue = new Date(lastPaidDate);
+                    nextDue.setMonth(nextDue.getMonth() + 1);
+                    updates.next_due_date = nextDue.toISOString();
+                    updates.last_payment_date = lastPayment.payment_date;
+                }
+                else {
+                    // Fallback: just add 1 month to payment date?
+                    const nextDue = new Date(lastPayment.payment_date);
+                    nextDue.setMonth(nextDue.getMonth() + 1);
+                    updates.next_due_date = nextDue.toISOString();
+                    updates.last_payment_date = lastPayment.payment_date;
+                }
+            }
+            else {
+                // No payments? Revert to Joined Date logic?
+                // If never paid, due date is joined date (or next month if fixed).
+                // Let's leave it or set to joined_at.
+                // updates.next_due_date = groupMember.joined_at; 
+            }
+            // Check Status
+            if (updates.next_due_date) {
+                const today = new Date();
+                const dueDate = new Date(updates.next_due_date);
+                updates.payment_status = dueDate > today ? 'paid' : 'overdue';
+            }
+        }
+        // 3. Update Group Member
+        if (Object.keys(updates).length > 0) {
+            await supabase_1.supabase
+                .from('group_members')
+                .update(updates)
+                .eq('group_id', groupId)
+                .eq('student_id', studentId);
+        }
+    }
+    catch (e) {
+        console.error('Error recalculating status:', e);
+    }
+}
+;
 exports.default = router;
