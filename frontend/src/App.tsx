@@ -15,15 +15,10 @@ const AdminGroups = React.lazy(() => import('./pages/admin/AdminGroups'));
 const AdminTeachers = React.lazy(() => import('./pages/admin/AdminTeachers'));
 const AdminActions = React.lazy(() => import('./pages/admin/AdminActions'));
 const AdminSubjects = React.lazy(() => import('./pages/admin/AdminSubjects'));
-<<<<<<< Updated upstream
 const AdminStudents = React.lazy(() => import('./pages/admin/AdminStudents'));
-const AdminStudentDetails = React.lazy(() => import('./pages/admin/AdminStudentDetails')); // New Page
+const AdminStudentDetails = React.lazy(() => import('./pages/admin/AdminStudentDetails'));
 const AdminProfile = React.lazy(() => import('./pages/admin/AdminProfile'));
-=======
-const AdminStudents = React.lazy(() => import('./pages/admin/AdminStudents')); // New
-const AdminProfile = React.lazy(() => import('./pages/admin/AdminProfile')); // New
-const AdminBroadcast = React.lazy(() => import('./pages/admin/AdminBroadcast')); // New
->>>>>>> Stashed changes
+const AdminBroadcast = React.lazy(() => import('./pages/admin/AdminBroadcast'));
 const Onboarding = React.lazy(() => import('./pages/Onboarding'));
 const GuestDashboard = React.lazy(() => import('./pages/GuestDashboard'));
 const WaitingPage = React.lazy(() => import('./pages/WaitingPage'));
