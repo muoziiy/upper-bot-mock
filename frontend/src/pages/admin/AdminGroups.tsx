@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Section } from '../../components/ui/Section';
 import { ListItem } from '../../components/ui/ListItem';
 import { Search, Plus } from 'lucide-react';
@@ -29,19 +30,20 @@ const AdminGroups: React.FC = () => {
     const [selectedGroup, setSelectedGroup] = useState<Group | null>(null);
 
     // Handle Native Back Button
+    const navigate = useNavigate();
+
+    // Handle Native Back Button
     useEffect(() => {
         if (webApp) {
             webApp.BackButton.show();
-            const handleBack = () => {
-                window.history.back();
-            };
+            const handleBack = () => navigate(-1);
             webApp.BackButton.onClick(handleBack);
             return () => {
                 webApp.BackButton.offClick(handleBack);
                 webApp.BackButton.hide();
             };
         }
-    }, [webApp]);
+    }, [webApp, navigate]);
 
     const handleCreate = () => {
         setSelectedGroup(null);

@@ -1092,7 +1092,8 @@ router.post('/broadcast', async (req, res) => {
             .filter(id => id); // Filter out null/undefined
 
         if (telegramIds.length > 0) {
-            const result = await sendBroadcastNotification(telegramIds, message);
+            const broadcastMessage = `${message}\n\n📢 *Broadcast Message*`;
+            const result = await sendBroadcastNotification(telegramIds, broadcastMessage);
             successCount = result.success;
         }
 

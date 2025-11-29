@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useTelegram } from '../../context/TelegramContext';
 import { Section } from '../../components/ui/Section';
 import { Send, Clock, Users, BookOpen, User } from 'lucide-react';
@@ -26,13 +27,17 @@ const AdminBroadcast: React.FC = () => {
     const [history, setHistory] = useState<BroadcastHistory[]>([]);
     const [loading, setLoading] = useState(false);
 
+    const navigate = useNavigate();
+
     useEffect(() => {
         webApp.BackButton.show();
-        webApp.BackButton.onClick(() => window.history.back());
+        const handleBack = () => navigate(-1);
+        webApp.BackButton.onClick(handleBack);
         return () => {
-            webApp.BackButton.offClick(() => window.history.back());
+            webApp.BackButton.offClick(handleBack);
+            webApp.BackButton.hide();
         };
-    }, [webApp]);
+    }, [webApp, navigate]);
 
     useEffect(() => {
         fetchGroups();

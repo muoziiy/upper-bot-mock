@@ -82,7 +82,6 @@ const AdminStudentDetails: React.FC = () => {
         setShowPaymentModal(false);
         setShowGroupModal(false);
         setShowAttendanceModal(false);
-        navigate('/admin/students');
     };
 
     return (
