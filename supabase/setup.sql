@@ -671,7 +671,7 @@ INSERT INTO education_center_settings (default_payment_type)
 VALUES ('monthly_fixed')
 ON CONFLICT DO NOTHING;
 
-ON CONFLICT DO NOTHING;
+
 
 -- ============================================
 -- 10. SCHEDULED BROADCASTS

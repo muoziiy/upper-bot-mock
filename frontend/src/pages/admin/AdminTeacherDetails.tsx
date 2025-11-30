@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useTelegram } from '../../context/TelegramContext';
 import { Section } from '../../components/ui/Section';
 import { ListItem } from '../../components/ui/ListItem';
-import { User, Phone, BookOpen, DollarSign, Calendar } from 'lucide-react';
+import { User, Phone, BookOpen } from 'lucide-react';
 
 interface TeacherDetails {
     id: string;
