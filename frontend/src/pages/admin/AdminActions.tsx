@@ -11,18 +11,7 @@ const AdminActions: React.FC = () => {
             <h1 className="text-2xl font-bold mb-6 px-4 text-tg-text">Quick Actions</h1>
 
             <Section title="User Management">
-                <ListItem
-                    title="Add New Student"
-                    subtitle="Register a new student manually"
-                    icon="👤"
-                    showChevron
-                />
-                <ListItem
-                    title="Add New Teacher"
-                    subtitle="Register a new teacher manually"
-                    icon="👨‍🏫"
-                    showChevron
-                />
+
                 <ListItem
                     title="Manage Groups"
                     subtitle="View, edit, or create groups"
