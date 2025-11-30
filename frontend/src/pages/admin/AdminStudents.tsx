@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, Filter } from 'lucide-react';
 import { cn } from '../../lib/utils';
-import { Section } from '../../components/ui/Section';
-import { ListItem } from '../../components/ui/ListItem';
+import { AdminSection } from './components/AdminSection';
+import { AdminListItem } from './components/AdminListItem';
 import AdminPaymentModal from './components/AdminPaymentModal';
 import AdminFilterModal from './components/AdminFilterModal';
 import AdminGroupManagementModal from './components/AdminGroupManagementModal';
@@ -112,25 +112,25 @@ const AdminStudents: React.FC = () => {
     };
 
     return (
-        <div className="min-h-screen bg-tg-secondary pb-20">
+        <div className="min-h-screen bg-[#F2F2F7] dark:bg-[#000000] pb-20">
             {/* Search Header */}
-            <div className="bg-tg-secondary sticky top-0 z-20 px-4 py-2 backdrop-blur-md bg-opacity-90">
+            <div className="bg-[#F2F2F7] dark:bg-[#000000] sticky top-0 z-20 px-4 py-2 backdrop-blur-md bg-opacity-90">
                 <div className="relative flex gap-2">
                     <div className="relative flex-1">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-tg-hint" size={18} />
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8E8E93]" size={18} />
                         <input
                             type="text"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             placeholder="Search"
-                            className="w-full bg-gray-200 dark:bg-black/20 text-black dark:text-white pl-9 pr-4 py-2 rounded-xl border-none outline-none focus:ring-2 focus:ring-tg-button/50 transition-all placeholder:text-tg-hint"
+                            className="w-full bg-[#E3E3E8] dark:bg-[#1C1C1E] text-black dark:text-white pl-9 pr-4 py-2 rounded-[10px] border-none outline-none focus:ring-2 focus:ring-blue-500/50 transition-all placeholder:text-[#8E8E93]"
                         />
                     </div>
                     <button
                         onClick={() => setShowFilterModal(true)}
                         className={cn(
-                            "p-2 rounded-xl transition-colors",
-                            filters.status !== 'all' ? "bg-tg-button text-white" : "bg-gray-200 dark:bg-black/20 text-tg-hint"
+                            "p-2 rounded-[10px] transition-colors",
+                            filters.status !== 'all' ? "bg-blue-500 text-white" : "bg-[#E3E3E8] dark:bg-[#1C1C1E] text-[#8E8E93]"
                         )}
                     >
                         <Filter size={20} />
@@ -143,20 +143,22 @@ const AdminStudents: React.FC = () => {
                 {error ? (
                     <div className="text-center py-10 text-red-500">
                         {error}
-                        <button onClick={fetchStudents} className="block mx-auto mt-2 text-tg-button text-sm">Retry</button>
+                        <button onClick={fetchStudents} className="block mx-auto mt-2 text-blue-500 text-sm">Retry</button>
                     </div>
                 ) : loading ? (
                     <div className="flex justify-center py-10">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-tg-button"></div>
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
                     </div>
                 ) : students.length > 0 ? (
-                    <Section>
+                    <AdminSection>
                         {students.map((student, idx) => (
-                            <ListItem
+                            <AdminListItem
                                 key={student.id}
                                 icon={student.sex === 'female' ? '👩' : '👨'}
+                                iconColor="bg-blue-500"
                                 title={`${student.onboarding_first_name || student.first_name} ${student.surname}`}
-                                subtitle={`ID: ${student.student_id}`}
+                                // subtitle removed
+                                value={<span className="text-sm text-[#8E8E93]">#{student.student_id}</span>}
                                 rightElement={
                                     student.payment_status === 'overdue' ? (
                                         <span className="text-xs font-bold text-red-500 bg-red-100 dark:bg-red-900/30 px-2 py-0.5 rounded-full">
@@ -169,9 +171,9 @@ const AdminStudents: React.FC = () => {
                                 showChevron
                             />
                         ))}
-                    </Section>
+                    </AdminSection>
                 ) : (
-                    <div className="text-center py-12 text-tg-hint">
+                    <div className="text-center py-12 text-[#8E8E93]">
                         No students found
                     </div>
                 )}

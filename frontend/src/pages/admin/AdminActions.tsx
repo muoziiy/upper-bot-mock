@@ -1,90 +1,90 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Section } from '../../components/ui/Section';
-import { ListItem } from '../../components/ui/ListItem';
+import { AdminSection } from './components/AdminSection';
+import { AdminListItem } from './components/AdminListItem';
 
 const AdminActions: React.FC = () => {
     const navigate = useNavigate();
 
     return (
-        <div className="min-h-screen pt-4 pb-20">
-            <h1 className="text-2xl font-bold mb-6 px-4 text-tg-text">Quick Actions</h1>
+        <div className="min-h-screen pt-4 pb-20 bg-[#F2F2F7] dark:bg-[#000000]">
+            <h1 className="text-3xl font-bold mb-6 px-4 text-black dark:text-white">Quick Actions</h1>
 
-            <Section title="User Management">
+            <AdminSection title="User Management">
 
-                <ListItem
+                <AdminListItem
                     title="Manage Groups"
-                    subtitle="View, edit, or create groups"
                     icon="👥"
+                    iconColor="bg-blue-500"
                     onClick={() => navigate('/admin/groups')}
                     showChevron
                 />
-                <ListItem
+                <AdminListItem
                     title="Manage Subjects"
-                    subtitle="Add or edit subjects"
                     icon="📚"
+                    iconColor="bg-pink-500"
                     onClick={() => navigate('/admin/subjects')}
                     showChevron
                 />
-                <ListItem
+                <AdminListItem
                     title="Manage Admins"
-                    subtitle="List and manage administrators"
                     icon="🛡️"
+                    iconColor="bg-gray-500"
                     onClick={() => navigate('/admin/admins')}
                     showChevron
                 />
-                <ListItem
+                <AdminListItem
                     title="Manage Requests"
-                    subtitle="Approve new students and staff"
                     icon="📝"
+                    iconColor="bg-yellow-500"
                     onClick={() => navigate('/admin/requests')}
                     showChevron
                     isLast
                 />
-            </Section>
+            </AdminSection>
 
-            <Section title="Communication">
-                <ListItem
+            <AdminSection title="Communication">
+                <AdminListItem
                     title="Send Broadcast"
-                    subtitle="Message all users or specific groups"
                     icon="📢"
+                    iconColor="bg-green-500"
                     onClick={() => navigate('/admin/broadcast')}
                     showChevron
                 />
-                <ListItem
+                <AdminListItem
                     title="Notifications"
-                    subtitle="Manage automated notifications"
                     icon="🔔"
+                    iconColor="bg-red-500"
                     onClick={() => navigate('/admin/notifications')}
                     showChevron
                     isLast
                 />
-            </Section>
+            </AdminSection>
 
-            <Section title="System">
-                <ListItem
+            <AdminSection title="System">
+                <AdminListItem
                     title="Education Center Settings"
-                    subtitle="Configure payment system"
                     icon="🏫"
+                    iconColor="bg-purple-500"
                     onClick={() => navigate('/admin/center-settings')}
                     showChevron
                 />
-                <ListItem
+                <AdminListItem
                     title="Bot Settings"
-                    subtitle="Configure general bot settings"
                     icon="⚙️"
+                    iconColor="bg-gray-600"
                     onClick={() => navigate('/admin/settings')}
                     showChevron
                 />
-                <ListItem
+                <AdminListItem
                     title="Export Data"
-                    subtitle="Download reports as Excel/PDF"
                     icon="📥"
+                    iconColor="bg-blue-400"
                     onClick={() => navigate('/admin/export')}
                     showChevron
                     isLast
                 />
-            </Section>
+            </AdminSection>
         </div>
     );
 };

@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTelegram } from '../../context/TelegramContext';
-import { Section } from '../../components/ui/Section';
-import { Send, Clock, Users, BookOpen } from 'lucide-react';
-
+import { AdminSection } from './components/AdminSection';
+import { AdminListItem } from './components/AdminListItem';
+import { Send, Clock, Check } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
 interface BroadcastHistory {
@@ -135,18 +135,24 @@ const AdminBroadcast: React.FC = () => {
         }
     };
 
+    const Toggle = ({ checked }: { checked: boolean }) => (
+        <div className={`w-11 h-6 rounded-full transition-colors ${checked ? 'bg-green-500' : 'bg-[#E9E9EA] dark:bg-[#39393D]'} relative`}>
+            <div className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow-sm transition-transform ${checked ? 'translate-x-[22px]' : 'translate-x-0.5'}`} />
+        </div>
+    );
+
     return (
-        <div className="min-h-screen bg-tg-secondary pb-20 pt-4">
-            <h1 className="text-2xl font-bold mb-6 px-4 text-tg-text">Broadcasting</h1>
+        <div className="min-h-screen bg-[#F2F2F7] dark:bg-[#000000] pb-20 pt-4">
+            <h1 className="text-3xl font-bold mb-6 px-4 text-black dark:text-white">Broadcasting</h1>
 
             {/* Tabs */}
             <div className="px-4 mb-6">
-                <div className="bg-tg-bg p-1 rounded-xl flex">
+                <div className="bg-[#E3E3E8] dark:bg-[#1C1C1E] p-1 rounded-[10px] flex">
                     <button
                         onClick={() => setActiveTab('compose')}
                         className={cn(
-                            "flex-1 py-2 text-sm font-medium rounded-lg transition-all",
-                            activeTab === 'compose' ? "bg-tg-button text-white shadow-sm" : "text-tg-hint hover:text-tg-text"
+                            "flex-1 py-1.5 text-[13px] font-medium rounded-[7px] transition-all",
+                            activeTab === 'compose' ? "bg-white dark:bg-[#636366] text-black dark:text-white shadow-sm" : "text-[#8E8E93]"
                         )}
                     >
                         Compose
@@ -154,8 +160,8 @@ const AdminBroadcast: React.FC = () => {
                     <button
                         onClick={() => setActiveTab('history')}
                         className={cn(
-                            "flex-1 py-2 text-sm font-medium rounded-lg transition-all",
-                            activeTab === 'history' ? "bg-tg-button text-white shadow-sm" : "text-tg-hint hover:text-tg-text"
+                            "flex-1 py-1.5 text-[13px] font-medium rounded-[7px] transition-all",
+                            activeTab === 'history' ? "bg-white dark:bg-[#636366] text-black dark:text-white shadow-sm" : "text-[#8E8E93]"
                         )}
                     >
                         History
@@ -164,164 +170,145 @@ const AdminBroadcast: React.FC = () => {
             </div>
 
             {activeTab === 'compose' ? (
-                <div className="px-4 space-y-6">
+                <div className="space-y-6">
                     {/* Target Selection */}
-                    <Section title="Target Audience">
-                        <div className="grid grid-cols-2 gap-3 p-4">
-                            <button
-                                onClick={() => setTargetType('all_students')}
-                                className={cn(
-                                    "p-3 rounded-xl border-2 flex flex-col items-center gap-2 transition-all",
-                                    targetType === 'all_students' ? "border-tg-button bg-tg-button/5" : "border-transparent bg-tg-secondary"
-                                )}
-                            >
-                                <Users className={targetType === 'all_students' ? "text-tg-button" : "text-tg-hint"} />
-                                <span className="text-xs font-medium text-tg-text">All Students</span>
-                            </button>
-                            <button
-                                onClick={() => setTargetType('all_teachers')}
-                                className={cn(
-                                    "p-3 rounded-xl border-2 flex flex-col items-center gap-2 transition-all",
-                                    targetType === 'all_teachers' ? "border-tg-button bg-tg-button/5" : "border-transparent bg-tg-secondary"
-                                )}
-                            >
-                                <Users className={targetType === 'all_teachers' ? "text-tg-button" : "text-tg-hint"} />
-                                <span className="text-xs font-medium text-tg-text">All Teachers</span>
-                            </button>
-                            <button
-                                onClick={() => setTargetType('all_admins')}
-                                className={cn(
-                                    "p-3 rounded-xl border-2 flex flex-col items-center gap-2 transition-all",
-                                    targetType === 'all_admins' ? "border-tg-button bg-tg-button/5" : "border-transparent bg-tg-secondary"
-                                )}
-                            >
-                                <Users className={targetType === 'all_admins' ? "text-tg-button" : "text-tg-hint"} />
-                                <span className="text-xs font-medium text-tg-text">All Admins</span>
-                            </button>
-                            <button
-                                onClick={() => setTargetType('group')}
-                                className={cn(
-                                    "p-3 rounded-xl border-2 flex flex-col items-center gap-2 transition-all",
-                                    targetType === 'group' ? "border-tg-button bg-tg-button/5" : "border-transparent bg-tg-secondary"
-                                )}
-                            >
-                                <BookOpen className={targetType === 'group' ? "text-tg-button" : "text-tg-hint"} />
-                                <span className="text-xs font-medium text-tg-text">Specific Groups</span>
-                            </button>
-                        </div>
+                    <AdminSection title="Target Audience">
+                        <AdminListItem
+                            title="All Students"
+                            icon="👥"
+                            iconColor="bg-blue-500"
+                            rightElement={targetType === 'all_students' ? <Check className="text-blue-500" size={20} /> : null}
+                            onClick={() => setTargetType('all_students')}
+                        />
+                        <AdminListItem
+                            title="All Teachers"
+                            icon="👨‍🏫"
+                            iconColor="bg-orange-500"
+                            rightElement={targetType === 'all_teachers' ? <Check className="text-blue-500" size={20} /> : null}
+                            onClick={() => setTargetType('all_teachers')}
+                        />
+                        <AdminListItem
+                            title="All Admins"
+                            icon="🛡️"
+                            iconColor="bg-red-500"
+                            rightElement={targetType === 'all_admins' ? <Check className="text-blue-500" size={20} /> : null}
+                            onClick={() => setTargetType('all_admins')}
+                        />
+                        <AdminListItem
+                            title="Specific Groups"
+                            icon="📚"
+                            iconColor="bg-purple-500"
+                            rightElement={targetType === 'group' ? <Check className="text-blue-500" size={20} /> : null}
+                            onClick={() => setTargetType('group')}
+                            isLast={targetType !== 'group'}
+                        />
+                    </AdminSection>
 
-                        {targetType === 'group' && (
-                            <div className="px-4 pb-4 space-y-2 max-h-60 overflow-y-auto">
-                                {groups.map(g => (
-                                    <div
+                    {targetType === 'group' && (
+                        <AdminSection title="Select Groups">
+                            <div className="max-h-60 overflow-y-auto">
+                                {groups.map((g, idx) => (
+                                    <AdminListItem
                                         key={g.id}
+                                        title={g.name}
+                                        icon="👥"
+                                        iconColor="bg-gray-400"
+                                        rightElement={
+                                            <div className={cn(
+                                                "w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors",
+                                                selectedGroupIds.includes(g.id) ? "border-blue-500 bg-blue-500" : "border-[#C7C7CC] dark:border-[#48484A]"
+                                            )}>
+                                                {selectedGroupIds.includes(g.id) && <div className="w-2 h-2 bg-white rounded-full" />}
+                                            </div>
+                                        }
                                         onClick={() => handleGroupToggle(g.id)}
-                                        className={cn(
-                                            "flex items-center gap-3 p-3 rounded-xl border transition-all cursor-pointer",
-                                            selectedGroupIds.includes(g.id)
-                                                ? "border-tg-button bg-tg-button/10"
-                                                : "border-tg-secondary bg-tg-secondary/50"
-                                        )}
-                                    >
-                                        <div className={cn(
-                                            "w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors",
-                                            selectedGroupIds.includes(g.id) ? "border-tg-button bg-tg-button" : "border-tg-hint"
-                                        )}>
-                                            {selectedGroupIds.includes(g.id) && <div className="w-2 h-2 bg-white rounded-full" />}
-                                        </div>
-                                        <span className="text-sm font-medium text-tg-text">{g.name}</span>
-                                    </div>
+                                        isLast={idx === groups.length - 1}
+                                    />
                                 ))}
                             </div>
-                        )}
-                    </Section>
+                        </AdminSection>
+                    )}
 
                     {/* Scheduling */}
-                    <Section title="Schedule">
-                        <div className="p-4 space-y-4">
-                            <div className="flex items-center justify-between">
-                                <span className="text-sm font-medium text-tg-text">Schedule for later</span>
-                                <button
-                                    onClick={() => setIsScheduled(!isScheduled)}
-                                    className={cn(
-                                        "w-12 h-6 rounded-full transition-colors relative",
-                                        isScheduled ? "bg-tg-button" : "bg-tg-hint/30"
-                                    )}
-                                >
-                                    <div className={cn(
-                                        "w-4 h-4 bg-white rounded-full absolute top-1 transition-all",
-                                        isScheduled ? "left-7" : "left-1"
-                                    )} />
-                                </button>
-                            </div>
-
-                            {isScheduled && (
+                    <AdminSection title="Schedule">
+                        <AdminListItem
+                            title="Schedule for later"
+                            icon="📅"
+                            iconColor="bg-green-500"
+                            rightElement={<Toggle checked={isScheduled} />}
+                            onClick={() => setIsScheduled(!isScheduled)}
+                            isLast={!isScheduled}
+                        />
+                        {isScheduled && (
+                            <div className="p-4 bg-white dark:bg-[#1C1C1E]">
                                 <input
                                     type="datetime-local"
                                     value={scheduledDate}
                                     onChange={(e) => setScheduledDate(e.target.value)}
-                                    className="w-full p-3 rounded-xl bg-tg-secondary text-tg-text border-none outline-none focus:ring-2 focus:ring-tg-button"
+                                    className="w-full p-3 rounded-[10px] bg-[#E3E3E8] dark:bg-[#2C2C2E] text-black dark:text-white border-none outline-none focus:ring-2 focus:ring-blue-500/50"
                                 />
-                            )}
-                        </div>
-                    </Section>
+                            </div>
+                        )}
+                    </AdminSection>
 
                     {/* Message Input */}
-                    <Section title="Message">
-                        <div className="p-4">
+                    <AdminSection title="Message">
+                        <div className="p-4 bg-white dark:bg-[#1C1C1E]">
                             <textarea
                                 value={message}
                                 onChange={(e) => setMessage(e.target.value)}
                                 placeholder="Type your broadcast message here..."
-                                className="w-full h-32 bg-tg-secondary text-tg-text p-3 rounded-xl resize-none border-none outline-none focus:ring-2 focus:ring-tg-button placeholder:text-tg-hint"
+                                className="w-full h-32 bg-[#E3E3E8] dark:bg-[#2C2C2E] text-black dark:text-white p-3 rounded-[10px] resize-none border-none outline-none focus:ring-2 focus:ring-blue-500/50 placeholder:text-[#8E8E93]"
                             />
-                            <div className="mt-2 text-xs text-tg-hint flex gap-4">
+                            <div className="mt-2 text-xs text-[#8E8E93] flex gap-4">
                                 <span><b>*bold*</b></span>
                                 <span><i>_italic_</i></span>
                                 <span><span className="font-mono">`monospace`</span></span>
                             </div>
                         </div>
-                    </Section>
+                    </AdminSection>
 
                     {/* Send Button */}
-                    <button
-                        onClick={handleSend}
-                        disabled={loading || !message.trim() || (targetType === 'group' && selectedGroupIds.length === 0) || (isScheduled && !scheduledDate)}
-                        className="w-full bg-tg-button text-white py-4 rounded-xl font-semibold shadow-lg active:scale-95 transition-all disabled:opacity-50 disabled:active:scale-100 flex items-center justify-center gap-2"
-                    >
-                        {loading ? (
-                            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                        ) : (
-                            <>
-                                {isScheduled ? <Clock size={20} /> : <Send size={20} />}
-                                <span>{isScheduled ? 'Schedule Broadcast' : 'Send Broadcast'}</span>
-                            </>
-                        )}
-                    </button>
+                    <div className="px-4">
+                        <button
+                            onClick={handleSend}
+                            disabled={loading || !message.trim() || (targetType === 'group' && selectedGroupIds.length === 0) || (isScheduled && !scheduledDate)}
+                            className="w-full bg-blue-500 text-white py-3.5 rounded-[10px] font-semibold shadow-lg shadow-blue-500/20 active:scale-95 transition-all disabled:opacity-50 disabled:active:scale-100 flex items-center justify-center gap-2"
+                        >
+                            {loading ? (
+                                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                            ) : (
+                                <>
+                                    {isScheduled ? <Clock size={20} /> : <Send size={20} />}
+                                    <span>{isScheduled ? 'Schedule Broadcast' : 'Send Broadcast'}</span>
+                                </>
+                            )}
+                        </button>
+                    </div>
                 </div>
             ) : (
                 <div className="px-4 space-y-4">
                     {history.length > 0 ? (
                         history.map(item => (
-                            <div key={item.id} className="bg-tg-bg p-4 rounded-xl shadow-sm">
+                            <div key={item.id} className="bg-white dark:bg-[#1C1C1E] p-4 rounded-[10px] shadow-sm">
                                 <div className="flex justify-between items-start mb-2">
-                                    <span className="text-xs font-medium px-2 py-1 rounded-lg bg-tg-secondary text-tg-hint uppercase">
+                                    <span className="text-xs font-medium px-2 py-1 rounded-md bg-[#E3E3E8] dark:bg-[#2C2C2E] text-[#8E8E93] uppercase">
                                         {item.target_type.replace('_', ' ')}
                                     </span>
-                                    <span className="text-xs text-tg-hint flex items-center gap-1">
+                                    <span className="text-xs text-[#8E8E93] flex items-center gap-1">
                                         <Clock size={12} />
                                         {new Date(item.created_at).toLocaleDateString()}
                                     </span>
                                 </div>
-                                <p className="text-tg-text text-sm mb-3 whitespace-pre-wrap">{item.message}</p>
-                                <div className="flex justify-between items-center text-xs text-tg-hint border-t border-tg-secondary/50 pt-2">
+                                <p className="text-black dark:text-white text-sm mb-3 whitespace-pre-wrap">{item.message}</p>
+                                <div className="flex justify-between items-center text-xs text-[#8E8E93] border-t border-[#C6C6C8] dark:border-[#38383A] pt-2">
                                     <span>Sent by: {item.sender ? `${item.sender.first_name} ${item.sender.surname}` : 'Unknown'}</span>
                                     <span>Recipients: {item.recipient_count}</span>
                                 </div>
                             </div>
                         ))
                     ) : (
-                        <div className="text-center py-10 text-tg-hint">
+                        <div className="text-center py-10 text-[#8E8E93]">
                             No broadcast history found
                         </div>
                     )}

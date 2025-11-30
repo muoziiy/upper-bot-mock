@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import SegmentedControl from '../../components/ui/SegmentedControl';
-import { Section } from '../../components/ui/Section';
-import { ListItem } from '../../components/ui/ListItem';
+import { AdminSection } from './components/AdminSection';
+import { AdminListItem } from './components/AdminListItem';
 import { motion } from 'framer-motion';
 
 // Simple CountUp Component
@@ -100,11 +100,11 @@ const AdminStats: React.FC = () => {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-tg-secondary pt-4 pb-20 px-4">
-                <h1 className="text-2xl font-bold mb-6 text-black dark:text-white">Statistics</h1>
+            <div className="min-h-screen bg-[#F2F2F7] dark:bg-[#000000] pt-4 pb-20 px-4">
+                <h1 className="text-3xl font-bold mb-6 text-black dark:text-white">Statistics</h1>
                 <div className="grid grid-cols-2 gap-4">
                     {[1, 2, 3, 4].map(i => (
-                        <div key={i} className="bg-white dark:bg-black/20 h-32 rounded-2xl animate-pulse" />
+                        <div key={i} className="bg-white dark:bg-[#1C1C1E] h-32 rounded-[10px] animate-pulse" />
                     ))}
                 </div>
             </div>
@@ -112,8 +112,8 @@ const AdminStats: React.FC = () => {
     }
 
     return (
-        <div className="min-h-screen bg-tg-secondary pt-4 pb-20">
-            <h1 className="text-2xl font-bold mb-6 px-4 text-black dark:text-white">Statistics</h1>
+        <div className="min-h-screen bg-[#F2F2F7] dark:bg-[#000000] pt-4 pb-20">
+            <h1 className="text-3xl font-bold mb-6 px-4 text-black dark:text-white">Statistics</h1>
 
             <div className="px-4 mb-6">
                 <SegmentedControl
@@ -128,56 +128,58 @@ const AdminStats: React.FC = () => {
 
             {activeTab === 'general' ? (
                 <motion.div
-                    className="space-y-6 px-4"
+                    className="space-y-6"
                     variants={container}
                     initial="hidden"
                     animate="show"
                 >
-                    <div className="grid grid-cols-2 gap-4">
-                        <motion.div variants={item} className="bg-white dark:bg-black/20 p-4 rounded-2xl shadow-sm flex flex-col items-center justify-center gap-2">
+                    <div className="grid grid-cols-2 gap-4 px-4">
+                        <motion.div variants={item} className="bg-white dark:bg-[#1C1C1E] p-4 rounded-[10px] shadow-sm flex flex-col items-center justify-center gap-2">
                             <span className="text-4xl">👨‍🎓</span>
-                            <span className="text-2xl font-bold text-tg-text">
+                            <span className="text-2xl font-bold text-black dark:text-white">
                                 {generalStats.totalStudents}
                             </span>
-                            <span className="text-xs text-tg-hint font-medium uppercase tracking-wide">Students</span>
+                            <span className="text-xs text-[#6D6D72] dark:text-[#8E8E93] font-medium uppercase tracking-wide">Students</span>
                         </motion.div>
-                        <motion.div variants={item} className="bg-white dark:bg-black/20 p-4 rounded-2xl shadow-sm flex flex-col items-center justify-center gap-2">
+                        <motion.div variants={item} className="bg-white dark:bg-[#1C1C1E] p-4 rounded-[10px] shadow-sm flex flex-col items-center justify-center gap-2">
                             <span className="text-4xl">👩‍🏫</span>
-                            <span className="text-2xl font-bold text-tg-text">
+                            <span className="text-2xl font-bold text-black dark:text-white">
                                 {generalStats.totalTeachers}
                             </span>
-                            <span className="text-xs text-tg-hint font-medium uppercase tracking-wide">Teachers</span>
+                            <span className="text-xs text-[#6D6D72] dark:text-[#8E8E93] font-medium uppercase tracking-wide">Teachers</span>
                         </motion.div>
-                        <motion.div variants={item} className="bg-white dark:bg-black/20 p-4 rounded-2xl shadow-sm flex flex-col items-center justify-center gap-2">
+                        <motion.div variants={item} className="bg-white dark:bg-[#1C1C1E] p-4 rounded-[10px] shadow-sm flex flex-col items-center justify-center gap-2">
                             <span className="text-4xl">👥</span>
-                            <span className="text-2xl font-bold text-tg-text">
+                            <span className="text-2xl font-bold text-black dark:text-white">
                                 {generalStats.activeGroups}
                             </span>
-                            <span className="text-xs text-tg-hint font-medium uppercase tracking-wide">Active Groups</span>
+                            <span className="text-xs text-[#6D6D72] dark:text-[#8E8E93] font-medium uppercase tracking-wide">Active Groups</span>
                         </motion.div>
-                        <motion.div variants={item} className="bg-white dark:bg-black/20 p-4 rounded-2xl shadow-sm flex flex-col items-center justify-center gap-2">
+                        <motion.div variants={item} className="bg-white dark:bg-[#1C1C1E] p-4 rounded-[10px] shadow-sm flex flex-col items-center justify-center gap-2">
                             <span className="text-4xl">📚</span>
-                            <span className="text-2xl font-bold text-tg-text">
+                            <span className="text-2xl font-bold text-black dark:text-white">
                                 {generalStats.totalSubjects}
                             </span>
-                            <span className="text-xs text-tg-hint font-medium uppercase tracking-wide">Courses</span>
+                            <span className="text-xs text-[#6D6D72] dark:text-[#8E8E93] font-medium uppercase tracking-wide">Courses</span>
                         </motion.div>
                     </div>
 
                     <motion.div variants={item}>
-                        <Section title="Growth (This Month)">
-                            <ListItem
+                        <AdminSection title="Growth (This Month)">
+                            <AdminListItem
                                 title="New Students"
                                 value={<span className="text-green-500">+{generalStats.newStudents}</span>}
                                 icon="📈"
+                                iconColor="bg-green-500"
                             />
-                            <ListItem
+                            <AdminListItem
                                 title="New Groups"
                                 value={<span className="text-green-500">+{generalStats.newGroups}</span>}
                                 icon="🆕"
+                                iconColor="bg-blue-500"
                                 isLast
                             />
-                        </Section>
+                        </AdminSection>
                     </motion.div>
                 </motion.div>
             ) : (
@@ -189,36 +191,36 @@ const AdminStats: React.FC = () => {
                 >
                     <div className="px-4 grid grid-cols-2 gap-4">
                         {/* Net Income */}
-                        <motion.div variants={item} className="col-span-2 bg-gradient-to-br from-green-500/10 to-emerald-500/10 border border-green-500/20 p-6 rounded-2xl shadow-sm flex flex-col items-center justify-center gap-2">
+                        <motion.div variants={item} className="col-span-2 bg-white dark:bg-[#1C1C1E] p-6 rounded-[10px] shadow-sm flex flex-col items-center justify-center gap-2">
                             <span className="text-sm font-medium text-green-600 uppercase tracking-wide">Net Income</span>
-                            <span className="text-3xl font-bold text-green-700 dark:text-green-400">
+                            <span className="text-3xl font-bold text-green-600 dark:text-green-500">
                                 <CountUp end={financialStats.netIncome} suffix=" UZS" />
                             </span>
                         </motion.div>
 
                         {/* Incoming */}
-                        <motion.div variants={item} className="bg-white dark:bg-black/20 p-4 rounded-2xl shadow-sm flex flex-col items-center justify-center gap-2">
+                        <motion.div variants={item} className="bg-white dark:bg-[#1C1C1E] p-4 rounded-[10px] shadow-sm flex flex-col items-center justify-center gap-2">
                             <span className="text-2xl">📥</span>
-                            <span className="text-lg font-bold text-tg-text break-all text-center">
+                            <span className="text-lg font-bold text-black dark:text-white break-all text-center">
                                 <CountUp end={financialStats.totalRevenue} suffix=" UZS" />
                             </span>
-                            <span className="text-xs text-tg-hint font-medium uppercase tracking-wide">Incoming</span>
+                            <span className="text-xs text-[#6D6D72] dark:text-[#8E8E93] font-medium uppercase tracking-wide">Incoming</span>
                         </motion.div>
 
                         {/* Outgoing */}
-                        <motion.div variants={item} className="bg-white dark:bg-black/20 p-4 rounded-2xl shadow-sm flex flex-col items-center justify-center gap-2">
+                        <motion.div variants={item} className="bg-white dark:bg-[#1C1C1E] p-4 rounded-[10px] shadow-sm flex flex-col items-center justify-center gap-2">
                             <span className="text-2xl">📤</span>
                             <span className="text-lg font-bold text-red-500 break-all text-center">
                                 <CountUp end={financialStats.totalOutgoing} suffix=" UZS" />
                             </span>
-                            <span className="text-xs text-tg-hint font-medium uppercase tracking-wide">Outgoing</span>
+                            <span className="text-xs text-[#6D6D72] dark:text-[#8E8E93] font-medium uppercase tracking-wide">Outgoing</span>
                         </motion.div>
 
                         {/* Pending */}
-                        <motion.div variants={item} className="col-span-2 bg-white dark:bg-black/20 p-4 rounded-2xl shadow-sm flex items-center justify-between px-6">
+                        <motion.div variants={item} className="col-span-2 bg-white dark:bg-[#1C1C1E] p-4 rounded-[10px] shadow-sm flex items-center justify-between px-6">
                             <div className="flex items-center gap-3">
                                 <span className="text-2xl">⏳</span>
-                                <span className="text-sm font-medium text-tg-hint uppercase tracking-wide">Pending Payments</span>
+                                <span className="text-sm font-medium text-[#6D6D72] dark:text-[#8E8E93] uppercase tracking-wide">Pending Payments</span>
                             </div>
                             <span className="text-lg font-bold text-orange-500">
                                 <CountUp end={financialStats.pendingPayments} suffix=" UZS" />
@@ -228,27 +230,29 @@ const AdminStats: React.FC = () => {
 
                     {financialStats.recentTransactions.length > 0 && (
                         <motion.div variants={item}>
-                            <Section title="Recent Transactions">
+                            <AdminSection title="Recent Transactions">
                                 {financialStats.recentTransactions.map((tx, index) => (
-                                    <ListItem
+                                    <AdminListItem
                                         key={tx.id}
                                         title={tx.user}
-                                        subtitle={tx.description}
+                                        // subtitle removed as per request
                                         value={
                                             <span className={tx.type === 'incoming' ? 'text-green-500' : 'text-red-500'}>
                                                 {tx.type === 'incoming' ? '+' : '-'}{tx.amount.toLocaleString()} UZS
                                             </span>
                                         }
-                                        rightElement={<span className="text-xs text-tg-hint">{new Date(tx.date).toLocaleDateString()}</span>}
+                                        rightElement={<span className="text-xs text-[#6D6D72] dark:text-[#8E8E93]">{new Date(tx.date).toLocaleDateString()}</span>}
                                         isLast={index === financialStats.recentTransactions.length - 1}
+                                        icon={tx.type === 'incoming' ? '💰' : '💸'}
+                                        iconColor={tx.type === 'incoming' ? 'bg-green-500' : 'bg-red-500'}
                                     />
                                 ))}
-                            </Section>
+                            </AdminSection>
                         </motion.div>
                     )}
 
                     {financialStats.recentTransactions.length === 0 && (
-                        <motion.div variants={item} className="px-4 text-center text-tg-hint text-sm">
+                        <motion.div variants={item} className="px-4 text-center text-[#6D6D72] dark:text-[#8E8E93] text-sm">
                             No recent transactions
                         </motion.div>
                     )}

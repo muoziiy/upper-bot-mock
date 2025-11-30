@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
 import { useAppData } from '../../context/AppDataContext';
 import { useTelegram } from '../../context/TelegramContext';
-import { Section } from '../../components/ui/Section';
-import { ListItem } from '../../components/ui/ListItem';
-import { Settings, LogOut, Globe, Moon } from 'lucide-react';
+import { AdminSection } from './components/AdminSection';
+import { AdminListItem } from './components/AdminListItem';
 import SettingsModal from '../../components/profile/SettingsModal';
 
 const AdminProfile: React.FC = () => {
@@ -12,7 +11,7 @@ const AdminProfile: React.FC = () => {
     const [showSettings, setShowSettings] = useState(false);
 
     return (
-        <div className="min-h-screen bg-tg-secondary pt-6 pb-20">
+        <div className="min-h-screen bg-[#F2F2F7] dark:bg-[#000000] pt-6 pb-20">
             <SettingsModal isOpen={showSettings} onClose={() => setShowSettings(false)} />
 
             <div className="flex flex-col items-center justify-center mb-8">
@@ -26,42 +25,46 @@ const AdminProfile: React.FC = () => {
                 <h1 className="text-2xl font-bold text-black dark:text-white">
                     {dashboardData?.user.onboarding_first_name || dashboardData?.user.first_name} {dashboardData?.user.last_name}
                 </h1>
-                <p className="text-tg-hint">Administrator</p>
+                <p className="text-[#8E8E93]">Administrator</p>
             </div>
 
-            <Section title="Settings">
-                <ListItem
-                    icon={<Settings size={20} />}
+            <AdminSection title="Settings">
+                <AdminListItem
+                    icon="⚙️"
+                    iconColor="bg-gray-500"
                     title="General Settings"
                     onClick={() => setShowSettings(true)}
                     showChevron
                 />
-                <ListItem
-                    icon={<Globe size={20} />}
+                <AdminListItem
+                    icon="🌐"
+                    iconColor="bg-blue-500"
                     title="Language"
                     value="English"
                     onClick={() => { }}
                     showChevron
                 />
-                <ListItem
-                    icon={<Moon size={20} />}
+                <AdminListItem
+                    icon="🌙"
+                    iconColor="bg-purple-500"
                     title="Appearance"
                     value="System"
                     onClick={() => { }}
                     showChevron
                     isLast
                 />
-            </Section>
+            </AdminSection>
 
-            <Section>
-                <ListItem
-                    icon={<LogOut size={20} />}
+            <AdminSection>
+                <AdminListItem
+                    icon="🚪"
+                    iconColor="bg-red-500"
                     title="Log Out"
                     destructive
                     onClick={() => { }}
                     isLast
                 />
-            </Section>
+            </AdminSection>
         </div>
     );
 };

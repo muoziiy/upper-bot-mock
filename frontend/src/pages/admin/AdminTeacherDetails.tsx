@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTelegram } from '../../context/TelegramContext';
-import { Section } from '../../components/ui/Section';
-import { ListItem } from '../../components/ui/ListItem';
-import { User, Phone, BookOpen, CreditCard } from 'lucide-react';
+import { AdminSection } from './components/AdminSection';
+import { AdminListItem } from './components/AdminListItem';
 import AdminTeacherPaymentModal from './components/AdminTeacherPaymentModal';
 
 interface TeacherDetails {
@@ -76,97 +75,105 @@ const AdminTeacherDetails: React.FC = () => {
     };
 
     if (loading) {
-        return <div className="flex h-screen items-center justify-center bg-tg-secondary text-tg-text">Loading...</div>;
+        return <div className="flex h-screen items-center justify-center bg-[#F2F2F7] dark:bg-[#000000] text-[#8E8E93]">Loading...</div>;
     }
 
     if (!teacher) {
-        return <div className="flex h-screen items-center justify-center bg-tg-secondary text-tg-text">Teacher not found</div>;
+        return <div className="flex h-screen items-center justify-center bg-[#F2F2F7] dark:bg-[#000000] text-[#8E8E93]">Teacher not found</div>;
     }
 
     const totalStudents = groups.reduce((sum, g) => sum + g.student_count, 0);
 
 
     return (
-        <div className="page-content pt-4 pb-20">
-            <h1 className="text-2xl font-bold mb-4 px-4 text-tg-text">Teacher Details</h1>
+        <div className="page-content pt-4 pb-20 bg-[#F2F2F7] dark:bg-[#000000] min-h-screen">
+            <h1 className="text-3xl font-bold mb-4 px-4 text-black dark:text-white">Teacher Details</h1>
 
             {/* Profile Header */}
             <div className="flex flex-col items-center mb-6 pt-2">
-                <div className="w-24 h-24 bg-tg-secondary rounded-full flex items-center justify-center mb-3 shadow-sm">
-                    <User size={48} className="text-tg-hint" />
+                <div className="w-24 h-24 bg-[#E3E3E8] dark:bg-[#1C1C1E] rounded-full flex items-center justify-center mb-3 shadow-sm text-4xl">
+                    👨‍🏫
                 </div>
-                <h2 className="text-2xl font-bold text-tg-text text-center leading-tight">
+                <h2 className="text-2xl font-bold text-black dark:text-white text-center leading-tight">
                     {teacher.onboarding_first_name || teacher.first_name} {teacher.surname}
                 </h2>
-                <p className="text-tg-hint text-base">@{teacher.username || 'No username'}</p>
+                <p className="text-[#8E8E93] text-base">@{teacher.username || 'No username'}</p>
             </div>
 
             {/* Personal Info Section */}
-            <Section title="Personal Info">
-                <ListItem
+            <AdminSection title="Personal Info">
+                <AdminListItem
                     title="Phone Number"
-                    subtitle={teacher.phone_number || 'Not provided'}
-                    icon={<Phone size={20} className="text-tg-button" />}
+                    value={teacher.phone_number || 'Not provided'}
+                    icon="📞"
+                    iconColor="bg-green-500"
                     onClick={() => {
                         if (teacher.phone_number) {
                             window.open(`tel:${teacher.phone_number}`);
                         }
                     }}
                 />
-                <ListItem
+                <AdminListItem
                     title="Bio"
-                    subtitle={teacher.bio || 'No bio provided'}
-                    icon={<BookOpen size={20} className="text-tg-button" />}
+                    value={teacher.bio || 'No bio provided'}
+                    icon="📝"
+                    iconColor="bg-gray-500"
+                    isLast
                 />
-            </Section>
+            </AdminSection>
 
             {/* Finance Section */}
-            <Section title="Finance">
-                <ListItem
+            <AdminSection title="Finance">
+                <AdminListItem
                     title="Payment History"
-                    subtitle="View all payouts"
-                    icon={<CreditCard size={20} className="text-green-500" />}
+                    // subtitle removed
+                    icon="💳"
+                    iconColor="bg-blue-500"
                     onClick={() => setShowPaymentModal(true)}
                     showChevron
+                    isLast
                 />
-            </Section>
+            </AdminSection>
 
             {/* Stats Section */}
-            <Section title="Overview">
+            <AdminSection title="Overview">
                 <div className="grid grid-cols-2 gap-4 p-4">
-                    <div className="bg-tg-bg p-3 rounded-xl border border-tg-secondary">
-                        <div className="text-tg-hint text-xs mb-1">Total Students</div>
-                        <div className="text-xl font-bold text-tg-text">{totalStudents}</div>
+                    <div className="bg-white dark:bg-[#1C1C1E] p-3 rounded-[10px] border-none shadow-sm">
+                        <div className="text-[#8E8E93] text-xs mb-1">Total Students</div>
+                        <div className="text-xl font-bold text-black dark:text-white">{totalStudents}</div>
                     </div>
-                    <div className="bg-tg-bg p-3 rounded-xl border border-tg-secondary">
-                        <div className="text-tg-hint text-xs mb-1">Active Groups</div>
-                        <div className="text-xl font-bold text-tg-text">{groups.length}</div>
+                    <div className="bg-white dark:bg-[#1C1C1E] p-3 rounded-[10px] border-none shadow-sm">
+                        <div className="text-[#8E8E93] text-xs mb-1">Active Groups</div>
+                        <div className="text-xl font-bold text-black dark:text-white">{groups.length}</div>
                     </div>
                 </div>
-            </Section>
+            </AdminSection>
 
             {/* Groups Section */}
-            <Section title="Groups">
+            <AdminSection title="Groups">
                 {groups.length > 0 ? (
-                    groups.map((group) => (
-                        <ListItem
+                    groups.map((group, index) => (
+                        <AdminListItem
                             key={group.id}
                             title={group.name}
-                            subtitle={`${group.student_count} students • ${group.price.toLocaleString()} UZS/month`}
-                            icon={<BookOpen size={20} className="text-tg-button" />}
-                            rightElement={
-                                <div className="text-xs text-tg-hint">
-                                    {/* Could show schedule summary here */}
+                            // subtitle removed
+                            value={
+                                <div className="flex flex-col items-end">
+                                    <span className="text-sm text-[#8E8E93]">{group.student_count} students</span>
+                                    <span className="text-xs text-[#8E8E93]">{group.price.toLocaleString()} UZS</span>
                                 </div>
                             }
+                            icon="📚"
+                            iconColor="bg-orange-500"
                             onClick={() => navigate('/admin/groups')} // Or to specific group details if available
                             showChevron
+                            isLast={index === groups.length - 1}
                         />
                     ))
                 ) : (
-                    <div className="p-4 text-center text-tg-hint">No groups assigned</div>
+                    <div className="p-4 text-center text-[#8E8E93] bg-white dark:bg-[#1C1C1E]">No groups assigned</div>
                 )}
-            </Section>
+            </AdminSection>
 
             {/* Payment Modal */}
             <AdminTeacherPaymentModal

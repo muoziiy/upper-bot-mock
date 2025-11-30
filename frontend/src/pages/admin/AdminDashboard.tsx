@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Section } from '../../components/ui/Section';
-import { ListItem } from '../../components/ui/ListItem';
+import { AdminSection } from './components/AdminSection';
+import { AdminListItem } from './components/AdminListItem';
 import { useAppData } from '../../context/AppDataContext';
 import { useTranslation } from 'react-i18next';
 
@@ -11,65 +11,67 @@ const AdminDashboard: React.FC = () => {
     const { t } = useTranslation();
 
     return (
-        <div className="page-content pt-4 pb-20">
+        <div className="page-content pt-4 pb-20 bg-[#F2F2F7] dark:bg-[#000000] min-h-screen">
             <header className="mb-6 px-4">
-                <h1 className="text-2xl font-bold text-tg-text">
+                <h1 className="text-3xl font-bold text-black dark:text-white">
                     {t('dashboard.hello')} {dashboardData?.user.onboarding_first_name || dashboardData?.user.first_name}
                 </h1>
-                <p className="text-tg-hint">Admin Dashboard</p>
+                <p className="text-[#6D6D72] dark:text-[#8E8E93]">Admin Dashboard</p>
             </header>
 
-            <Section title="Management">
-                <ListItem
+            <AdminSection title="Management">
+                <AdminListItem
                     icon="👥"
+                    iconColor="bg-blue-500"
                     title="Students"
-                    subtitle="Manage Students"
                     onClick={() => navigate('/admin/students')}
                     showChevron
                 />
-                <ListItem
+                <AdminListItem
                     icon="👨‍🏫"
+                    iconColor="bg-orange-500"
                     title="Teachers"
-                    subtitle="Manage Staff"
                     onClick={() => navigate('/admin/teachers')}
                     showChevron
                 />
-                <ListItem
+                <AdminListItem
                     icon="🛡️"
+                    iconColor="bg-gray-500"
                     title="Admins"
-                    subtitle="Manage Admins"
                     onClick={() => navigate('/admin/admins')}
                     showChevron
+                    isLast
                 />
-            </Section>
+            </AdminSection>
 
-            <Section title="Analytics">
-                <ListItem
+            <AdminSection title="Analytics">
+                <AdminListItem
                     icon="📊"
+                    iconColor="bg-green-500"
                     title="Statistics"
-                    subtitle="Payments & General Stats"
                     onClick={() => navigate('/admin/stats')}
                     showChevron
+                    isLast
                 />
-            </Section>
+            </AdminSection>
 
-            <Section title="Tools">
-                <ListItem
+            <AdminSection title="Tools">
+                <AdminListItem
                     icon="⚡"
+                    iconColor="bg-indigo-500"
                     title="Quick Actions"
-                    subtitle="Common Tasks"
                     onClick={() => navigate('/admin/actions')}
                     showChevron
                 />
-                <ListItem
+                <AdminListItem
                     icon="📚"
+                    iconColor="bg-pink-500"
                     title="Subjects"
-                    subtitle="Manage Subjects"
                     onClick={() => navigate('/admin/subjects')}
                     showChevron
                     isLast
                 />
-            </Section>
+            </AdminSection>
         </div >
     );
 };

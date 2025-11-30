@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAppData } from '../../context/AppDataContext';
-import { Section } from '../../components/ui/Section';
-import { ListItem } from '../../components/ui/ListItem';
+import { AdminSection } from './components/AdminSection';
+import { AdminListItem } from './components/AdminListItem';
 
 interface PendingRequest {
     id: string;
@@ -96,31 +96,33 @@ const AdminRequests: React.FC = () => {
     };
 
     return (
-        <div className="page-content pt-4 pb-20">
-            <h1 className="text-2xl font-bold mb-4 px-4 text-tg-text">Manage Requests</h1>
+        <div className="page-content pt-4 pb-20 bg-[#F2F2F7] dark:bg-[#000000] min-h-screen">
+            <h1 className="text-3xl font-bold mb-4 px-4 text-black dark:text-white">Manage Requests</h1>
 
             {/* Student/Staff Requests */}
             {pendingStudentStaff.length > 0 && (
-                <Section title="Pending Student & Staff Requests">
+                <AdminSection title="Pending Student & Staff Requests">
                     {pendingStudentStaff.map((req, index) => (
-                        <ListItem
+                        <AdminListItem
                             key={req.id}
                             title={`${req.onboarding_first_name || req.first_name} ${req.surname}`}
-                            subtitle={`${req.role === 'guest' ? '🎓 Student' : '👨‍🏫 Staff'} • Age: ${req.age} • Sex: ${req.sex}`}
+                            // subtitle removed
+                            value={<span className="text-sm text-[#8E8E93]">{req.role === 'guest' ? 'Student' : 'Staff'} • {req.age}yo</span>}
                             icon={req.role === 'guest' ? '🎓' : '👨‍🏫'}
+                            iconColor={req.role === 'guest' ? 'bg-blue-500' : 'bg-orange-500'}
                             rightElement={
                                 <div className="flex gap-2">
                                     <button
                                         onClick={() => handleApproveStudentStaff(req.id, req.role === 'guest' ? 'student' : 'staff')}
                                         disabled={loading}
-                                        className="px-3 py-1 bg-green-500/20 text-green-500 rounded-full text-xs font-medium disabled:opacity-50"
+                                        className="px-3 py-1 bg-green-500 text-white rounded-full text-xs font-medium disabled:opacity-50 shadow-sm"
                                     >
                                         Approve
                                     </button>
                                     <button
                                         onClick={() => handleDeclineStudentStaff(req.id)}
                                         disabled={loading}
-                                        className="px-3 py-1 bg-red-500/20 text-red-500 rounded-full text-xs font-medium disabled:opacity-50"
+                                        className="px-3 py-1 bg-red-500 text-white rounded-full text-xs font-medium disabled:opacity-50 shadow-sm"
                                     >
                                         Decline
                                     </button>
@@ -129,29 +131,31 @@ const AdminRequests: React.FC = () => {
                             isLast={index === pendingStudentStaff.length - 1}
                         />
                     ))}
-                </Section>
+                </AdminSection>
             )}
 
             {/* Admin Requests */}
             {pendingAdminRequests.length > 0 && (
-                <Section title="New Admin Requests">
+                <AdminSection title="New Admin Requests">
                     {pendingAdminRequests.map((req, index) => (
-                        <ListItem
+                        <AdminListItem
                             key={req.id}
                             title={req.users?.onboarding_first_name || req.users?.first_name || 'Unknown User'}
-                            subtitle={`@${req.users?.username || 'no_username'} • ID: ${req.user_id}`}
+                            // subtitle removed
+                            value={<span className="text-sm text-[#8E8E93]">@{req.users?.username || 'no_username'}</span>}
                             icon="🔔"
+                            iconColor="bg-red-500"
                             rightElement={
                                 <div className="flex gap-2">
                                     <button
                                         onClick={() => handleApproveAdmin(req.id)}
-                                        className="px-3 py-1 bg-green-500/20 text-green-500 rounded-full text-xs font-medium"
+                                        className="px-3 py-1 bg-green-500 text-white rounded-full text-xs font-medium shadow-sm"
                                     >
                                         Approve
                                     </button>
                                     <button
                                         onClick={() => handleDeclineAdmin(req.id)}
-                                        className="px-3 py-1 bg-red-500/20 text-red-500 rounded-full text-xs font-medium"
+                                        className="px-3 py-1 bg-red-500 text-white rounded-full text-xs font-medium shadow-sm"
                                     >
                                         Decline
                                     </button>
@@ -160,11 +164,11 @@ const AdminRequests: React.FC = () => {
                             isLast={index === pendingAdminRequests.length - 1}
                         />
                     ))}
-                </Section>
+                </AdminSection>
             )}
 
             {pendingStudentStaff.length === 0 && pendingAdminRequests.length === 0 && (
-                <div className="px-4 py-8 text-center text-tg-hint">
+                <div className="px-4 py-8 text-center text-[#8E8E93]">
                     No pending requests
                 </div>
             )}

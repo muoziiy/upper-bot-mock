@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTelegram } from '../../context/TelegramContext';
-import { Section } from '../../components/ui/Section';
-import { ListItem } from '../../components/ui/ListItem';
-import { Trash2, Shield, User } from 'lucide-react';
+import { AdminSection } from './components/AdminSection';
+import { AdminListItem } from './components/AdminListItem';
+import { Trash2 } from 'lucide-react';
 
 interface AdminUser {
     id: string;
@@ -75,19 +75,21 @@ const AdminManageAdmins: React.FC = () => {
     };
 
     return (
-        <div className="page-content pt-4 pb-20">
-            <h1 className="text-2xl font-bold mb-4 px-4 text-tg-text">Manage Admins</h1>
+        <div className="page-content pt-4 pb-20 bg-[#F2F2F7] dark:bg-[#000000] min-h-screen">
+            <h1 className="text-3xl font-bold mb-4 px-4 text-black dark:text-white">Manage Admins</h1>
 
-            <Section title="Current Administrators">
+            <AdminSection title="Current Administrators">
                 {loading ? (
-                    <div className="p-4 text-center text-tg-hint">Loading...</div>
+                    <div className="p-4 text-center text-[#8E8E93]">Loading...</div>
                 ) : admins.length > 0 ? (
-                    admins.map((admin) => (
-                        <ListItem
+                    admins.map((admin, index) => (
+                        <AdminListItem
                             key={admin.id}
                             title={`${admin.first_name} ${admin.surname || ''}`}
-                            subtitle={`@${admin.username || 'No username'} • ${admin.role}`}
-                            icon={admin.role === 'super_admin' ? <Shield className="text-yellow-500" size={20} /> : <User className="text-tg-button" size={20} />}
+                            // subtitle removed
+                            value={<span className="text-sm text-[#8E8E93]">@{admin.username || 'No username'}</span>}
+                            icon={admin.role === 'super_admin' ? "🛡️" : "👤"}
+                            iconColor={admin.role === 'super_admin' ? "bg-yellow-500" : "bg-gray-500"}
                             rightElement={
                                 admin.role !== 'super_admin' && admin.telegram_id !== user?.id ? (
                                     <button
@@ -101,12 +103,13 @@ const AdminManageAdmins: React.FC = () => {
                                     </button>
                                 ) : null
                             }
+                            isLast={index === admins.length - 1}
                         />
                     ))
                 ) : (
-                    <div className="p-4 text-center text-tg-hint">No admins found.</div>
+                    <div className="p-4 text-center text-[#8E8E93]">No admins found.</div>
                 )}
-            </Section>
+            </AdminSection>
         </div>
     );
 };

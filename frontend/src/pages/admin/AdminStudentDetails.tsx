@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTelegram } from '../../context/TelegramContext';
-import { Section } from '../../components/ui/Section';
-import { ListItem } from '../../components/ui/ListItem';
-import { User, Phone, BookOpen, ChevronLeft, ChevronRight, CreditCard } from 'lucide-react';
+import { AdminSection } from './components/AdminSection';
+import { AdminListItem } from './components/AdminListItem';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import AdminPaymentModal from './components/AdminPaymentModal';
 import AdminGroupManagementModal from './components/AdminGroupManagementModal';
 import AdminGroupDetailsModal from './components/AdminGroupDetailsModal';
@@ -144,93 +144,113 @@ const AdminStudentDetails: React.FC = () => {
     };
 
     if (loading) {
-        return <div className="min-h-screen bg-tg-secondary flex items-center justify-center text-tg-hint">Loading...</div>;
+        return <div className="min-h-screen bg-[#F2F2F7] dark:bg-[#000000] flex items-center justify-center text-[#8E8E93]">Loading...</div>;
     }
 
     if (!student) {
-        return <div className="min-h-screen bg-tg-secondary flex items-center justify-center text-tg-hint">Student not found</div>;
+        return <div className="min-h-screen bg-[#F2F2F7] dark:bg-[#000000] flex items-center justify-center text-[#8E8E93]">Student not found</div>;
     }
 
     return (
-        <div className="page-content pt-4 pb-20">
-            <h1 className="text-2xl font-bold mb-4 px-4 text-tg-text">Student Details</h1>
+        <div className="page-content pt-4 pb-20 bg-[#F2F2F7] dark:bg-[#000000] min-h-screen">
+            <h1 className="text-3xl font-bold mb-4 px-4 text-black dark:text-white">Student Details</h1>
 
             {/* Profile Header */}
             <div className="flex flex-col items-center mb-6 pt-2">
-                <div className="w-24 h-24 bg-tg-secondary rounded-full flex items-center justify-center mb-3 shadow-sm">
-                    <User size={48} className="text-tg-hint" />
+                <div className="w-24 h-24 bg-[#E3E3E8] dark:bg-[#1C1C1E] rounded-full flex items-center justify-center mb-3 shadow-sm text-4xl">
+                    🎓
                 </div>
-                <h2 className="text-2xl font-bold text-tg-text text-center leading-tight">
+                <h2 className="text-2xl font-bold text-black dark:text-white text-center leading-tight">
                     {student.onboarding_first_name || student.first_name} {student.surname}
                 </h2>
-                <p className="text-tg-hint text-base">@{student.username || 'No username'}</p>
+                <p className="text-[#8E8E93] text-base">@{student.username || 'No username'}</p>
             </div>
 
             {/* Personal Info Section */}
-            <Section title="Personal Info">
-                <ListItem
+            <AdminSection title="Personal Info">
+                <AdminListItem
                     title="Phone Number"
-                    subtitle={student.phone_number || 'Not provided'}
-                    icon={<Phone size={20} className="text-tg-button" />}
+                    value={student.phone_number || 'Not provided'}
+                    icon="📞"
+                    iconColor="bg-green-500"
                     onClick={() => {
                         if (student.phone_number) {
                             window.open(`tel:${student.phone_number}`);
                         }
                     }}
                 />
-                <ListItem
+                <AdminListItem
                     title="Student ID"
                     value={`#${student.student_id_display || student.student_id || 'N/A'}`}
-                    icon={<User size={20} className="text-tg-button" />}
+                    icon="🆔"
+                    iconColor="bg-blue-500"
+                    isLast
                 />
-            </Section>
+            </AdminSection>
 
             {/* Finance Section */}
-            <Section title="Finance">
-                <ListItem
+            <AdminSection title="Finance">
+                <AdminListItem
                     title="Payment History"
-                    subtitle="View all transactions"
-                    icon={<CreditCard size={20} className="text-green-500" />}
+                    // subtitle removed
+                    icon="💳"
+                    iconColor="bg-blue-500"
                     onClick={() => setShowPaymentModal(true)}
                     showChevron
+                    isLast
                 />
-            </Section>
+            </AdminSection>
 
             {/* Groups Section */}
-            <Section title="Groups" action={<button onClick={() => setShowGroupManagement(true)} className="text-tg-button text-sm font-medium">Manage</button>}>
+            <AdminSection title="Groups" footer="Tap a group to view details">
                 {student.groups && student.groups.length > 0 ? (
-                    student.groups.map((group: any) => (
-                        <div key={group.id} onClick={() => handleGroupClick(group)} className="active:scale-[0.99] transition-transform">
-                            <ListItem
-                                title={group.name}
-                                subtitle={`${group.payment_status === 'paid' ? '✅ Paid' : '⚠️ Overdue'} • ${group.lessons_remaining !== undefined ? `${group.lessons_remaining} lessons left` : `Due: ${group.next_due_date ? new Date(group.next_due_date).toLocaleDateString() : 'N/A'}`}`}
-                                icon={<BookOpen size={20} className="text-tg-button" />}
-                                rightElement={
-                                    <div className="text-xs text-tg-hint">
+                    student.groups.map((group: any, index: number) => (
+                        <AdminListItem
+                            key={group.id}
+                            title={group.name}
+                            // subtitle removed
+                            value={
+                                <div className="flex flex-col items-end">
+                                    <span className={group.payment_status === 'paid' ? 'text-green-500' : 'text-red-500'}>
+                                        {group.payment_status === 'paid' ? 'Paid' : 'Overdue'}
+                                    </span>
+                                    <span className="text-xs text-[#8E8E93]">
                                         {group.teacher?.onboarding_first_name || group.teacher?.first_name || 'No Teacher'}
-                                    </div>
-                                }
-                                showChevron
-                            />
-                        </div>
+                                    </span>
+                                </div>
+                            }
+                            icon="📚"
+                            iconColor="bg-orange-500"
+                            onClick={() => handleGroupClick(group)}
+                            showChevron
+                            isLast={index === student.groups.length - 1}
+                        />
                     ))
                 ) : (
-                    <div className="p-4 text-center text-tg-hint">No groups assigned</div>
+                    <div className="p-4 text-center text-[#8E8E93] bg-white dark:bg-[#1C1C1E]">No groups assigned</div>
                 )}
-            </Section>
+                <div className="p-2 bg-transparent">
+                    <button
+                        onClick={() => setShowGroupManagement(true)}
+                        className="w-full py-2 text-blue-500 font-medium text-sm"
+                    >
+                        Manage Groups
+                    </button>
+                </div>
+            </AdminSection>
 
             {/* Attendance Section */}
-            <Section title="Attendance">
-                <div className="p-4">
+            <AdminSection title="Attendance">
+                <div className="p-4 bg-white dark:bg-[#1C1C1E]">
                     {/* Calendar Header */}
                     <div className="flex items-center justify-between mb-4">
-                        <button onClick={prevMonth} className="p-2 hover:bg-tg-secondary rounded-full text-tg-text">
+                        <button onClick={prevMonth} className="p-2 hover:bg-[#E3E3E8] dark:hover:bg-[#2C2C2E] rounded-full text-black dark:text-white">
                             <ChevronLeft size={20} />
                         </button>
-                        <h3 className="text-lg font-semibold text-tg-text">
+                        <h3 className="text-lg font-semibold text-black dark:text-white">
                             {currentDate.toLocaleString('default', { month: 'long', year: 'numeric' })}
                         </h3>
-                        <button onClick={nextMonth} className="p-2 hover:bg-tg-secondary rounded-full text-tg-text">
+                        <button onClick={nextMonth} className="p-2 hover:bg-[#E3E3E8] dark:hover:bg-[#2C2C2E] rounded-full text-black dark:text-white">
                             <ChevronRight size={20} />
                         </button>
                     </div>
@@ -238,14 +258,14 @@ const AdminStudentDetails: React.FC = () => {
                     {/* Calendar Grid */}
                     <div className="grid grid-cols-7 gap-1 text-center mb-2">
                         {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(day => (
-                            <div key={day} className="text-xs font-medium text-tg-hint py-1">{day}</div>
+                            <div key={day} className="text-xs font-medium text-[#8E8E93] py-1">{day}</div>
                         ))}
                     </div>
                     <div className="grid grid-cols-7 gap-1">
                         {blanks.map(i => <div key={`blank-${i}`} className="aspect-square" />)}
                         {days.map(day => {
                             const status = getAttendanceStatus(day);
-                            let bgClass = "bg-tg-secondary text-tg-text";
+                            let bgClass = "bg-transparent text-black dark:text-white";
                             if (status === 'present') bgClass = "bg-green-500/20 text-green-500 font-bold";
                             if (status === 'absent') bgClass = "bg-red-500/20 text-red-500 font-bold";
                             if (status === 'late') bgClass = "bg-orange-500/20 text-orange-500 font-bold";
@@ -259,13 +279,13 @@ const AdminStudentDetails: React.FC = () => {
                     </div>
 
                     {/* Legend */}
-                    <div className="flex justify-center gap-4 mt-4 text-xs text-tg-hint">
+                    <div className="flex justify-center gap-4 mt-4 text-xs text-[#8E8E93]">
                         <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-green-500"></div> Present</div>
                         <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-red-500"></div> Absent</div>
                         <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-orange-500"></div> Late</div>
                     </div>
                 </div>
-            </Section>
+            </AdminSection>
 
             {/* Modals */}
             <AdminGroupManagementModal

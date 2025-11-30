@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Section } from '../../components/ui/Section';
-import { ListItem } from '../../components/ui/ListItem';
+import { AdminSection } from './components/AdminSection';
+import { AdminListItem } from './components/AdminListItem';
 import { Plus } from 'lucide-react';
 
 const AdminSubjects: React.FC = () => {
@@ -48,8 +48,8 @@ const AdminSubjects: React.FC = () => {
     };
 
     return (
-        <div className="min-h-screen bg-tg-secondary pt-4 pb-20">
-            <h1 className="text-2xl font-bold mb-6 px-4 text-black dark:text-white">Manage Subjects</h1>
+        <div className="min-h-screen bg-[#F2F2F7] dark:bg-[#000000] pt-4 pb-20">
+            <h1 className="text-3xl font-bold mb-6 px-4 text-black dark:text-white">Manage Subjects</h1>
 
             <div className="px-4 mb-6">
                 <div className="flex gap-2">
@@ -58,31 +58,32 @@ const AdminSubjects: React.FC = () => {
                         value={newSubject}
                         onChange={(e) => setNewSubject(e.target.value)}
                         placeholder="New Subject Name"
-                        className="flex-1 bg-gray-200 dark:bg-black/20 text-black dark:text-white border-none rounded-xl p-3 outline-none focus:ring-2 focus:ring-tg-button/50 transition-all placeholder:text-tg-hint"
+                        className="flex-1 bg-[#E3E3E8] dark:bg-[#1C1C1E] text-black dark:text-white border-none rounded-[10px] p-3 outline-none focus:ring-2 focus:ring-pink-500/50 transition-all placeholder:text-[#8E8E93]"
                     />
                     <button
                         onClick={handleAddSubject}
                         disabled={loading || !newSubject.trim()}
-                        className="bg-tg-button text-white p-3 rounded-xl flex items-center justify-center disabled:opacity-50 active:scale-95 transition-transform"
+                        className="bg-pink-500 text-white p-3 rounded-[10px] flex items-center justify-center disabled:opacity-50 active:scale-95 transition-transform shadow-lg shadow-pink-500/20"
                     >
                         <Plus size={24} />
                     </button>
                 </div>
             </div>
 
-            <Section title="Existing Subjects">
+            <AdminSection title="Existing Subjects">
                 {subjects.map((subject, index) => (
-                    <ListItem
+                    <AdminListItem
                         key={subject.id}
                         title={subject.name}
                         icon="📚"
+                        iconColor="bg-pink-500"
                         isLast={index === subjects.length - 1}
                     />
                 ))}
                 {subjects.length === 0 && (
-                    <div className="p-4 text-center text-tg-hint">No subjects found.</div>
+                    <div className="p-4 text-center text-[#8E8E93]">No subjects found.</div>
                 )}
-            </Section>
+            </AdminSection>
         </div>
     );
 };

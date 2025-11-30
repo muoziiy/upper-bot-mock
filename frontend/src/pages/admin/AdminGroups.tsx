@@ -1,8 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Section } from '../../components/ui/Section';
-import { ListItem } from '../../components/ui/ListItem';
+import { AdminSection } from './components/AdminSection';
+import { AdminListItem } from './components/AdminListItem';
 import { Search, Plus } from 'lucide-react';
 import AdminCreateGroupModal from './components/AdminCreateGroupModal';
 import { useTelegram } from '../../context/TelegramContext';
@@ -60,52 +60,53 @@ const AdminGroups: React.FC = () => {
     );
 
     return (
-        <div className="min-h-screen bg-tg-secondary pt-4 pb-20">
-            <h1 className="text-2xl font-bold mb-4 px-4 text-black dark:text-white">Manage Groups</h1>
+        <div className="min-h-screen bg-[#F2F2F7] dark:bg-[#000000] pt-4 pb-20">
+            <h1 className="text-3xl font-bold mb-4 px-4 text-black dark:text-white">Manage Groups</h1>
 
             <div className="space-y-6">
                 <div className="px-4 flex items-center gap-2 mb-4">
                     <div className="relative flex-1">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-tg-hint" size={18} />
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8E8E93]" size={18} />
                         <input
                             type="text"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             placeholder="Search groups..."
-                            className="w-full bg-gray-200 dark:bg-black/20 text-black dark:text-white pl-9 pr-4 py-2 rounded-xl border-none outline-none focus:ring-2 focus:ring-tg-button/50 transition-all placeholder:text-tg-hint"
+                            className="w-full bg-[#E3E3E8] dark:bg-[#1C1C1E] text-black dark:text-white pl-9 pr-4 py-2 rounded-[10px] border-none outline-none focus:ring-2 focus:ring-blue-500/50 transition-all placeholder:text-[#8E8E93]"
                         />
                     </div>
                     <button
                         onClick={handleCreate}
-                        className="w-10 h-10 bg-tg-button text-white rounded-xl flex items-center justify-center shadow-lg shadow-tg-button/20 active:scale-95 transition-transform"
+                        className="w-10 h-10 bg-blue-500 text-white rounded-[10px] flex items-center justify-center shadow-lg shadow-blue-500/20 active:scale-95 transition-transform"
                     >
                         <Plus size={20} />
                     </button>
                 </div>
 
                 {loading ? (
-                    <div className="text-center text-tg-hint py-8">Loading groups...</div>
+                    <div className="text-center text-[#8E8E93] py-8">Loading groups...</div>
                 ) : filteredGroups.length > 0 ? (
-                    <Section title="All Groups">
+                    <AdminSection title="All Groups">
                         {filteredGroups.map((group, index) => (
-                            <ListItem
+                            <AdminListItem
                                 key={group.id}
                                 title={group.name}
-                                subtitle={
-                                    <div className="flex flex-col">
-                                        <span>{group.teacher_name || 'No Teacher'}</span>
-                                        <span className="text-xs opacity-70">{group.price ? `${group.price.toLocaleString()} UZS` : 'Free'}</span>
-                                    </div>
+                                // subtitle removed
+                                value={
+                                    <span className="text-sm text-[#8E8E93]">
+                                        {group.price ? `${group.price.toLocaleString()} UZS` : 'Free'}
+                                    </span>
                                 }
                                 icon="👥"
+                                iconColor="bg-blue-500"
                                 onClick={() => handleEdit(group)}
                                 showChevron
                                 isLast={index === filteredGroups.length - 1}
                             />
                         ))}
-                    </Section>
+                    </AdminSection>
                 ) : (
-                    <div className="text-center text-tg-hint py-8">No groups found</div>
+                    <div className="text-center text-[#8E8E93] py-8">No groups found</div>
                 )}
             </div>
 
