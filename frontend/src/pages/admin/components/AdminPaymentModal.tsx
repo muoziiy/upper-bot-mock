@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Check, ChevronDown, Trash2, Plus, AlertTriangle } from 'lucide-react';
+import { Trash2, AlertTriangle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../../../lib/utils';
 import { useTelegram } from '../../../context/TelegramContext';
+import { AdminSection } from './AdminSection';
+import { AdminListItem } from './AdminListItem';
 
 interface Payment {
     id: string;
@@ -179,16 +181,19 @@ const AdminPaymentModal: React.FC<AdminPaymentModalProps> = ({ isOpen, onClose, 
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-[60] bg-tg-bg flex flex-col">
+        <div className="fixed inset-0 z-[60] bg-[#F2F2F7] dark:bg-[#000000] flex flex-col">
             {/* Header */}
-            <div className="px-4 py-3 border-b border-tg-hint/10 flex items-center justify-between bg-tg-bg">
-                <h2 className="text-lg font-semibold text-tg-text">
+            <div className="px-4 py-3 border-b border-tg-hint/10 flex items-center justify-between bg-[#F2F2F7] dark:bg-[#000000]">
+                <h2 className="text-lg font-semibold text-black dark:text-white">
                     {view === 'add' ? 'Add Payment' : `Payments - ${studentName}`}
                 </h2>
+                <button onClick={onClose} className="text-tg-button font-medium">
+                    Done
+                </button>
             </div>
 
             {/* Content */}
-            <div className="flex-1 overflow-y-auto p-4 bg-tg-bg">
+            <div className="flex-1 overflow-y-auto pt-4">
                 <AnimatePresence mode="wait">
                     {view === 'history' ? (
                         <motion.div
@@ -196,51 +201,48 @@ const AdminPaymentModal: React.FC<AdminPaymentModalProps> = ({ isOpen, onClose, 
                             initial={{ opacity: 0, x: -20 }}
                             animate={{ opacity: 1, x: 0 }}
                             exit={{ opacity: 0, x: 20 }}
-                            className="space-y-4"
                         >
-                            {/* Add Button */}
-                            <button
-                                onClick={() => setView('add')}
-                                className="w-full py-3 rounded-xl bg-tg-button text-white font-semibold flex items-center justify-center gap-2 active:scale-95 transition-transform"
-                            >
-                                <Plus size={20} />
-                                Add Payment
-                            </button>
+                            {/* Actions */}
+                            <AdminSection>
+                                <AdminListItem
+                                    title="Add Payment"
+                                    icon="➕"
+                                    iconColor="bg-blue-500"
+                                    onClick={() => setView('add')}
+                                    isLast
+                                />
+                            </AdminSection>
 
-                            {/* List */}
-                            <div className="space-y-3">
+                            {/* History List */}
+                            <AdminSection title="History">
                                 {payments.length > 0 ? (
-                                    payments.map((payment) => (
-                                        <div key={payment.id} className="bg-tg-secondary p-4 rounded-xl border border-tg-hint/10 flex justify-between items-center">
-                                            <div>
-                                                <div className="font-semibold text-tg-text text-lg">
-                                                    {payment.amount.toLocaleString()} UZS
-                                                </div>
-                                                <div className="text-sm text-tg-hint flex items-center gap-2">
-                                                    <span>📅 {new Date(payment.payment_date).toLocaleDateString()}</span>
-                                                    <span>•</span>
-                                                    <span className="capitalize">{payment.payment_method}</span>
-                                                </div>
-                                                {payment.subject_name && (
-                                                    <div className="text-xs text-tg-button mt-1 font-medium">
-                                                        {payment.subject_name}
-                                                    </div>
-                                                )}
-                                            </div>
-                                            <button
-                                                onClick={() => handleDelete(payment.id)}
-                                                className="p-2 text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
-                                            >
-                                                <Trash2 size={20} />
-                                            </button>
-                                        </div>
+                                    payments.map((payment, index) => (
+                                        <AdminListItem
+                                            key={payment.id}
+                                            title={`${payment.amount.toLocaleString()} UZS`}
+                                            subtitle={`${new Date(payment.payment_date).toLocaleDateString()} • ${payment.payment_method} • ${payment.subject_name || 'General'}`}
+                                            icon="💰"
+                                            iconColor="bg-green-500"
+                                            rightElement={
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleDelete(payment.id);
+                                                    }}
+                                                    className="p-2 text-red-500 active:opacity-70"
+                                                >
+                                                    <Trash2 size={20} />
+                                                </button>
+                                            }
+                                            isLast={index === payments.length - 1}
+                                        />
                                     ))
                                 ) : (
-                                    <div className="text-center py-12 text-tg-hint">
+                                    <div className="p-4 text-center text-[#8E8E93] bg-white dark:bg-[#1C1C1E]">
                                         No payment history found.
                                     </div>
                                 )}
-                            </div>
+                            </AdminSection>
                         </motion.div>
                     ) : (
                         <motion.div
@@ -248,89 +250,67 @@ const AdminPaymentModal: React.FC<AdminPaymentModalProps> = ({ isOpen, onClose, 
                             initial={{ opacity: 0, x: 20 }}
                             animate={{ opacity: 1, x: 0 }}
                             exit={{ opacity: 0, x: -20 }}
-                            className="space-y-6"
                         >
-                            {/* Date */}
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium text-tg-hint ml-1">Date</label>
-                                <div className="relative">
-                                    <Calendar className="absolute left-3.5 top-1/2 -translate-y-1/2 text-tg-hint" size={18} />
+                            <AdminSection title="Payment Details">
+                                {/* Date */}
+                                <div className="px-4 py-3 bg-white dark:bg-[#1C1C1E] border-b border-[#C6C6C8] dark:border-[#38383A] flex items-center justify-between">
+                                    <span className="text-[17px] text-black dark:text-white">Date</span>
                                     <input
                                         type="date"
                                         value={date}
                                         onChange={(e) => setDate(e.target.value)}
-                                        className="w-full bg-tg-secondary text-tg-text pl-11 p-3.5 rounded-xl border-none outline-none focus:ring-2 focus:ring-tg-button/20"
+                                        className="bg-transparent text-right text-[17px] text-[#8E8E93] outline-none"
                                     />
                                 </div>
-                            </div>
 
-                            {/* Group */}
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium text-tg-hint ml-1">Group</label>
-                                <div className="relative">
+                                {/* Group */}
+                                <div className="px-4 py-3 bg-white dark:bg-[#1C1C1E] border-b border-[#C6C6C8] dark:border-[#38383A] flex items-center justify-between">
+                                    <span className="text-[17px] text-black dark:text-white">Group</span>
                                     <select
                                         value={selectedGroupId}
                                         onChange={(e) => setSelectedGroupId(e.target.value)}
-                                        className="w-full bg-tg-secondary text-tg-text p-3.5 rounded-xl border-none outline-none appearance-none focus:ring-2 focus:ring-tg-button/20"
+                                        className="bg-transparent text-right text-[17px] text-[#8E8E93] outline-none appearance-none"
                                     >
                                         <option value="" disabled>Select Group</option>
                                         {groups.map(g => (
-                                            <option key={g.id} value={g.id}>{g.name} ({g.price.toLocaleString()} UZS)</option>
+                                            <option key={g.id} value={g.id}>{g.name}</option>
                                         ))}
                                     </select>
-                                    <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 text-tg-hint pointer-events-none" size={18} />
                                 </div>
-                            </div>
 
-                            {/* Lessons Attended */}
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium text-tg-hint ml-1">Lessons Attended</label>
-                                <input
-                                    type="number"
-                                    value={lessonsAttended}
-                                    onChange={(e) => setLessonsAttended(e.target.value)}
-                                    className="w-full bg-tg-secondary text-tg-text p-3.5 rounded-xl border-none outline-none focus:ring-2 focus:ring-tg-button/20"
-                                />
-                                <p className="text-xs text-tg-hint ml-1">
-                                    💡 Expected: {expectedAmount.toLocaleString()} UZS ({lessonsAttended}/12 lessons)
-                                </p>
-                            </div>
-
-                            {/* Payment Method */}
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium text-tg-hint ml-1">Payment Method</label>
-                                <div className="flex gap-2">
-                                    <button
-                                        onClick={() => setMethod('cash')}
-                                        className={cn(
-                                            "flex-1 py-3 rounded-xl border transition-all flex items-center justify-center gap-2",
-                                            method === 'cash'
-                                                ? "bg-tg-button/10 border-tg-button text-tg-button"
-                                                : "bg-tg-secondary border-transparent text-tg-hint"
-                                        )}
-                                    >
-                                        <span>💵</span> Cash
-                                        {method === 'cash' && <Check size={16} />}
-                                    </button>
-                                    <button
-                                        onClick={() => setMethod('card')}
-                                        className={cn(
-                                            "flex-1 py-3 rounded-xl border transition-all flex items-center justify-center gap-2",
-                                            method === 'card'
-                                                ? "bg-tg-button/10 border-tg-button text-tg-button"
-                                                : "bg-tg-secondary border-transparent text-tg-hint"
-                                        )}
-                                    >
-                                        <span>💳</span> Card
-                                        {method === 'card' && <Check size={16} />}
-                                    </button>
+                                {/* Lessons */}
+                                <div className="px-4 py-3 bg-white dark:bg-[#1C1C1E] border-b border-[#C6C6C8] dark:border-[#38383A] flex items-center justify-between">
+                                    <span className="text-[17px] text-black dark:text-white">Lessons</span>
+                                    <input
+                                        type="number"
+                                        value={lessonsAttended}
+                                        onChange={(e) => setLessonsAttended(e.target.value)}
+                                        className="bg-transparent text-right text-[17px] text-[#8E8E93] outline-none w-20"
+                                    />
                                 </div>
-                            </div>
 
-                            {/* Amount */}
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium text-tg-hint ml-1">Amount Paid</label>
-                                <div className="relative">
+                                {/* Method */}
+                                <div className="px-4 py-3 bg-white dark:bg-[#1C1C1E] border-b border-[#C6C6C8] dark:border-[#38383A] flex items-center justify-between">
+                                    <span className="text-[17px] text-black dark:text-white">Method</span>
+                                    <div className="flex gap-4">
+                                        <button
+                                            onClick={() => setMethod('cash')}
+                                            className={cn("text-[17px] transition-colors", method === 'cash' ? "text-blue-500 font-semibold" : "text-[#8E8E93]")}
+                                        >
+                                            Cash
+                                        </button>
+                                        <button
+                                            onClick={() => setMethod('card')}
+                                            className={cn("text-[17px] transition-colors", method === 'card' ? "text-blue-500 font-semibold" : "text-[#8E8E93]")}
+                                        >
+                                            Card
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Amount */}
+                                <div className="px-4 py-3 bg-white dark:bg-[#1C1C1E] flex items-center justify-between">
+                                    <span className="text-[17px] text-black dark:text-white">Amount</span>
                                     <input
                                         type="number"
                                         value={amount}
@@ -340,30 +320,23 @@ const AdminPaymentModal: React.FC<AdminPaymentModalProps> = ({ isOpen, onClose, 
                                         }}
                                         placeholder="0"
                                         className={cn(
-                                            "w-full bg-tg-secondary text-tg-text p-3.5 rounded-xl border outline-none focus:ring-2 transition-all text-lg font-semibold",
-                                            amount && !isAmountMatching
-                                                ? "border-red-300 focus:ring-red-500/20 text-red-500"
-                                                : amount && isAmountMatching
-                                                    ? "border-green-300 focus:ring-green-500/20 text-green-500"
-                                                    : "border-transparent focus:ring-tg-button/20"
+                                            "bg-transparent text-right text-[17px] outline-none w-32",
+                                            amount && !isAmountMatching ? "text-red-500" : "text-blue-500"
                                         )}
                                     />
-                                    {amount && isAmountMatching && (
-                                        <Check className="absolute right-3.5 top-1/2 -translate-y-1/2 text-green-500" size={20} />
-                                    )}
                                 </div>
-                                {amount && !isAmountMatching && (
-                                    <p className="text-xs text-red-500 flex items-center gap-1 ml-1">
-                                        <AlertTriangle size={12} />
-                                        Amount differs from expected {expectedAmount.toLocaleString()} UZS
-                                    </p>
-                                )}
-                            </div>
+                            </AdminSection>
 
-                            {/* Save Button */}
-                            <div className="pt-4">
+                            {amount && !isAmountMatching && (
+                                <div className="px-4 mb-6 text-xs text-red-500 flex items-center gap-1">
+                                    <AlertTriangle size={12} />
+                                    Expected: {expectedAmount.toLocaleString()} UZS
+                                </div>
+                            )}
+
+                            <div className="px-4">
                                 {showConfirmation ? (
-                                    <div className="space-y-2 animate-in fade-in slide-in-from-bottom-2">
+                                    <div className="space-y-2">
                                         <p className="text-center text-red-500 text-sm font-medium">
                                             ⚠️ Amount mismatch. Are you sure?
                                         </p>
@@ -379,7 +352,7 @@ const AdminPaymentModal: React.FC<AdminPaymentModalProps> = ({ isOpen, onClose, 
                                     <button
                                         onClick={handleSave}
                                         disabled={loading}
-                                        className="w-full py-3.5 rounded-xl bg-tg-button text-white font-semibold active:scale-[0.98] transition-all shadow-lg shadow-tg-button/20"
+                                        className="w-full py-3.5 rounded-xl bg-blue-500 text-white font-semibold active:scale-[0.98] transition-all"
                                     >
                                         Save Payment
                                     </button>
