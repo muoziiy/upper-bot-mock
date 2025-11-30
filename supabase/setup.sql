@@ -183,19 +183,6 @@ CREATE TABLE IF NOT EXISTS teacher_payments (
     teacher_id UUID REFERENCES users(id) ON DELETE CASCADE,
     amount DECIMAL(10, 2) NOT NULL,
     payment_date DATE NOT NULL,
-    status TEXT DEFAULT 'completed',
-    notes TEXT,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
--- ATTENDANCE RECORDS
-CREATE TABLE IF NOT EXISTS attendance_records (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    student_id UUID REFERENCES users(id) ON DELETE CASCADE,
-    group_id UUID REFERENCES groups(id) ON DELETE CASCADE,
-    attendance_date DATE NOT NULL,
-    status TEXT DEFAULT 'present',
     notes TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),

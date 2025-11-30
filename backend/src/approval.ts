@@ -147,7 +147,7 @@ export const setupApprovalHandlers = (bot: Telegraf) => {
         logInfo(`Admin action received: ${action}`, {
             action: 'admin_action_received',
             userId: adminTelegramId,
-            additionalInfo: { requestId, action }
+            additionalInfo: { requestId, action, rawMatch: ctx.match }
         });
 
         try {
@@ -167,14 +167,20 @@ export const setupApprovalHandlers = (bot: Telegraf) => {
             }
 
             // 2. ATOMIC CHECK (The Safety Lock)
-            const { data: request } = await supabase
+            logInfo('Fetching request from DB', { additionalInfo: { requestId } });
+
+            const { data: request, error: fetchError } = await supabase
                 .from('registration_requests')
                 .select('*, users(telegram_id, first_name)')
                 .eq('id', requestId)
                 .single();
 
+            if (fetchError) {
+                logError(fetchError, { action: 'fetch_request_error', additionalInfo: { requestId } });
+            }
+
             if (!request) {
-                logWarning('Approval request not found', { additionalInfo: { requestId } });
+                logWarning('Approval request not found', { additionalInfo: { requestId, fetchError } });
                 return ctx.answerCbQuery('⚠️ Request not found.');
             }
 
