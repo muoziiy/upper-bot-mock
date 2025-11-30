@@ -592,6 +592,8 @@ router.get('/students/:id', async (req, res) => {
             .select(`
                 joined_at,
                 payment_status,
+                next_due_date,
+                lessons_remaining,
                 groups (
                     id,
                     name,
@@ -621,7 +623,9 @@ router.get('/students/:id', async (req, res) => {
             price: gm.groups.price,
             teacher_name: gm.groups.teacher ? `${gm.groups.teacher.onboarding_first_name || gm.groups.teacher.first_name} ${gm.groups.teacher.surname}` : null,
             joined_at: gm.joined_at,
-            payment_status: gm.payment_status
+            payment_status: gm.payment_status,
+            next_due_date: gm.next_due_date,
+            lessons_remaining: gm.lessons_remaining
         }));
 
         res.json({

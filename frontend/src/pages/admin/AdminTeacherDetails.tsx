@@ -84,43 +84,52 @@ const AdminTeacherDetails: React.FC = () => {
     }
 
     const totalStudents = groups.reduce((sum, g) => sum + g.student_count, 0);
-    const potentialRevenue = groups.reduce((sum, g) => sum + (g.price * g.student_count), 0);
+
 
     return (
         <div className="page-content pt-4 pb-20">
             <h1 className="text-2xl font-bold mb-4 px-4 text-tg-text">Teacher Details</h1>
 
-            {/* Profile Section */}
-            <Section title="Profile">
-                <div className="p-4 flex flex-col items-center">
-                    <div className="w-20 h-20 bg-tg-button/10 rounded-full flex items-center justify-center mb-3">
-                        <User size={40} className="text-tg-button" />
-                    </div>
-                    <h2 className="text-xl font-bold text-tg-text">{teacher.onboarding_first_name || teacher.first_name} {teacher.surname}</h2>
-                    <p className="text-tg-hint text-sm">@{teacher.username || 'No username'}</p>
+            {/* Profile Header */}
+            <div className="flex flex-col items-center mb-6 pt-2">
+                <div className="w-24 h-24 bg-tg-secondary rounded-full flex items-center justify-center mb-3 shadow-sm">
+                    <User size={48} className="text-tg-hint" />
                 </div>
+                <h2 className="text-2xl font-bold text-tg-text text-center leading-tight">
+                    {teacher.onboarding_first_name || teacher.first_name} {teacher.surname}
+                </h2>
+                <p className="text-tg-hint text-base">@{teacher.username || 'No username'}</p>
+            </div>
+
+            {/* Personal Info Section */}
+            <Section title="Personal Info">
                 <ListItem
                     title="Phone Number"
                     subtitle={teacher.phone_number || 'Not provided'}
-                    icon={<Phone size={20} className="text-tg-hint" />}
+                    icon={<Phone size={20} className="text-tg-button" />}
+                    onClick={() => {
+                        if (teacher.phone_number) {
+                            window.open(`tel:${teacher.phone_number}`);
+                        }
+                    }}
                 />
                 <ListItem
                     title="Bio"
                     subtitle={teacher.bio || 'No bio provided'}
-                    icon={<BookOpen size={20} className="text-tg-hint" />}
+                    icon={<BookOpen size={20} className="text-tg-button" />}
                 />
             </Section>
 
-            {/* Payment Info Button */}
-            <div className="px-4 mb-6">
-                <button
+            {/* Finance Section */}
+            <Section title="Finance">
+                <ListItem
+                    title="Payment History"
+                    subtitle="View all payouts"
+                    icon={<CreditCard size={20} className="text-green-500" />}
                     onClick={() => setShowPaymentModal(true)}
-                    className="w-full py-3 rounded-xl bg-tg-button text-white font-semibold shadow-lg shadow-tg-button/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
-                >
-                    <CreditCard size={20} />
-                    Payment Info
-                </button>
-            </div>
+                    showChevron
+                />
+            </Section>
 
             {/* Stats Section */}
             <Section title="Overview">
@@ -132,11 +141,6 @@ const AdminTeacherDetails: React.FC = () => {
                     <div className="bg-tg-bg p-3 rounded-xl border border-tg-secondary">
                         <div className="text-tg-hint text-xs mb-1">Active Groups</div>
                         <div className="text-xl font-bold text-tg-text">{groups.length}</div>
-                    </div>
-                    <div className="col-span-2 bg-tg-bg p-3 rounded-xl border border-tg-secondary">
-                        <div className="text-tg-hint text-xs mb-1">Potential Monthly Revenue</div>
-                        <div className="text-xl font-bold text-green-500">{potentialRevenue.toLocaleString()} UZS</div>
-                        <div className="text-xs text-tg-hint mt-1">Based on active students * group price</div>
                     </div>
                 </div>
             </Section>
