@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { useTelegram } from '../../../context/TelegramContext';
 import { Trash2, CreditCard, Calendar, Settings } from 'lucide-react';
 import AdminPaymentModal from './AdminPaymentModal';
