@@ -1,6 +1,6 @@
 import { Context, Telegraf, Markup } from 'telegraf';
 import { supabase } from './supabase';
-import { logError, logInfo } from './logger';
+import { logError, logInfo, logWarning } from './logger';
 
 // ==========================================
 // 1. NOTIFY ADMINS (The "One Action" Setup)
@@ -16,6 +16,12 @@ export const notifyAdminsOfNewRequest = async (
     }
 ) => {
     try {
+        logInfo('Starting admin notification process', {
+            action: 'notify_admins_start',
+            userId: payload.userId,
+            additionalInfo: { type: payload.type }
+        });
+
         // 1. Get User DB ID
         const { data: userData } = await supabase
             .from('users')
@@ -24,7 +30,10 @@ export const notifyAdminsOfNewRequest = async (
             .single();
 
         if (!userData) {
-            console.error('User not found for request creation');
+            logError(new Error('User not found for request creation'), {
+                action: 'notify_admins_user_lookup',
+                userId: payload.userId
+            });
             return;
         }
 
@@ -40,9 +49,17 @@ export const notifyAdminsOfNewRequest = async (
             .single();
 
         if (reqError || !request) {
-            console.error('Failed to create registration request', reqError);
+            logError(reqError || new Error('No request returned'), {
+                action: 'create_registration_request',
+                userId: payload.userId
+            });
             return;
         }
+
+        logInfo('Registration request created', {
+            action: 'request_created',
+            additionalInfo: { requestId: request.id }
+        });
 
         // 3. Fetch All Admins
         const { data: admins, error } = await supabase
@@ -51,9 +68,14 @@ export const notifyAdminsOfNewRequest = async (
             .in('role', ['admin', 'super_admin']);
 
         if (error || !admins) {
-            console.error('Failed to fetch admins', error);
+            logError(error || new Error('No admins found'), { action: 'fetch_admins' });
             return;
         }
+
+        logInfo(`Found ${admins.length} admins to notify`, {
+            action: 'admins_fetched',
+            additionalInfo: { count: admins.length }
+        });
 
         // 4. Send Message to Each Admin & Log It
         const logs = [];
@@ -80,21 +102,31 @@ export const notifyAdminsOfNewRequest = async (
                 });
 
             } catch (e) {
-                console.error(`Failed to notify admin ${admin.telegram_id}`, e);
+                logError(e, {
+                    action: 'send_admin_message',
+                    additionalInfo: { adminId: admin.telegram_id }
+                });
             }
         }
 
         // 5. Save Logs (The "Sync" Table)
         if (logs.length > 0) {
-            const { error: logError } = await supabase
+            const { error: logErrorDb } = await supabase
                 .from('admin_notification_logs')
                 .insert(logs);
 
-            if (logError) console.error('Failed to save notification logs', logError);
+            if (logErrorDb) {
+                logError(logErrorDb, { action: 'save_notification_logs' });
+            } else {
+                logInfo('Notification logs saved', {
+                    action: 'logs_saved',
+                    additionalInfo: { count: logs.length }
+                });
+            }
         }
 
     } catch (e) {
-        console.error('Error in notifyAdminsOfNewRequest', e);
+        logError(e, { action: 'notifyAdminsOfNewRequest_fatal' });
     }
 };
 
@@ -112,6 +144,12 @@ export const setupApprovalHandlers = (bot: Telegraf) => {
 
         if (!adminTelegramId) return;
 
+        logInfo(`Admin action received: ${action}`, {
+            action: 'admin_action_received',
+            userId: adminTelegramId,
+            additionalInfo: { requestId, action }
+        });
+
         try {
             // 1. Verify Admin Authority
             const { data: adminUser } = await supabase
@@ -121,6 +159,10 @@ export const setupApprovalHandlers = (bot: Telegraf) => {
                 .single();
 
             if (!adminUser || !['admin', 'super_admin'].includes(adminUser.role)) {
+                logWarning('Unauthorized approval attempt', {
+                    action: 'unauthorized_approval',
+                    userId: adminTelegramId
+                });
                 return ctx.answerCbQuery('⛔ You are not authorized.');
             }
 
@@ -129,18 +171,26 @@ export const setupApprovalHandlers = (bot: Telegraf) => {
                 .from('registration_requests')
                 .select('*, users(telegram_id, first_name)')
                 .eq('id', requestId)
-                .eq('id', requestId)
                 .single();
 
             if (!request) {
+                logWarning('Approval request not found', { additionalInfo: { requestId } });
                 return ctx.answerCbQuery('⚠️ Request not found.');
+            }
+
+            if (request.status !== 'pending') {
+                logInfo('Request already processed', {
+                    action: 'request_already_processed',
+                    additionalInfo: { status: request.status }
+                });
+                return ctx.answerCbQuery(`⚠️ Request already ${request.status}.`);
             }
 
             // 3. PROCESS THE ACTION
             const newStatus = action === 'approve' ? 'approved' : 'declined';
 
             // Update Request
-            await supabase
+            const { error: updateError } = await supabase
                 .from('registration_requests')
                 .update({
                     status: newStatus,
@@ -148,6 +198,10 @@ export const setupApprovalHandlers = (bot: Telegraf) => {
                     updated_at: new Date().toISOString()
                 })
                 .eq('id', requestId);
+
+            if (updateError) throw updateError;
+
+            logInfo(`Request status updated to ${newStatus}`, { additionalInfo: { requestId } });
 
             // Update User Role (if approved) or Revert (if declined)
             if (action === 'approve') {
@@ -164,8 +218,6 @@ export const setupApprovalHandlers = (bot: Telegraf) => {
                 }
             } else {
                 // If declined, ensure they stay as 'new_user' or 'guest' (or whatever logic you prefer)
-                // Usually we might reset them to 'new_user' so they can try again or just leave them as is.
-                // For now, let's set to 'new_user' to be safe.
                 await supabase.from('users').update({ role: 'new_user' }).eq('id', request.user_id);
 
                 // Notify User
@@ -185,6 +237,8 @@ export const setupApprovalHandlers = (bot: Telegraf) => {
                 .eq('request_id', requestId);
 
             if (logs) {
+                logInfo(`Starting mass update for ${logs.length} messages`, { additionalInfo: { requestId } });
+
                 const updatePromises = logs.map(async (log) => {
                     const isAdminWhoClicked = log.admin_chat_id.toString() === adminTelegramId.toString();
 
@@ -198,20 +252,6 @@ export const setupApprovalHandlers = (bot: Telegraf) => {
                             ? `❌ **You declined this request.**`
                             : `❌ **Declined by ${adminName}**`;
                     }
-
-                    // Append original details if needed, or just replace. 
-                    // User asked for: "The message in their chat changes... buttons disappear... text updates"
-                    // We'll keep the original text but append the status or replace the header.
-                    // Actually, the user prompt said: "replacing them with text: '✅ Approved by Admin A'"
-                    // But usually we want to keep the context (Name, Age etc).
-                    // Let's try to edit the text to append the status at the top or bottom.
-                    // However, `editMessageText` replaces the whole text. 
-                    // We don't have the original text easily unless we query it or store it.
-                    // BUT, for the admin who clicked, we have `ctx.callbackQuery.message.text`.
-                    // For others, we don't. 
-                    // STRATEGY: We will construct a generic "Resolved" message with the user's name if possible, 
-                    // OR we just say "Request for [Name] - Approved by [Admin]".
-                    // We have `request.users.first_name`.
 
                     const studentName = request.users?.first_name || 'User';
                     const finalMessage = `${newText}\n\n👤 ${studentName} (${request.role_requested})`;
@@ -231,14 +271,14 @@ export const setupApprovalHandlers = (bot: Telegraf) => {
                 });
 
                 await Promise.all(updatePromises);
+                logInfo('Mass update completed', { additionalInfo: { requestId } });
             }
 
-            // Answer the interaction for the clicker (if not already handled by the mass update loop)
-            // The mass update loop handles the clicker too, but `answerCbQuery` is separate.
+            // Answer the interaction for the clicker
             await ctx.answerCbQuery(`Done!`);
 
         } catch (error) {
-            console.error('Error handling approval action:', error);
+            logError(error, { action: 'handle_approval_action', additionalInfo: { requestId } });
             ctx.answerCbQuery('An error occurred.');
         }
     });
