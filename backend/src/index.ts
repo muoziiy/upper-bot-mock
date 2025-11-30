@@ -14,6 +14,8 @@ import onboardingRoutes from './routes/onboarding';
 import schedulerRoutes from './routes/scheduler';
 import bot from './bot';
 
+import { startScheduler } from './scheduler';
+
 dotenv.config();
 
 const app = express();
@@ -40,6 +42,9 @@ app.get('/', (req, res) => {
 
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
+
+    // Start Scheduler
+    startScheduler();
 
     // Start Telegram bot
     bot.launch().then(() => {

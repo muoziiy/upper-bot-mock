@@ -6,6 +6,21 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const supabase_1 = require("../supabase");
 const router = express_1.default.Router();
+// Get Center Settings (Public/Student)
+router.get('/settings', async (req, res) => {
+    try {
+        const { data, error } = await supabase_1.supabase
+            .from('education_center_settings')
+            .select('support_info')
+            .single();
+        if (error)
+            throw error;
+        res.json(data);
+    }
+    catch (error) {
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
 // Get available exams for a student
 router.get('/exams', async (req, res) => {
     const studentId = req.headers['x-user-id']; // Mock auth header

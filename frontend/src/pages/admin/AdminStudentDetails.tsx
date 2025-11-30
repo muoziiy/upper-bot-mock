@@ -220,7 +220,7 @@ const AdminStudentDetails: React.FC = () => {
                                                         }}
                                                         className="flex-1 bg-green-500 text-white py-2 rounded-lg text-sm font-medium shadow-sm active:scale-95 transition-transform"
                                                     >
-                                                        Add Payment
+                                                        Payment Info
                                                     </button>
                                                     <button
                                                         onClick={(e) => {

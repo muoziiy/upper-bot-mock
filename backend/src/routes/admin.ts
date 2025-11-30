@@ -534,6 +534,7 @@ router.get('/students', async (req, res) => {
 
             if (hasOverdue) overallStatus = 'overdue';
             else if (hasPaid) overallStatus = 'paid';
+            else overallStatus = 'overdue'; // Default to overdue if not paid
 
             return {
                 id: student.id,
@@ -606,12 +607,11 @@ router.get('/students/:id', async (req, res) => {
         if (groupsError) throw groupsError;
 
         // Calculate status from group_members
-        let status = 'unpaid';
+        let status = 'overdue';
         const hasOverdue = groupsData?.some((g: any) => g.payment_status === 'overdue');
         const hasPaid = groupsData?.some((g: any) => g.payment_status === 'paid');
 
-        if (hasOverdue) status = 'overdue';
-        else if (hasPaid) status = 'paid';
+        if (hasPaid && !hasOverdue) status = 'paid';
 
         // Format groups
         const groups = groupsData.map((gm: any) => ({
@@ -801,20 +801,6 @@ router.put('/students/:id/payments/:paymentId', async (req, res) => {
             .single();
 
         if (studentError) throw studentError;
-
-        // Send notification to student
-        try {
-            await sendStudentPaymentNotification(student.telegram_id, {
-                action: 'updated',
-                subject: payment.subjects?.name || 'Unknown',
-                amount: parseFloat(amount),
-                date: payment_date,
-                method: payment_method,
-                status
-            });
-        } catch (notifError) {
-            console.error('Failed to send payment notification:', notifError);
-        }
 
         res.json(payment);
     } catch (error) {
@@ -1636,23 +1622,13 @@ async function recalculateStudentGroupStatus(studentId: string, groupId: string)
                 .eq('group_id', groupId)
                 .in('status', ['present', 'late']);
 
-            const { count: allAttendance } = await supabase
-                .from('attendance_records')
-                .select('*', { count: 'exact', head: true })
-                .eq('student_id', studentId)
-                .eq('group_id', groupId);
-
-            const lessonsRemaining = totalPaidLessons - (allAttendance || 0);
+            const lessonsRemaining = totalPaidLessons - (totalUsedLessons || 0);
 
             updates.lessons_remaining = lessonsRemaining;
             updates.payment_status = lessonsRemaining > 0 ? 'paid' : 'overdue';
 
         } else {
             // B. Monthly (Fixed or Rolling)
-            // Find the latest "paid until" date.
-            // Simplified: Look at the latest payment's month/year or explicit coverage.
-            // If we assume payments cover specific months, we find the latest covered month.
-
             // Sort payments by date desc
             validPayments.sort((a, b) => new Date(b.payment_date).getTime() - new Date(a.payment_date).getTime());
 
@@ -1661,27 +1637,28 @@ async function recalculateStudentGroupStatus(studentId: string, groupId: string)
                 // If we have month/year, use that.
                 if (lastPayment.month && lastPayment.year) {
                     // Next due is the month AFTER the last paid month.
-                    // e.g. Paid for Oct 2023 -> Due Nov 1st 2023.
-                    const lastPaidDate = new Date(lastPayment.year, lastPayment.month - 1, 1); // Month is 1-indexed in DB? Usually.
+                    const lastPaidDate = new Date(lastPayment.year, lastPayment.month - 1, 1);
                     const nextDue = new Date(lastPaidDate);
                     nextDue.setMonth(nextDue.getMonth() + 1);
                     updates.next_due_date = nextDue.toISOString();
                     updates.last_payment_date = lastPayment.payment_date;
                 } else {
-                    // Fallback: just add 1 month to payment date?
+                    // Fallback: just add 1 month to payment date
                     const nextDue = new Date(lastPayment.payment_date);
                     nextDue.setMonth(nextDue.getMonth() + 1);
                     updates.next_due_date = nextDue.toISOString();
                     updates.last_payment_date = lastPayment.payment_date;
                 }
             } else {
-                // No payments? Revert to Joined Date logic?
-                // If never paid, due date is joined date (or next month if fixed).
-                // Let's leave it or set to joined_at.
-                // updates.next_due_date = groupMember.joined_at; 
+                // No payments? 
+                // If never paid, we don't set next_due_date here, relying on initial setup or manual override.
+                // But we should mark as overdue if joined long ago? 
+                // For now, if no payments, let's assume overdue if joined > 1 month ago?
+                // Let's keep it simple: No payments = Overdue (unless just joined)
+                updates.payment_status = 'overdue';
             }
 
-            // Check Status
+            // Check Status if we have a due date
             if (updates.next_due_date) {
                 const today = new Date();
                 const dueDate = new Date(updates.next_due_date);

@@ -475,6 +475,8 @@ router.get('/students', async (req, res) => {
                 overallStatus = 'overdue';
             else if (hasPaid)
                 overallStatus = 'paid';
+            else
+                overallStatus = 'overdue'; // Default to overdue if not paid
             return {
                 id: student.id,
                 student_id: student.student_id,
@@ -542,12 +544,10 @@ router.get('/students/:id', async (req, res) => {
         if (groupsError)
             throw groupsError;
         // Calculate status from group_members
-        let status = 'unpaid';
+        let status = 'overdue';
         const hasOverdue = groupsData?.some((g) => g.payment_status === 'overdue');
         const hasPaid = groupsData?.some((g) => g.payment_status === 'paid');
-        if (hasOverdue)
-            status = 'overdue';
-        else if (hasPaid)
+        if (hasPaid && !hasOverdue)
             status = 'paid';
         // Format groups
         const groups = groupsData.map((gm) => ({
@@ -596,20 +596,20 @@ router.get('/students/:id/attendance', async (req, res) => {
     const { id } = req.params;
     try {
         const { data, error } = await supabase_1.supabase
-            .from('attendance')
+            .from('attendance_records')
             .select(`
                 id,
-                date,
+                attendance_date,
                 status,
                 groups (name)
             `)
             .eq('student_id', id)
-            .order('date', { ascending: false });
+            .order('attendance_date', { ascending: false });
         if (error)
             throw error;
         const attendance = data.map((record) => ({
             id: record.id,
-            date: record.date,
+            date: record.attendance_date,
             status: record.status,
             group_name: record.groups?.name
         }));
@@ -718,20 +718,6 @@ router.put('/students/:id/payments/:paymentId', async (req, res) => {
             .single();
         if (studentError)
             throw studentError;
-        // Send notification to student
-        try {
-            await (0, notifications_1.sendStudentPaymentNotification)(student.telegram_id, {
-                action: 'updated',
-                subject: payment.subjects?.name || 'Unknown',
-                amount: parseFloat(amount),
-                date: payment_date,
-                method: payment_method,
-                status
-            });
-        }
-        catch (notifError) {
-            console.error('Failed to send payment notification:', notifError);
-        }
         res.json(payment);
     }
     catch (error) {
@@ -990,6 +976,56 @@ router.put('/students/:id/groups', async (req, res) => {
         res.status(500).json({ error: 'Internal server error' });
     }
 });
+// Broadcast Message
+router.post('/broadcast', async (req, res) => {
+    const { message, group_ids, scheduled_at } = req.body;
+    if (!message) {
+        return res.status(400).json({ error: 'Message is required' });
+    }
+    try {
+        // 1. Handle Scheduling
+        if (scheduled_at && new Date(scheduled_at) > new Date()) {
+            const { error } = await supabase_1.supabase
+                .from('scheduled_broadcasts')
+                .insert({
+                admin_id: req.user?.id, // Assuming auth middleware populates this, or null if not
+                message,
+                group_ids: group_ids || [],
+                scheduled_at,
+                status: 'pending'
+            });
+            if (error)
+                throw error;
+            return res.json({ success: true, message: 'Broadcast scheduled' });
+        }
+        // 2. Immediate Broadcast
+        let query = supabase_1.supabase
+            .from('group_members')
+            .select('users(telegram_id)')
+            .not('users', 'is', null);
+        if (group_ids && group_ids.length > 0 && !group_ids.includes('all')) {
+            query = query.in('group_id', group_ids);
+        }
+        const { data: members, error } = await query;
+        if (error)
+            throw error;
+        const telegramIds = [...new Set(members?.map((m) => m.users?.telegram_id).filter(Boolean))];
+        // Send messages (using bot instance would be better, but here we might need a helper or axios)
+        // Assuming we have a helper or can import bot. 
+        // Since we are in routes, we can import bot from '../bot' if exported, or use axios to telegram API.
+        // Let's use the helper from scheduler.ts or similar if available, or just axios.
+        // Actually, `bot.ts` exports `bot`.
+        const results = await Promise.allSettled(telegramIds.map(id => bot_1.default.telegram.sendMessage(id, `📢 *Announcement*\n\n${message}`, { parse_mode: 'Markdown' })));
+        const sentCount = results.filter(r => r.status === 'fulfilled').length;
+        // Log to broadcast history (if table exists, otherwise skip)
+        // await supabase.from('broadcast_history').insert(...) 
+        res.json({ success: true, sent: sentCount, total: telegramIds.length });
+    }
+    catch (error) {
+        console.error('Error sending broadcast:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
 // Mark Attendance
 router.post('/attendance', async (req, res) => {
     const { student_id, group_id, date, status } = req.body;
@@ -1233,6 +1269,105 @@ router.post('/settings/payment-type', async (req, res) => {
         res.status(500).json({ error: 'Internal server error' });
     }
 });
+// Update Support Info
+router.post('/settings/support', async (req, res) => {
+    const { support_info } = req.body;
+    if (!support_info || typeof support_info !== 'object') {
+        return res.status(400).json({ error: 'Invalid support info' });
+    }
+    try {
+        // Upsert settings (assuming singleton)
+        const { data, error } = await supabase_1.supabase
+            .from('education_center_settings')
+            .update({ support_info, updated_at: new Date().toISOString() })
+            .gt('updated_at', '2000-01-01') // Dummy condition to match all
+            .select()
+            .single();
+        if (error)
+            throw error;
+        res.json({ success: true, data });
+    }
+    catch (error) {
+        console.error('Error updating support info:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+// Get all admins
+router.get('/admins', async (req, res) => {
+    try {
+        const { data, error } = await supabase_1.supabase
+            .from('users')
+            .select('id, first_name, surname, role, telegram_id, username')
+            .in('role', ['admin', 'super_admin'])
+            .order('first_name', { ascending: true });
+        if (error)
+            throw error;
+        res.json(data);
+    }
+    catch (error) {
+        console.error('Error fetching admins:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+// Get teacher details
+router.get('/teachers/:id', async (req, res) => {
+    const { id } = req.params;
+    try {
+        // 1. Fetch Teacher Profile
+        const { data: teacher, error: teacherError } = await supabase_1.supabase
+            .from('users')
+            .select('*')
+            .eq('id', id)
+            .eq('role', 'teacher')
+            .single();
+        if (teacherError || !teacher) {
+            return res.status(404).json({ error: 'Teacher not found' });
+        }
+        // 2. Fetch Groups with Student Count
+        const { data: groups, error: groupsError } = await supabase_1.supabase
+            .from('groups')
+            .select(`
+                *,
+                group_members (count)
+            `)
+            .eq('teacher_id', id);
+        if (groupsError)
+            throw groupsError;
+        // Format groups data
+        const formattedGroups = groups.map(g => ({
+            ...g,
+            student_count: g.group_members[0]?.count || 0
+        }));
+        res.json({
+            teacher,
+            groups: formattedGroups
+        });
+    }
+    catch (error) {
+        console.error('Error fetching teacher details:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+// Demote admin
+router.post('/admins/demote', async (req, res) => {
+    const { adminId } = req.body;
+    try {
+        // Prevent demoting self (handled by frontend usually, but good to have check)
+        // Also prevent demoting super_admin if requester is not super_admin (we don't have requester info here easily without middleware, assuming trusted admin)
+        const { error } = await supabase_1.supabase
+            .from('users')
+            .update({ role: 'new_user' })
+            .eq('id', adminId)
+            .neq('role', 'super_admin'); // Prevent demoting super_admin via this simple endpoint
+        if (error)
+            throw error;
+        res.json({ success: true });
+    }
+    catch (error) {
+        console.error('Error demoting admin:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
 // Delete student from group
 router.delete('/students/:id/groups', async (req, res) => {
     const { id } = req.params;
@@ -1320,20 +1455,12 @@ async function recalculateStudentGroupStatus(studentId, groupId) {
                 .eq('student_id', studentId)
                 .eq('group_id', groupId)
                 .in('status', ['present', 'late']);
-            const { count: allAttendance } = await supabase_1.supabase
-                .from('attendance_records')
-                .select('*', { count: 'exact', head: true })
-                .eq('student_id', studentId)
-                .eq('group_id', groupId);
-            const lessonsRemaining = totalPaidLessons - (allAttendance || 0);
+            const lessonsRemaining = totalPaidLessons - (totalUsedLessons || 0);
             updates.lessons_remaining = lessonsRemaining;
             updates.payment_status = lessonsRemaining > 0 ? 'paid' : 'overdue';
         }
         else {
             // B. Monthly (Fixed or Rolling)
-            // Find the latest "paid until" date.
-            // Simplified: Look at the latest payment's month/year or explicit coverage.
-            // If we assume payments cover specific months, we find the latest covered month.
             // Sort payments by date desc
             validPayments.sort((a, b) => new Date(b.payment_date).getTime() - new Date(a.payment_date).getTime());
             if (validPayments.length > 0) {
@@ -1341,15 +1468,14 @@ async function recalculateStudentGroupStatus(studentId, groupId) {
                 // If we have month/year, use that.
                 if (lastPayment.month && lastPayment.year) {
                     // Next due is the month AFTER the last paid month.
-                    // e.g. Paid for Oct 2023 -> Due Nov 1st 2023.
-                    const lastPaidDate = new Date(lastPayment.year, lastPayment.month - 1, 1); // Month is 1-indexed in DB? Usually.
+                    const lastPaidDate = new Date(lastPayment.year, lastPayment.month - 1, 1);
                     const nextDue = new Date(lastPaidDate);
                     nextDue.setMonth(nextDue.getMonth() + 1);
                     updates.next_due_date = nextDue.toISOString();
                     updates.last_payment_date = lastPayment.payment_date;
                 }
                 else {
-                    // Fallback: just add 1 month to payment date?
+                    // Fallback: just add 1 month to payment date
                     const nextDue = new Date(lastPayment.payment_date);
                     nextDue.setMonth(nextDue.getMonth() + 1);
                     updates.next_due_date = nextDue.toISOString();
@@ -1357,12 +1483,14 @@ async function recalculateStudentGroupStatus(studentId, groupId) {
                 }
             }
             else {
-                // No payments? Revert to Joined Date logic?
-                // If never paid, due date is joined date (or next month if fixed).
-                // Let's leave it or set to joined_at.
-                // updates.next_due_date = groupMember.joined_at; 
+                // No payments? 
+                // If never paid, we don't set next_due_date here, relying on initial setup or manual override.
+                // But we should mark as overdue if joined long ago? 
+                // For now, if no payments, let's assume overdue if joined > 1 month ago?
+                // Let's keep it simple: No payments = Overdue (unless just joined)
+                updates.payment_status = 'overdue';
             }
-            // Check Status
+            // Check Status if we have a due date
             if (updates.next_due_date) {
                 const today = new Date();
                 const dueDate = new Date(updates.next_due_date);

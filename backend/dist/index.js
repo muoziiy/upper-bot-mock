@@ -18,6 +18,7 @@ const journey_1 = __importDefault(require("./routes/journey"));
 const onboarding_1 = __importDefault(require("./routes/onboarding"));
 const scheduler_1 = __importDefault(require("./routes/scheduler"));
 const bot_1 = __importDefault(require("./bot"));
+const scheduler_2 = require("./scheduler");
 dotenv_1.default.config();
 const app = (0, express_1.default)();
 const PORT = process.env.PORT || 3000;
@@ -39,6 +40,8 @@ app.get('/', (req, res) => {
 });
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
+    // Start Scheduler
+    (0, scheduler_2.startScheduler)();
     // Start Telegram bot
     bot_1.default.launch().then(() => {
         console.log('Telegram bot started successfully');

@@ -3,11 +3,17 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.setupApprovalHandlers = exports.notifyAdminsOfNewRequest = void 0;
 const telegraf_1 = require("telegraf");
 const supabase_1 = require("./supabase");
+const logger_1 = require("./logger");
 // ==========================================
 // 1. NOTIFY ADMINS (The "One Action" Setup)
 // ==========================================
 const notifyAdminsOfNewRequest = async (bot, payload) => {
     try {
+        (0, logger_1.logInfo)('Starting admin notification process', {
+            action: 'notify_admins_start',
+            userId: payload.userId,
+            additionalInfo: { type: payload.type }
+        });
         // 1. Get User DB ID
         const { data: userData } = await supabase_1.supabase
             .from('users')
@@ -15,7 +21,10 @@ const notifyAdminsOfNewRequest = async (bot, payload) => {
             .eq('telegram_id', payload.userId)
             .single();
         if (!userData) {
-            console.error('User not found for request creation');
+            (0, logger_1.logError)(new Error('User not found for request creation'), {
+                action: 'notify_admins_user_lookup',
+                userId: payload.userId
+            });
             return;
         }
         // 2. Create Registration Request
@@ -29,18 +38,29 @@ const notifyAdminsOfNewRequest = async (bot, payload) => {
             .select()
             .single();
         if (reqError || !request) {
-            console.error('Failed to create registration request', reqError);
+            (0, logger_1.logError)(reqError || new Error('No request returned'), {
+                action: 'create_registration_request',
+                userId: payload.userId
+            });
             return;
         }
+        (0, logger_1.logInfo)('Registration request created', {
+            action: 'request_created',
+            additionalInfo: { requestId: request.id }
+        });
         // 3. Fetch All Admins
         const { data: admins, error } = await supabase_1.supabase
             .from('users')
             .select('telegram_id')
             .in('role', ['admin', 'super_admin']);
         if (error || !admins) {
-            console.error('Failed to fetch admins', error);
+            (0, logger_1.logError)(error || new Error('No admins found'), { action: 'fetch_admins' });
             return;
         }
+        (0, logger_1.logInfo)(`Found ${admins.length} admins to notify`, {
+            action: 'admins_fetched',
+            additionalInfo: { count: admins.length }
+        });
         // 4. Send Message to Each Admin & Log It
         const logs = [];
         const messageText = `🆕 **New ${payload.type === 'student' ? 'Student' : 'Staff'} Request**\n\n${payload.details}`;
@@ -64,20 +84,30 @@ const notifyAdminsOfNewRequest = async (bot, payload) => {
                 });
             }
             catch (e) {
-                console.error(`Failed to notify admin ${admin.telegram_id}`, e);
+                (0, logger_1.logError)(e, {
+                    action: 'send_admin_message',
+                    additionalInfo: { adminId: admin.telegram_id }
+                });
             }
         }
         // 5. Save Logs (The "Sync" Table)
         if (logs.length > 0) {
-            const { error: logError } = await supabase_1.supabase
+            const { error: logErrorDb } = await supabase_1.supabase
                 .from('admin_notification_logs')
                 .insert(logs);
-            if (logError)
-                console.error('Failed to save notification logs', logError);
+            if (logErrorDb) {
+                (0, logger_1.logError)(logErrorDb, { action: 'save_notification_logs' });
+            }
+            else {
+                (0, logger_1.logInfo)('Notification logs saved', {
+                    action: 'logs_saved',
+                    additionalInfo: { count: logs.length }
+                });
+            }
         }
     }
     catch (e) {
-        console.error('Error in notifyAdminsOfNewRequest', e);
+        (0, logger_1.logError)(e, { action: 'notifyAdminsOfNewRequest_fatal' });
     }
 };
 exports.notifyAdminsOfNewRequest = notifyAdminsOfNewRequest;
@@ -92,6 +122,11 @@ const setupApprovalHandlers = (bot) => {
         const adminName = ctx.from?.first_name || 'Admin';
         if (!adminTelegramId)
             return;
+        (0, logger_1.logInfo)(`Admin action received: ${action}`, {
+            action: 'admin_action_received',
+            userId: adminTelegramId,
+            additionalInfo: { requestId, action, rawMatch: ctx.match }
+        });
         try {
             // 1. Verify Admin Authority
             const { data: adminUser } = await supabase_1.supabase
@@ -100,22 +135,37 @@ const setupApprovalHandlers = (bot) => {
                 .eq('telegram_id', adminTelegramId)
                 .single();
             if (!adminUser || !['admin', 'super_admin'].includes(adminUser.role)) {
+                (0, logger_1.logWarning)('Unauthorized approval attempt', {
+                    action: 'unauthorized_approval',
+                    userId: adminTelegramId
+                });
                 return ctx.answerCbQuery('⛔ You are not authorized.');
             }
             // 2. ATOMIC CHECK (The Safety Lock)
-            const { data: request } = await supabase_1.supabase
+            (0, logger_1.logInfo)('Fetching request from DB', { additionalInfo: { requestId } });
+            const { data: request, error: fetchError } = await supabase_1.supabase
                 .from('registration_requests')
-                .select('*, users(telegram_id, first_name)')
-                .eq('id', requestId)
+                .select('*, users:users!registration_requests_user_id_fkey(telegram_id, first_name)')
                 .eq('id', requestId)
                 .single();
+            if (fetchError) {
+                (0, logger_1.logError)(fetchError, { action: 'fetch_request_error', additionalInfo: { requestId } });
+            }
             if (!request) {
+                (0, logger_1.logWarning)('Approval request not found', { additionalInfo: { requestId, fetchError } });
                 return ctx.answerCbQuery('⚠️ Request not found.');
+            }
+            if (request.status !== 'pending') {
+                (0, logger_1.logInfo)('Request already processed', {
+                    action: 'request_already_processed',
+                    additionalInfo: { status: request.status }
+                });
+                return ctx.answerCbQuery(`⚠️ Request already ${request.status}.`);
             }
             // 3. PROCESS THE ACTION
             const newStatus = action === 'approve' ? 'approved' : 'declined';
             // Update Request
-            await supabase_1.supabase
+            const { error: updateError } = await supabase_1.supabase
                 .from('registration_requests')
                 .update({
                 status: newStatus,
@@ -123,6 +173,9 @@ const setupApprovalHandlers = (bot) => {
                 updated_at: new Date().toISOString()
             })
                 .eq('id', requestId);
+            if (updateError)
+                throw updateError;
+            (0, logger_1.logInfo)(`Request status updated to ${newStatus}`, { additionalInfo: { requestId } });
             // Update User Role (if approved) or Revert (if declined)
             if (action === 'approve') {
                 const newRole = request.role_requested === 'student' ? 'student' : 'teacher';
@@ -134,8 +187,6 @@ const setupApprovalHandlers = (bot) => {
             }
             else {
                 // If declined, ensure they stay as 'new_user' or 'guest' (or whatever logic you prefer)
-                // Usually we might reset them to 'new_user' so they can try again or just leave them as is.
-                // For now, let's set to 'new_user' to be safe.
                 await supabase_1.supabase.from('users').update({ role: 'new_user' }).eq('id', request.user_id);
                 // Notify User
                 if (request.users?.telegram_id) {
@@ -148,6 +199,7 @@ const setupApprovalHandlers = (bot) => {
                 .select('admin_chat_id, message_id')
                 .eq('request_id', requestId);
             if (logs) {
+                (0, logger_1.logInfo)(`Starting mass update for ${logs.length} messages`, { additionalInfo: { requestId } });
                 const updatePromises = logs.map(async (log) => {
                     const isAdminWhoClicked = log.admin_chat_id.toString() === adminTelegramId.toString();
                     let newText = '';
@@ -161,21 +213,16 @@ const setupApprovalHandlers = (bot) => {
                             ? `❌ **You declined this request.**`
                             : `❌ **Declined by ${adminName}**`;
                     }
-                    // Append original details if needed, or just replace. 
-                    // User asked for: "The message in their chat changes... buttons disappear... text updates"
-                    // We'll keep the original text but append the status or replace the header.
-                    // Actually, the user prompt said: "replacing them with text: '✅ Approved by Admin A'"
-                    // But usually we want to keep the context (Name, Age etc).
-                    // Let's try to edit the text to append the status at the top or bottom.
-                    // However, `editMessageText` replaces the whole text. 
-                    // We don't have the original text easily unless we query it or store it.
-                    // BUT, for the admin who clicked, we have `ctx.callbackQuery.message.text`.
-                    // For others, we don't. 
-                    // STRATEGY: We will construct a generic "Resolved" message with the user's name if possible, 
-                    // OR we just say "Request for [Name] - Approved by [Admin]".
-                    // We have `request.users.first_name`.
                     const studentName = request.users?.first_name || 'User';
-                    const finalMessage = `${newText}\n\n👤 ${studentName} (${request.role_requested})`;
+                    // Fetch details from users table since we have the ID
+                    const { data: userDetails } = await supabase_1.supabase
+                        .from('users')
+                        .select('age, sex')
+                        .eq('id', request.user_id)
+                        .single();
+                    const age = userDetails?.age || 'N/A';
+                    const sex = userDetails?.sex || 'N/A';
+                    const finalMessage = `${newText}\n\n👤 ${studentName} (${request.role_requested})\n🎂 **Age:** ${age}\n🚻 **Sex:** ${sex}`;
                     try {
                         await bot.telegram.editMessageText(log.admin_chat_id, Number(log.message_id), undefined, finalMessage, { parse_mode: 'Markdown', reply_markup: undefined } // Remove buttons
                         );
@@ -186,13 +233,13 @@ const setupApprovalHandlers = (bot) => {
                     }
                 });
                 await Promise.all(updatePromises);
+                (0, logger_1.logInfo)('Mass update completed', { additionalInfo: { requestId } });
             }
-            // Answer the interaction for the clicker (if not already handled by the mass update loop)
-            // The mass update loop handles the clicker too, but `answerCbQuery` is separate.
+            // Answer the interaction for the clicker
             await ctx.answerCbQuery(`Done!`);
         }
         catch (error) {
-            console.error('Error handling approval action:', error);
+            (0, logger_1.logError)(error, { action: 'handle_approval_action', additionalInfo: { requestId } });
             ctx.answerCbQuery('An error occurred.');
         }
     });

@@ -36,7 +36,7 @@ router.post('/student', async (req, res) => {
             userId: userId
         });
         // Notify Admins (Non-blocking)
-        const details = `👤 **Name:** ${name} ${surname}\n🎂 **Age:** ${age}\n🚻 **Sex:** ${sex}\n📞 **Phone:** ${phoneNumber}`;
+        const details = `👤 **Name:** ${name} ${surname}\n🎂 **Age:** ${age}\n🚻 **Sex:** ${sex}`;
         // Do not await to prevent blocking response if telegram fails
         (0, approval_1.notifyAdminsOfNewRequest)(bot_1.default, {
             type: 'student',
