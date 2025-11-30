@@ -1593,4 +1593,139 @@ async function recalculateStudentGroupStatus(studentId: string, groupId: string)
     }
 };
 
+// ==============================================================================
+// TEACHER MANAGEMENT ENDPOINTS
+// ==============================================================================
+
+// Get Teacher Details
+router.get('/teachers/:id', async (req, res) => {
+    const { id } = req.params;
+
+    try {
+        const { data: teacher, error: teacherError } = await supabase
+            .from('users')
+            .select('*')
+            .eq('id', id)
+            .single();
+
+        if (teacherError) throw teacherError;
+
+        const { data: groups, error: groupsError } = await supabase
+            .from('groups')
+            .select('*')
+            .eq('teacher_id', id);
+
+        if (groupsError) throw groupsError;
+
+        // Calculate stats for groups
+        const groupsWithStats = await Promise.all(groups.map(async (group: any) => {
+            const { count } = await supabase
+                .from('group_members')
+                .select('*', { count: 'exact', head: true })
+                .eq('group_id', group.id);
+
+            return {
+                ...group,
+                student_count: count || 0
+            };
+        }));
+
+        res.json({
+            teacher,
+            groups: groupsWithStats
+        });
+    } catch (error) {
+        console.error('Error fetching teacher details:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Get Teacher Payments
+router.get('/teachers/:id/payments', async (req, res) => {
+    const { id } = req.params;
+    try {
+        const { data, error } = await supabase
+            .from('teacher_payments')
+            .select('*')
+            .eq('teacher_id', id)
+            .order('payment_date', { ascending: false });
+
+        if (error) throw error;
+        res.json(data);
+    } catch (error) {
+        console.error('Error fetching teacher payments:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Add Teacher Payment
+router.post('/teachers/:id/payments', async (req, res) => {
+    const { id } = req.params;
+    const { amount, payment_date, description } = req.body;
+
+    try {
+        const { data, error } = await supabase
+            .from('teacher_payments')
+            .insert([{ teacher_id: id, amount, payment_date, description }])
+            .select()
+            .single();
+
+        if (error) throw error;
+
+        // Notify Teacher
+        const { data: teacher } = await supabase
+            .from('users')
+            .select('telegram_id')
+            .eq('id', id)
+            .single();
+
+        if (teacher?.telegram_id) {
+            try {
+                await bot.telegram.sendMessage(teacher.telegram_id, `💰 **New Payout Received**\n\nAmount: ${amount.toLocaleString()} UZS\nDate: ${payment_date}\n${description ? `Note: ${description}` : ''}`, { parse_mode: 'Markdown' });
+            } catch (e) {
+                console.error('Failed to send notification', e);
+            }
+        }
+
+        res.json(data);
+    } catch (error) {
+        console.error('Error adding teacher payment:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Delete Teacher Payment
+router.delete('/teachers/:id/payments/:paymentId', async (req, res) => {
+    const { id, paymentId } = req.params;
+
+    try {
+        const { error } = await supabase
+            .from('teacher_payments')
+            .delete()
+            .eq('id', paymentId);
+
+        if (error) throw error;
+
+        // Notify Teacher
+        const { data: teacher } = await supabase
+            .from('users')
+            .select('telegram_id')
+            .eq('id', id)
+            .single();
+
+        if (teacher?.telegram_id) {
+            try {
+                await bot.telegram.sendMessage(teacher.telegram_id, `❌ **Payout Cancelled**\n\nA payout record has been removed by admin.`, { parse_mode: 'Markdown' });
+            } catch (e) {
+                console.error('Failed to send notification', e);
+            }
+        }
+
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Error deleting teacher payment:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
 export default router;
