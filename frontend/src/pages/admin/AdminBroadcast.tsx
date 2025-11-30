@@ -95,6 +95,10 @@ const AdminBroadcast: React.FC = () => {
                 payload.group_ids = selectedGroupIds;
             } else if (targetType === 'all_students') {
                 payload.group_ids = ['all'];
+            } else if (targetType === 'all_teachers') {
+                payload.group_ids = ['all_teachers'];
+            } else if (targetType === 'all_admins') {
+                payload.group_ids = ['all_admins'];
             }
 
             if (isScheduled) {
@@ -173,6 +177,26 @@ const AdminBroadcast: React.FC = () => {
                             >
                                 <Users className={targetType === 'all_students' ? "text-tg-button" : "text-tg-hint"} />
                                 <span className="text-xs font-medium text-tg-text">All Students</span>
+                            </button>
+                            <button
+                                onClick={() => setTargetType('all_teachers')}
+                                className={cn(
+                                    "p-3 rounded-xl border-2 flex flex-col items-center gap-2 transition-all",
+                                    targetType === 'all_teachers' ? "border-tg-button bg-tg-button/5" : "border-transparent bg-tg-secondary"
+                                )}
+                            >
+                                <Users className={targetType === 'all_teachers' ? "text-tg-button" : "text-tg-hint"} />
+                                <span className="text-xs font-medium text-tg-text">All Teachers</span>
+                            </button>
+                            <button
+                                onClick={() => setTargetType('all_admins')}
+                                className={cn(
+                                    "p-3 rounded-xl border-2 flex flex-col items-center gap-2 transition-all",
+                                    targetType === 'all_admins' ? "border-tg-button bg-tg-button/5" : "border-transparent bg-tg-secondary"
+                                )}
+                            >
+                                <Users className={targetType === 'all_admins' ? "text-tg-button" : "text-tg-hint"} />
+                                <span className="text-xs font-medium text-tg-text">All Admins</span>
                             </button>
                             <button
                                 onClick={() => setTargetType('group')}

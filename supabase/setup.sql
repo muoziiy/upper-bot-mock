@@ -663,6 +663,11 @@ CREATE TABLE IF NOT EXISTS education_center_settings (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- Ensure support_info column exists (Fix for missing column error)
+DO $$ BEGIN
+    ALTER TABLE education_center_settings ADD COLUMN support_info JSONB DEFAULT '{}';
+EXCEPTION WHEN duplicate_column THEN null; END $$;
+
 -- Ensure only one row exists
 CREATE UNIQUE INDEX IF NOT EXISTS idx_settings_singleton ON education_center_settings ((TRUE));
 

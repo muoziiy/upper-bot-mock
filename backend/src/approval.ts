@@ -260,7 +260,17 @@ export const setupApprovalHandlers = (bot: Telegraf) => {
                     }
 
                     const studentName = request.users?.first_name || 'User';
-                    const finalMessage = `${newText}\n\n👤 ${studentName} (${request.role_requested})`;
+                    // Fetch details from users table since we have the ID
+                    const { data: userDetails } = await supabase
+                        .from('users')
+                        .select('age, sex')
+                        .eq('id', request.user_id)
+                        .single();
+
+                    const age = userDetails?.age || 'N/A';
+                    const sex = userDetails?.sex || 'N/A';
+
+                    const finalMessage = `${newText}\n\n👤 ${studentName} (${request.role_requested})\n🎂 **Age:** ${age}\n🚻 **Sex:** ${sex}`;
 
                     try {
                         await bot.telegram.editMessageText(
