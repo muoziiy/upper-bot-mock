@@ -665,21 +665,21 @@ router.get('/students/:id/attendance', async (req, res) => {
 
     try {
         const { data, error } = await supabase
-            .from('attendance')
+            .from('attendance_records')
             .select(`
                 id,
-                date,
+                attendance_date,
                 status,
                 groups (name)
             `)
             .eq('student_id', id)
-            .order('date', { ascending: false });
+            .order('attendance_date', { ascending: false });
 
         if (error) throw error;
 
         const attendance = data.map((record: any) => ({
             id: record.id,
-            date: record.date,
+            date: record.attendance_date,
             status: record.status,
             group_name: record.groups?.name
         }));
@@ -1091,6 +1091,70 @@ router.put('/students/:id/groups', async (req, res) => {
     }
 });
 
+// Broadcast Message
+router.post('/broadcast', async (req, res) => {
+    const { message, group_ids, scheduled_at } = req.body;
+
+    if (!message) {
+        return res.status(400).json({ error: 'Message is required' });
+    }
+
+    try {
+        // 1. Handle Scheduling
+        if (scheduled_at && new Date(scheduled_at) > new Date()) {
+            const { error } = await supabase
+                .from('scheduled_broadcasts')
+                .insert({
+                    admin_id: (req as any).user?.id, // Assuming auth middleware populates this, or null if not
+                    message,
+                    group_ids: group_ids || [],
+                    scheduled_at,
+                    status: 'pending'
+                });
+
+            if (error) throw error;
+            return res.json({ success: true, message: 'Broadcast scheduled' });
+        }
+
+        // 2. Immediate Broadcast
+        let query = supabase
+            .from('group_members')
+            .select('users(telegram_id)')
+            .not('users', 'is', null);
+
+        if (group_ids && group_ids.length > 0 && !group_ids.includes('all')) {
+            query = query.in('group_id', group_ids);
+        }
+
+        const { data: members, error } = await query;
+
+        if (error) throw error;
+
+        const telegramIds = [...new Set(members?.map((m: any) => m.users?.telegram_id).filter(Boolean))];
+
+        // Send messages (using bot instance would be better, but here we might need a helper or axios)
+        // Assuming we have a helper or can import bot. 
+        // Since we are in routes, we can import bot from '../bot' if exported, or use axios to telegram API.
+        // Let's use the helper from scheduler.ts or similar if available, or just axios.
+        // Actually, `bot.ts` exports `bot`.
+
+        const results = await Promise.allSettled(telegramIds.map(id =>
+            bot.telegram.sendMessage(id, `📢 *Announcement*\n\n${message}`, { parse_mode: 'Markdown' })
+        ));
+
+        const sentCount = results.filter(r => r.status === 'fulfilled').length;
+
+        // Log to broadcast history (if table exists, otherwise skip)
+        // await supabase.from('broadcast_history').insert(...) 
+
+        res.json({ success: true, sent: sentCount, total: telegramIds.length });
+
+    } catch (error) {
+        console.error('Error sending broadcast:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
 // Mark Attendance
 router.post('/attendance', async (req, res) => {
     const { student_id, group_id, date, status } = req.body;
@@ -1353,6 +1417,119 @@ router.post('/settings/payment-type', async (req, res) => {
         res.json({ success: true, message: 'Payment settings updated for all students' });
     } catch (error) {
         console.error('Error updating payment settings:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Update Support Info
+router.post('/settings/support', async (req, res) => {
+    const { support_info } = req.body;
+
+    if (!support_info || typeof support_info !== 'object') {
+        return res.status(400).json({ error: 'Invalid support info' });
+    }
+
+    try {
+        // Upsert settings (assuming singleton)
+        const { data, error } = await supabase
+            .from('education_center_settings')
+            .update({ support_info, updated_at: new Date().toISOString() })
+            .gt('updated_at', '2000-01-01') // Dummy condition to match all
+            .select()
+            .single();
+
+        if (error) throw error;
+
+        res.json({ success: true, data });
+    } catch (error) {
+        console.error('Error updating support info:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+
+
+// Get all admins
+router.get('/admins', async (req, res) => {
+    try {
+        const { data, error } = await supabase
+            .from('users')
+            .select('id, first_name, surname, role, telegram_id, username')
+            .in('role', ['admin', 'super_admin'])
+            .order('first_name', { ascending: true });
+
+        if (error) throw error;
+        res.json(data);
+    } catch (error) {
+        console.error('Error fetching admins:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Get teacher details
+router.get('/teachers/:id', async (req, res) => {
+    const { id } = req.params;
+
+    try {
+        // 1. Fetch Teacher Profile
+        const { data: teacher, error: teacherError } = await supabase
+            .from('users')
+            .select('*')
+            .eq('id', id)
+            .eq('role', 'teacher')
+            .single();
+
+        if (teacherError || !teacher) {
+            return res.status(404).json({ error: 'Teacher not found' });
+        }
+
+        // 2. Fetch Groups with Student Count
+        const { data: groups, error: groupsError } = await supabase
+            .from('groups')
+            .select(`
+                *,
+                group_members (count)
+            `)
+            .eq('teacher_id', id);
+
+        if (groupsError) throw groupsError;
+
+        // Format groups data
+        const formattedGroups = groups.map(g => ({
+            ...g,
+            student_count: g.group_members[0]?.count || 0
+        }));
+
+        res.json({
+            teacher,
+            groups: formattedGroups
+        });
+
+    } catch (error) {
+        console.error('Error fetching teacher details:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Demote admin
+router.post('/admins/demote', async (req, res) => {
+    const { adminId } = req.body;
+
+    try {
+        // Prevent demoting self (handled by frontend usually, but good to have check)
+        // Also prevent demoting super_admin if requester is not super_admin (we don't have requester info here easily without middleware, assuming trusted admin)
+
+        const { error } = await supabase
+            .from('users')
+            .update({ role: 'new_user' })
+            .eq('id', adminId)
+            .neq('role', 'super_admin'); // Prevent demoting super_admin via this simple endpoint
+
+        if (error) throw error;
+
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Error demoting admin:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
 });

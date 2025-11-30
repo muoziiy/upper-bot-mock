@@ -20,7 +20,7 @@ interface PendingRequest {
     user_id?: string;
 }
 
-const AdminAdmins: React.FC = () => {
+const AdminRequests: React.FC = () => {
     const { adminRequests } = useAppData();
     const [pendingStudentStaff, setPendingStudentStaff] = useState<PendingRequest[]>([]);
     const [loading, setLoading] = useState(false);
@@ -172,4 +172,4 @@ const AdminAdmins: React.FC = () => {
     );
 };
 
-export default AdminAdmins;
+export default AdminRequests;

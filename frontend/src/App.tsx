@@ -17,13 +17,15 @@ const AdminActions = React.lazy(() => import('./pages/admin/AdminActions'));
 const AdminSubjects = React.lazy(() => import('./pages/admin/AdminSubjects'));
 const AdminStudents = React.lazy(() => import('./pages/admin/AdminStudents'));
 const AdminStudentDetails = React.lazy(() => import('./pages/admin/AdminStudentDetails'));
+const AdminTeacherDetails = React.lazy(() => import('./pages/admin/AdminTeacherDetails'));
 const AdminProfile = React.lazy(() => import('./pages/admin/AdminProfile'));
 const AdminBroadcast = React.lazy(() => import('./pages/admin/AdminBroadcast'));
 const AdminNotifications = React.lazy(() => import('./pages/admin/AdminNotifications'));
 const AdminBotSettings = React.lazy(() => import('./pages/admin/AdminBotSettings'));
 const AdminCenterSettings = React.lazy(() => import('./pages/admin/AdminCenterSettings'));
 const AdminExportData = React.lazy(() => import('./pages/admin/AdminExportData'));
-const AdminAdmins = React.lazy(() => import('./pages/admin/AdminAdmins'));
+const AdminRequests = React.lazy(() => import('./pages/admin/AdminRequests'));
+const AdminManageAdmins = React.lazy(() => import('./pages/admin/AdminManageAdmins'));
 const Onboarding = React.lazy(() => import('./pages/Onboarding'));
 const GuestDashboard = React.lazy(() => import('./pages/GuestDashboard'));
 const WaitingPage = React.lazy(() => import('./pages/WaitingPage'));
@@ -104,6 +106,7 @@ const AppContent: React.FC = () => {
     { path: "/admin/stats", element: <AdminStats /> },
     { path: "/admin/groups", element: <AdminGroups /> },
     { path: "/admin/teachers", element: <AdminTeachers /> },
+    { path: "/admin/teachers/:id", element: <AdminTeacherDetails /> }, // New Page
     { path: "/admin/actions", element: <AdminActions /> },
     { path: "/admin/subjects", element: <AdminSubjects /> },
     { path: "/admin/students", element: <AdminStudents /> },
@@ -114,7 +117,8 @@ const AppContent: React.FC = () => {
     { path: "/admin/settings", element: <AdminBotSettings /> },
     { path: "/admin/center-settings", element: <AdminCenterSettings /> },
     { path: "/admin/export", element: <AdminExportData /> },
-    { path: "/admin/admins", element: <AdminAdmins /> },
+    { path: "/admin/requests", element: <AdminRequests /> },
+    { path: "/admin/admins", element: <AdminManageAdmins /> },
   ]);
 
   if (loading) {

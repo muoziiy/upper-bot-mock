@@ -11,6 +11,14 @@ const AdminCenterSettings: React.FC = () => {
     const [loading, setLoading] = useState(false);
     const [selectedType, setSelectedType] = useState<'monthly_fixed' | 'monthly_rolling' | 'lesson_based' | null>(null);
 
+    const [supportInfo, setSupportInfo] = useState({
+        admin_profile_link: '',
+        admin_phone: '',
+        working_hours: '',
+        location_link: '',
+        location_text: ''
+    });
+
     React.useEffect(() => {
         if (webApp) {
             webApp.BackButton.show();
@@ -31,6 +39,9 @@ const AdminCenterSettings: React.FC = () => {
                     const data = await res.json();
                     if (data.default_payment_type) {
                         setSelectedType(data.default_payment_type);
+                    }
+                    if (data.support_info) {
+                        setSupportInfo(prev => ({ ...prev, ...data.support_info }));
                     }
                 }
             } catch (e) {
@@ -67,9 +78,93 @@ const AdminCenterSettings: React.FC = () => {
         }
     };
 
+    const handleSaveSupportInfo = async () => {
+        setLoading(true);
+        try {
+            const res = await fetch(`${import.meta.env.VITE_API_URL}/admin/settings/support`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ support_info: supportInfo })
+            });
+
+            if (res.ok) {
+                alert('Support info updated successfully!');
+            } else {
+                alert('Failed to update support info');
+            }
+        } catch (e) {
+            console.error('Error updating support info', e);
+            alert('An error occurred');
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return (
         <div className="page-content pt-4 pb-20">
             <h1 className="text-2xl font-bold mb-4 px-4 text-tg-text">Center Settings</h1>
+
+            <Section title="Support & Contact Info">
+                <div className="p-4 space-y-3">
+                    <div>
+                        <label className="text-xs text-tg-hint mb-1 block">Admin Profile Link (Telegram)</label>
+                        <input
+                            type="text"
+                            value={supportInfo.admin_profile_link}
+                            onChange={(e) => setSupportInfo({ ...supportInfo, admin_profile_link: e.target.value })}
+                            placeholder="https://t.me/username"
+                            className="w-full bg-tg-secondary-bg text-tg-text p-2 rounded-lg border border-tg-hint/20 focus:border-tg-button focus:outline-none"
+                        />
+                    </div>
+                    <div>
+                        <label className="text-xs text-tg-hint mb-1 block">Admin Phone Number</label>
+                        <input
+                            type="text"
+                            value={supportInfo.admin_phone}
+                            onChange={(e) => setSupportInfo({ ...supportInfo, admin_phone: e.target.value })}
+                            placeholder="+998 90 123 45 67"
+                            className="w-full bg-tg-secondary-bg text-tg-text p-2 rounded-lg border border-tg-hint/20 focus:border-tg-button focus:outline-none"
+                        />
+                    </div>
+                    <div>
+                        <label className="text-xs text-tg-hint mb-1 block">Working Hours</label>
+                        <input
+                            type="text"
+                            value={supportInfo.working_hours}
+                            onChange={(e) => setSupportInfo({ ...supportInfo, working_hours: e.target.value })}
+                            placeholder="Mon-Sat, 9:00 - 18:00"
+                            className="w-full bg-tg-secondary-bg text-tg-text p-2 rounded-lg border border-tg-hint/20 focus:border-tg-button focus:outline-none"
+                        />
+                    </div>
+                    <div>
+                        <label className="text-xs text-tg-hint mb-1 block">Location Text</label>
+                        <input
+                            type="text"
+                            value={supportInfo.location_text}
+                            onChange={(e) => setSupportInfo({ ...supportInfo, location_text: e.target.value })}
+                            placeholder="Tashkent, Chilonzor..."
+                            className="w-full bg-tg-secondary-bg text-tg-text p-2 rounded-lg border border-tg-hint/20 focus:border-tg-button focus:outline-none"
+                        />
+                    </div>
+                    <div>
+                        <label className="text-xs text-tg-hint mb-1 block">Location Link (Google Maps)</label>
+                        <input
+                            type="text"
+                            value={supportInfo.location_link}
+                            onChange={(e) => setSupportInfo({ ...supportInfo, location_link: e.target.value })}
+                            placeholder="https://maps.google.com/..."
+                            className="w-full bg-tg-secondary-bg text-tg-text p-2 rounded-lg border border-tg-hint/20 focus:border-tg-button focus:outline-none"
+                        />
+                    </div>
+                    <button
+                        onClick={handleSaveSupportInfo}
+                        disabled={loading}
+                        className="w-full bg-tg-button text-white py-2 rounded-lg font-medium mt-2 active:opacity-80 disabled:opacity-50"
+                    >
+                        {loading ? 'Saving...' : 'Save Support Info'}
+                    </button>
+                </div>
+            </Section>
 
             <Section title="Global Payment System">
                 <div className="px-4 mb-4">

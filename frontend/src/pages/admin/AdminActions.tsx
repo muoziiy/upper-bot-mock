@@ -36,6 +36,20 @@ const AdminActions: React.FC = () => {
                     icon="📚"
                     onClick={() => navigate('/admin/subjects')}
                     showChevron
+                />
+                <ListItem
+                    title="Manage Admins"
+                    subtitle="List and manage administrators"
+                    icon="🛡️"
+                    onClick={() => navigate('/admin/admins')}
+                    showChevron
+                />
+                <ListItem
+                    title="Manage Requests"
+                    subtitle="Approve new students and staff"
+                    icon="📝"
+                    onClick={() => navigate('/admin/requests')}
+                    showChevron
                     isLast
                 />
             </Section>

@@ -107,4 +107,69 @@ router.get('/daily', async (req, res) => {
     }
 });
 
+// Process Scheduled Broadcasts (Run every minute)
+router.get('/process-broadcasts', async (req, res) => {
+    try {
+        const now = new Date().toISOString();
+
+        // 1. Fetch pending broadcasts due now or in past
+        const { data: broadcasts, error } = await supabase
+            .from('scheduled_broadcasts')
+            .select('*')
+            .eq('status', 'pending')
+            .lte('scheduled_at', now);
+
+        if (error) throw error;
+
+        let processed = 0;
+
+        for (const broadcast of broadcasts || []) {
+            try {
+                // 2. Determine Recipients
+                let query = supabase
+                    .from('group_members')
+                    .select('users(telegram_id)')
+                    .not('users', 'is', null);
+
+                // Check if group_ids is valid array and not empty
+                const groupIds = broadcast.group_ids;
+                if (Array.isArray(groupIds) && groupIds.length > 0 && !groupIds.includes('all')) {
+                    query = query.in('group_id', groupIds);
+                }
+
+                const { data: members, error: memberError } = await query;
+                if (memberError) throw memberError;
+
+                const telegramIds = [...new Set(members?.map((m: any) => m.users?.telegram_id).filter(Boolean))];
+
+                // 3. Send Messages
+                // We use axios here as in the rest of this file
+                await Promise.allSettled(telegramIds.map(id =>
+                    sendReminder(id, `📢 *Announcement*\n\n${broadcast.message}`)
+                ));
+
+                // 4. Update Status
+                await supabase
+                    .from('scheduled_broadcasts')
+                    .update({ status: 'sent' })
+                    .eq('id', broadcast.id);
+
+                processed++;
+
+            } catch (e) {
+                console.error(`Failed to process broadcast ${broadcast.id}`, e);
+                await supabase
+                    .from('scheduled_broadcasts')
+                    .update({ status: 'failed' }) // Or keep pending to retry? Failed is safer to avoid loops.
+                    .eq('id', broadcast.id);
+            }
+        }
+
+        res.json({ success: true, processed });
+    } catch (error) {
+        console.error('Error processing broadcasts:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
 export default router;

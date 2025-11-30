@@ -672,6 +672,7 @@ CREATE TABLE IF NOT EXISTS admin_notification_logs (
 CREATE TABLE IF NOT EXISTS education_center_settings (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     default_payment_type payment_type DEFAULT 'monthly_fixed',
+    support_info JSONB DEFAULT '{}',
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
@@ -683,3 +684,18 @@ INSERT INTO education_center_settings (default_payment_type)
 VALUES ('monthly_fixed')
 ON CONFLICT DO NOTHING;
 
+ON CONFLICT DO NOTHING;
+
+-- ============================================
+-- 10. SCHEDULED BROADCASTS
+-- ============================================
+
+CREATE TABLE IF NOT EXISTS scheduled_broadcasts (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    admin_id UUID REFERENCES users(id) ON DELETE SET NULL,
+    message TEXT NOT NULL,
+    group_ids JSONB DEFAULT '[]', -- Array of group IDs
+    scheduled_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    status TEXT DEFAULT 'pending', -- 'pending', 'sent', 'failed'
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);

@@ -1,24 +1,44 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAppData } from '../context/AppDataContext';
 import { useTelegram } from '../context/TelegramContext';
 import { useTranslation } from 'react-i18next';
-import { Settings, ChevronRight, Calendar } from 'lucide-react';
+import { Settings, ChevronRight, Calendar, HelpCircle } from 'lucide-react';
 import TeacherInfoModal from '../components/profile/TeacherInfoModal';
 import AttendanceCalendarModal from '../components/profile/AttendanceCalendarModal';
 import SettingsModal from '../components/profile/SettingsModal';
 import PaymentHistoryModal from '../components/profile/PaymentHistoryModal';
+import SupportModal from '../components/profile/SupportModal';
 
 const Profile: React.FC = () => {
     const { t } = useTranslation();
     const { user } = useTelegram();
     const { dashboardData, loading } = useAppData();
     const [showSettings, setShowSettings] = useState(false);
+    const [showSupport, setShowSupport] = useState(false);
+    const [supportInfo, setSupportInfo] = useState<any>(null);
     const [selectedTeacher, setSelectedTeacher] = useState<any>(null);
     const [selectedSubjectAttendance, setSelectedSubjectAttendance] = useState<any>(null);
     const [selectedSubjectPayments, setSelectedSubjectPayments] = useState<any>(null);
 
     // Use real student ID from DB, fallback to '---' if not set
     const studentId = dashboardData?.user.student_id || '---';
+
+    useEffect(() => {
+        const fetchSupportInfo = async () => {
+            try {
+                const res = await fetch(`${import.meta.env.VITE_API_URL}/students/settings`);
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.support_info) {
+                        setSupportInfo(data.support_info);
+                    }
+                }
+            } catch (e) {
+                console.error('Failed to fetch support info', e);
+            }
+        };
+        fetchSupportInfo();
+    }, []);
 
     if (loading) {
         return (
@@ -32,6 +52,7 @@ const Profile: React.FC = () => {
         <div className="min-h-screen bg-tg-secondary pb-24 pt-6 text-tg-text">
             {/* Modals */}
             <SettingsModal isOpen={showSettings} onClose={() => setShowSettings(false)} />
+            <SupportModal isOpen={showSupport} onClose={() => setShowSupport(false)} supportInfo={supportInfo} />
             <TeacherInfoModal
                 teacher={selectedTeacher}
                 isOpen={!!selectedTeacher}
@@ -66,12 +87,6 @@ const Profile: React.FC = () => {
                     </div>
                     {/* Paid Badge */}
                     <div className="absolute -top-1 -right-1">
-                        {/* Logic: Check if ANY group is overdue? Or master status? 
-                            Let's assume dashboardData.user doesn't have master status yet, 
-                            we might need to calculate it or check groups.
-                            But wait, we updated backend to return rich groups with status.
-                            Let's check if any group is 'overdue'.
-                         */}
                         {dashboardData?.groups?.some((g: any) => g.status === 'overdue') ? (
                             <div className="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-md border-2 border-tg-secondary">
                                 Overdue
@@ -93,19 +108,30 @@ const Profile: React.FC = () => {
                     </div>
                 </div>
 
-                {/* Settings Button */}
-                <button
-                    onClick={() => setShowSettings(true)}
-                    className="w-full bg-tg-bg rounded-xl p-4 flex items-center justify-between hover:bg-tg-bg/80 active:bg-tg-bg/60 transition-colors shadow-sm"
-                >
-                    <div className="flex items-center gap-3">
+                {/* Actions Grid */}
+                <div className="grid grid-cols-2 gap-3">
+                    {/* Settings Button */}
+                    <button
+                        onClick={() => setShowSettings(true)}
+                        className="bg-tg-bg rounded-xl p-4 flex flex-col items-center justify-center gap-2 hover:bg-tg-bg/80 active:bg-tg-bg/60 transition-colors shadow-sm"
+                    >
                         <div className="bg-tg-button/10 p-2 rounded-lg">
-                            <Settings size={20} className="text-tg-button" />
+                            <Settings size={24} className="text-tg-button" />
                         </div>
-                        <span className="text-tg-text font-medium">{t('profile.account_settings')}</span>
-                    </div>
-                    <ChevronRight size={20} className="text-tg-hint" />
-                </button>
+                        <span className="text-tg-text font-medium text-sm">{t('profile.account_settings')}</span>
+                    </button>
+
+                    {/* Support Button */}
+                    <button
+                        onClick={() => setShowSupport(true)}
+                        className="bg-tg-bg rounded-xl p-4 flex flex-col items-center justify-center gap-2 hover:bg-tg-bg/80 active:bg-tg-bg/60 transition-colors shadow-sm"
+                    >
+                        <div className="bg-blue-500/10 p-2 rounded-lg">
+                            <HelpCircle size={24} className="text-blue-500" />
+                        </div>
+                        <span className="text-tg-text font-medium text-sm">Support & Info</span>
+                    </button>
+                </div>
 
                 {/* My Courses (Groups) */}
                 <div>

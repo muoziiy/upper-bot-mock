@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Search } from 'lucide-react';
 import { Section } from '../../components/ui/Section';
 import { ListItem } from '../../components/ui/ListItem';
@@ -14,6 +15,7 @@ interface Teacher {
 }
 
 const AdminTeachers: React.FC = () => {
+    const navigate = useNavigate();
     const { teachers: rawTeachers, loading } = useAdminData();
     const teachers = rawTeachers as Teacher[];
     const [searchQuery, setSearchQuery] = useState('');
@@ -61,6 +63,7 @@ const AdminTeachers: React.FC = () => {
                                         </span>
                                     ) : null
                                 }
+                                onClick={() => navigate(`/admin/teachers/${teacher.id}`)}
                                 isLast={idx === filteredTeachers.length - 1}
                                 showChevron
                             />

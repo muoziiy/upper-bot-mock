@@ -3,6 +3,21 @@ import { supabase } from '../supabase';
 
 const router = express.Router();
 
+// Get Center Settings (Public/Student)
+router.get('/settings', async (req, res) => {
+    try {
+        const { data, error } = await supabase
+            .from('education_center_settings')
+            .select('support_info')
+            .single();
+
+        if (error) throw error;
+        res.json(data);
+    } catch (error) {
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
 // Get available exams for a student
 router.get('/exams', async (req, res) => {
     const studentId = req.headers['x-user-id']; // Mock auth header
