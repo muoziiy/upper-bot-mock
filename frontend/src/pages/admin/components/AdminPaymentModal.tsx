@@ -25,9 +25,10 @@ interface AdminPaymentModalProps {
     studentId: string;
     studentName: string;
     groups: Group[]; // Passed from parent
+    defaultGroupId?: string | null;
 }
 
-const AdminPaymentModal: React.FC<AdminPaymentModalProps> = ({ isOpen, onClose, studentId, studentName, groups }) => {
+const AdminPaymentModal: React.FC<AdminPaymentModalProps> = ({ isOpen, onClose, studentId, studentName, groups, defaultGroupId }) => {
     const { webApp } = useTelegram();
     const [view, setView] = useState<'history' | 'add'>('history');
     const [payments, setPayments] = useState<Payment[]>([]);
@@ -69,10 +70,12 @@ const AdminPaymentModal: React.FC<AdminPaymentModalProps> = ({ isOpen, onClose, 
 
     // Set default group
     useEffect(() => {
-        if (groups.length > 0 && !selectedGroupId) {
+        if (defaultGroupId) {
+            setSelectedGroupId(defaultGroupId);
+        } else if (groups.length > 0 && !selectedGroupId) {
             setSelectedGroupId(groups[0].id);
         }
-    }, [groups]);
+    }, [groups, defaultGroupId, isOpen]);
 
     const fetchPayments = async () => {
         try {

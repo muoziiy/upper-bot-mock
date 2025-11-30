@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTelegram } from '../../context/TelegramContext';
 import { Section } from '../../components/ui/Section';
-import { Clock, Plus, Trash2 } from 'lucide-react';
+import { Plus, ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import AdminPaymentModal from './components/AdminPaymentModal';
 import AdminGroupManagementModal from './components/AdminGroupManagementModal';
@@ -22,12 +22,10 @@ interface Student {
         teacher_name?: string;
         joined_at?: string;
         payment_status?: 'paid' | 'overdue' | 'unpaid';
-        status?: 'active' | 'overdue' | 'unpaid'; // From backend calculation
+        status?: 'active' | 'overdue' | 'unpaid';
     }[];
     payment_status?: 'paid' | 'unpaid' | 'overdue';
 }
-
-
 
 interface AttendanceRecord {
     id: string;
@@ -44,20 +42,31 @@ const AdminStudentDetails: React.FC = () => {
     const [attendance, setAttendance] = useState<AttendanceRecord[]>([]);
     const [loading, setLoading] = useState(true);
 
-    // Modal State (Keep for Add/Edit actions if needed, or replace with inline)
+    // Modal State
     const [showPaymentModal, setShowPaymentModal] = useState(false);
     const [showGroupModal, setShowGroupModal] = useState(false);
+    const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
+
+    // Calendar State
+    const [currentDate, setCurrentDate] = useState(new Date());
 
     useEffect(() => {
         if (webApp) {
             webApp.BackButton.show();
-            const handleBack = () => navigate('/admin/students');
+            const handleBack = () => {
+                if (showPaymentModal || showGroupModal) {
+                    setShowPaymentModal(false);
+                    setShowGroupModal(false);
+                } else {
+                    navigate('/admin/students');
+                }
+            };
             webApp.BackButton.onClick(handleBack);
             return () => {
                 webApp.BackButton.offClick(handleBack);
             };
         }
-    }, [webApp, navigate]);
+    }, [webApp, navigate, showPaymentModal, showGroupModal]);
 
     useEffect(() => {
         fetchStudentDetails();
@@ -92,38 +101,37 @@ const AdminStudentDetails: React.FC = () => {
         }
     };
 
-    const handleRemoveGroup = async (groupId: string) => {
-        if (!confirm('Are you sure you want to remove this student from the group?')) return;
-        try {
-            const res = await fetch(`${import.meta.env.VITE_API_URL}/admin/students/${id}/groups`, {
-                method: 'DELETE',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ groupId })
-            });
-            if (res.ok) {
-                fetchStudentDetails();
-            }
-        } catch (e) {
-            console.error('Failed to remove group', e);
-        }
+    const handleGroupClick = (groupId: string) => {
+        setSelectedGroupId(groupId);
+        setShowPaymentModal(true);
     };
 
-    const handleUpdateJoinedDate = async (groupId: string, date: string) => {
-        try {
-            const res = await fetch(`${import.meta.env.VITE_API_URL}/admin/students/${id}/groups`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ groupId, action: 'update_date', joinedAt: date })
-            });
-            if (res.ok) {
-                fetchStudentDetails();
-            }
-        } catch (e) {
-            console.error('Failed to update date', e);
-        }
+    // Calendar Logic
+    const getDaysInMonth = (date: Date) => {
+        const year = date.getFullYear();
+        const month = date.getMonth();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        const firstDayOfMonth = new Date(year, month, 1).getDay(); // 0 = Sunday
+        return { daysInMonth, firstDayOfMonth };
     };
 
-    const [expandedGroup, setExpandedGroup] = useState<string | null>(null);
+    const { daysInMonth, firstDayOfMonth } = getDaysInMonth(currentDate);
+    const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
+    const blanks = Array.from({ length: firstDayOfMonth }, (_, i) => i);
+
+    const getAttendanceStatus = (day: number) => {
+        const dateStr = new Date(currentDate.getFullYear(), currentDate.getMonth(), day).toISOString().split('T')[0];
+        const record = attendance.find(a => a.date.startsWith(dateStr));
+        return record ? record.status : null;
+    };
+
+    const nextMonth = () => {
+        setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
+    };
+
+    const prevMonth = () => {
+        setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
+    };
 
     if (loading) {
         return <div className="min-h-screen bg-tg-secondary flex items-center justify-center text-tg-hint">Loading...</div>;
@@ -178,77 +186,35 @@ const AdminStudentDetails: React.FC = () => {
                     <Section>
                         {student.groups.length > 0 ? (
                             student.groups.map((group, idx) => (
-                                <div key={group.id} className={cn("bg-tg-bg flex flex-col", idx !== student.groups.length - 1 && "border-b border-tg-hint/10")}>
-                                    {/* Group Header (Clickable) */}
-                                    <div
-                                        className="p-4 flex justify-between items-start cursor-pointer active:bg-black/5 dark:active:bg-white/5 transition-colors"
-                                        onClick={() => setExpandedGroup(expandedGroup === group.id ? null : group.id)}
-                                    >
-                                        <div>
-                                            <span className="font-semibold text-tg-text block">{group.name}</span>
-                                            <span className="text-sm text-tg-hint">{group.teacher_name || 'No Teacher'}</span>
-                                        </div>
-                                        <div className="flex flex-col items-end gap-1">
-                                            <span className="text-sm font-medium text-tg-text">{group.price.toLocaleString()} UZS</span>
-                                            {/* Status Badge */}
-                                            {group.payment_status === 'overdue' ? (
-                                                <span className="px-2 py-0.5 bg-red-500/10 text-red-500 text-xs font-bold rounded-full border border-red-500/20">
-                                                    Overdue
-                                                </span>
-                                            ) : group.payment_status === 'paid' ? (
-                                                <span className="px-2 py-0.5 bg-green-500/10 text-green-500 text-xs font-bold rounded-full border border-green-500/20">
-                                                    Paid
-                                                </span>
-                                            ) : (
-                                                <span className="px-2 py-0.5 bg-gray-500/10 text-gray-500 text-xs font-bold rounded-full border border-gray-500/20">
-                                                    Unpaid
-                                                </span>
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    {/* Expanded Details */}
-                                    {expandedGroup === group.id && (
-                                        <div className="px-4 pb-4 pt-0 animate-in slide-in-from-top-2 duration-200">
-                                            <div className="bg-tg-secondary/50 rounded-lg p-3 space-y-3">
-                                                {/* Actions Row */}
-                                                <div className="flex gap-2">
-                                                    <button
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            setShowPaymentModal(true); // TODO: Pre-select this group in modal
-                                                        }}
-                                                        className="flex-1 bg-green-500 text-white py-2 rounded-lg text-sm font-medium shadow-sm active:scale-95 transition-transform"
-                                                    >
-                                                        Payment Info
-                                                    </button>
-                                                    <button
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            handleRemoveGroup(group.id);
-                                                        }}
-                                                        className="bg-red-500/10 text-red-500 px-3 rounded-lg active:bg-red-500/20 transition-colors"
-                                                    >
-                                                        <Trash2 size={18} />
-                                                    </button>
-                                                </div>
-
-                                                {/* Joined Date Edit */}
-                                                <div className="flex items-center justify-between bg-tg-bg p-2 rounded-md border border-tg-hint/10">
-                                                    <div className="flex items-center gap-2 text-tg-hint text-sm">
-                                                        <Clock size={14} />
-                                                        <span>Joined:</span>
-                                                    </div>
-                                                    <input
-                                                        type="date"
-                                                        value={group.joined_at ? new Date(group.joined_at).toISOString().split('T')[0] : ''}
-                                                        onChange={(e) => handleUpdateJoinedDate(group.id, e.target.value)}
-                                                        className="bg-transparent text-tg-text text-sm font-medium outline-none text-right"
-                                                    />
-                                                </div>
-                                            </div>
-                                        </div>
+                                <div
+                                    key={group.id}
+                                    className={cn(
+                                        "bg-tg-bg p-4 flex justify-between items-center cursor-pointer active:bg-black/5 dark:active:bg-white/5 transition-colors",
+                                        idx !== student.groups.length - 1 && "border-b border-tg-hint/10"
                                     )}
+                                    onClick={() => handleGroupClick(group.id)}
+                                >
+                                    <div>
+                                        <span className="font-semibold text-tg-text block">{group.name}</span>
+                                        <span className="text-sm text-tg-hint">{group.teacher_name || 'No Teacher'}</span>
+                                    </div>
+                                    <div className="flex flex-col items-end gap-1">
+                                        <span className="text-sm font-medium text-tg-text">{group.price.toLocaleString()} UZS</span>
+                                        {/* Status Badge */}
+                                        {group.payment_status === 'overdue' ? (
+                                            <span className="px-2 py-0.5 bg-red-500/10 text-red-500 text-xs font-bold rounded-full border border-red-500/20">
+                                                Overdue
+                                            </span>
+                                        ) : group.payment_status === 'paid' ? (
+                                            <span className="px-2 py-0.5 bg-green-500/10 text-green-500 text-xs font-bold rounded-full border border-green-500/20">
+                                                Paid
+                                            </span>
+                                        ) : (
+                                            <span className="px-2 py-0.5 bg-gray-500/10 text-gray-500 text-xs font-bold rounded-full border border-gray-500/20">
+                                                Unpaid
+                                            </span>
+                                        )}
+                                    </div>
                                 </div>
                             ))
                         ) : (
@@ -259,40 +225,79 @@ const AdminStudentDetails: React.FC = () => {
                     </Section>
                 </div>
 
-                {/* Attendance Section */}
+                {/* Attendance Calendar Section */}
                 <div className="space-y-2">
-                    <h3 className="text-sm font-medium text-tg-hint uppercase ml-2">Recent Attendance</h3>
-                    <Section>
-                        {attendance.length > 0 ? (
-                            attendance.slice(0, 5).map((record, idx) => (
-                                <div key={record.id} className={cn("p-4 bg-tg-bg flex justify-between items-center", idx !== attendance.length - 1 && "border-b border-tg-hint/10")}>
-                                    <div className="flex flex-col">
-                                        <span className="font-medium text-tg-text">{record.group_name || 'Class'}</span>
-                                        <span className="text-xs text-tg-hint">{new Date(record.date).toLocaleDateString()}</span>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        {record.status === 'present' && <span className="text-green-500 text-sm font-medium">Present</span>}
-                                        {record.status === 'absent' && <span className="text-red-500 text-sm font-medium">Absent</span>}
-                                        {record.status === 'late' && <span className="text-orange-500 text-sm font-medium">Late</span>}
-                                    </div>
+                    <h3 className="text-sm font-medium text-tg-hint uppercase ml-2">Attendance</h3>
+                    <div className="bg-tg-bg rounded-2xl p-4 shadow-sm border border-tg-hint/10">
+                        {/* Calendar Header */}
+                        <div className="flex items-center justify-between mb-4">
+                            <button onClick={prevMonth} className="p-1 hover:bg-tg-secondary rounded-full text-tg-hint">
+                                <ChevronLeft size={20} />
+                            </button>
+                            <span className="font-semibold text-tg-text">
+                                {currentDate.toLocaleString('default', { month: 'long', year: 'numeric' })}
+                            </span>
+                            <button onClick={nextMonth} className="p-1 hover:bg-tg-secondary rounded-full text-tg-hint">
+                                <ChevronRight size={20} />
+                            </button>
+                        </div>
+
+                        {/* Calendar Grid */}
+                        <div className="grid grid-cols-7 gap-1 text-center mb-2">
+                            {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(day => (
+                                <div key={day} className="text-xs font-medium text-tg-hint py-1">
+                                    {day}
                                 </div>
-                            ))
-                        ) : (
-                            <div className="p-4 text-center text-tg-hint">
-                                No attendance records
+                            ))}
+                        </div>
+                        <div className="grid grid-cols-7 gap-1">
+                            {blanks.map(i => <div key={`blank-${i}`} />)}
+                            {days.map(day => {
+                                const status = getAttendanceStatus(day);
+                                return (
+                                    <div
+                                        key={day}
+                                        className={cn(
+                                            "aspect-square flex items-center justify-center text-sm rounded-lg",
+                                            status === 'present' && "bg-green-500/20 text-green-600 font-bold",
+                                            status === 'absent' && "bg-red-500/20 text-red-600 font-bold",
+                                            status === 'late' && "bg-orange-500/20 text-orange-600 font-bold",
+                                            !status && "text-tg-text hover:bg-tg-secondary/50"
+                                        )}
+                                    >
+                                        {day}
+                                    </div>
+                                );
+                            })}
+                        </div>
+
+                        {/* Legend */}
+                        <div className="flex gap-4 justify-center mt-4 text-xs text-tg-hint">
+                            <div className="flex items-center gap-1">
+                                <div className="w-2 h-2 rounded-full bg-green-500"></div> Present
                             </div>
-                        )}
-                    </Section>
+                            <div className="flex items-center gap-1">
+                                <div className="w-2 h-2 rounded-full bg-red-500"></div> Absent
+                            </div>
+                            <div className="flex items-center gap-1">
+                                <div className="w-2 h-2 rounded-full bg-orange-500"></div> Late
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
             {/* Modals */}
             <AdminPaymentModal
                 isOpen={showPaymentModal}
-                onClose={() => setShowPaymentModal(false)}
+                onClose={() => {
+                    setShowPaymentModal(false);
+                    setSelectedGroupId(null);
+                }}
                 studentId={student.id}
                 studentName={`${student.first_name} ${student.surname}`}
                 groups={student.groups}
+                defaultGroupId={selectedGroupId}
             />
             <AdminGroupManagementModal
                 isOpen={showGroupModal}

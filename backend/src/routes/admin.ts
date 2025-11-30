@@ -598,6 +598,7 @@ router.get('/students/:id', async (req, res) => {
                     price,
                     teacher:users!groups_teacher_id_fkey (
                         first_name,
+                        onboarding_first_name,
                         surname
                     )
                 )
@@ -618,7 +619,7 @@ router.get('/students/:id', async (req, res) => {
             id: gm.groups.id,
             name: gm.groups.name,
             price: gm.groups.price,
-            teacher_name: gm.groups.teacher ? `${gm.groups.teacher.first_name} ${gm.groups.teacher.surname}` : null,
+            teacher_name: gm.groups.teacher ? `${gm.groups.teacher.onboarding_first_name || gm.groups.teacher.first_name} ${gm.groups.teacher.surname}` : null,
             joined_at: gm.joined_at,
             payment_status: gm.payment_status
         }));
