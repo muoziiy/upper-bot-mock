@@ -1409,6 +1409,7 @@ router.post('/settings/payment-type', async (req, res) => {
 });
 
 // Update Support Info
+// Update Support Info
 router.post('/settings/support', async (req, res) => {
     const { support_info } = req.body;
 
@@ -1418,26 +1419,16 @@ router.post('/settings/support', async (req, res) => {
 
     try {
         // Upsert settings (assuming singleton)
-        const { data, error } = await supabase
+        const { error } = await supabase
             .from('education_center_settings')
             .update({ support_info, updated_at: new Date().toISOString() })
-            .gt('updated_at', '2000-01-01') // Dummy condition to match all
-            .select()
-            .single();
-
-        // Also prevent demoting super_admin if requester is not super_admin (we don't have requester info here easily without middleware, assuming trusted admin)
-
-        const { error } = await supabase
-            .from('users')
-            .update({ role: 'new_user' })
-            .eq('id', adminId)
-            .neq('role', 'super_admin'); // Prevent demoting super_admin via this simple endpoint
+            .gt('updated_at', '2000-01-01'); // Dummy condition to match all
 
         if (error) throw error;
 
         res.json({ success: true });
     } catch (error) {
-        console.error('Error demoting admin:', error);
+        console.error('Error updating support info:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
 });

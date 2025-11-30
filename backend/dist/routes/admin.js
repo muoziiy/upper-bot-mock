@@ -536,6 +536,7 @@ router.get('/students/:id', async (req, res) => {
                     price,
                     teacher:users!groups_teacher_id_fkey (
                         first_name,
+                        onboarding_first_name,
                         surname
                     )
                 )
@@ -554,7 +555,7 @@ router.get('/students/:id', async (req, res) => {
             id: gm.groups.id,
             name: gm.groups.name,
             price: gm.groups.price,
-            teacher_name: gm.groups.teacher ? `${gm.groups.teacher.first_name} ${gm.groups.teacher.surname}` : null,
+            teacher_name: gm.groups.teacher ? `${gm.groups.teacher.onboarding_first_name || gm.groups.teacher.first_name} ${gm.groups.teacher.surname}` : null,
             joined_at: gm.joined_at,
             payment_status: gm.payment_status
         }));
@@ -1270,6 +1271,7 @@ router.post('/settings/payment-type', async (req, res) => {
     }
 });
 // Update Support Info
+// Update Support Info
 router.post('/settings/support', async (req, res) => {
     const { support_info } = req.body;
     if (!support_info || typeof support_info !== 'object') {
@@ -1277,94 +1279,16 @@ router.post('/settings/support', async (req, res) => {
     }
     try {
         // Upsert settings (assuming singleton)
-        const { data, error } = await supabase_1.supabase
+        const { error } = await supabase_1.supabase
             .from('education_center_settings')
             .update({ support_info, updated_at: new Date().toISOString() })
-            .gt('updated_at', '2000-01-01') // Dummy condition to match all
-            .select()
-            .single();
-        if (error)
-            throw error;
-        res.json({ success: true, data });
-    }
-    catch (error) {
-        console.error('Error updating support info:', error);
-        res.status(500).json({ error: 'Internal server error' });
-    }
-});
-// Get all admins
-router.get('/admins', async (req, res) => {
-    try {
-        const { data, error } = await supabase_1.supabase
-            .from('users')
-            .select('id, first_name, surname, role, telegram_id, username')
-            .in('role', ['admin', 'super_admin'])
-            .order('first_name', { ascending: true });
-        if (error)
-            throw error;
-        res.json(data);
-    }
-    catch (error) {
-        console.error('Error fetching admins:', error);
-        res.status(500).json({ error: 'Internal server error' });
-    }
-});
-// Get teacher details
-router.get('/teachers/:id', async (req, res) => {
-    const { id } = req.params;
-    try {
-        // 1. Fetch Teacher Profile
-        const { data: teacher, error: teacherError } = await supabase_1.supabase
-            .from('users')
-            .select('*')
-            .eq('id', id)
-            .eq('role', 'teacher')
-            .single();
-        if (teacherError || !teacher) {
-            return res.status(404).json({ error: 'Teacher not found' });
-        }
-        // 2. Fetch Groups with Student Count
-        const { data: groups, error: groupsError } = await supabase_1.supabase
-            .from('groups')
-            .select(`
-                *,
-                group_members (count)
-            `)
-            .eq('teacher_id', id);
-        if (groupsError)
-            throw groupsError;
-        // Format groups data
-        const formattedGroups = groups.map(g => ({
-            ...g,
-            student_count: g.group_members[0]?.count || 0
-        }));
-        res.json({
-            teacher,
-            groups: formattedGroups
-        });
-    }
-    catch (error) {
-        console.error('Error fetching teacher details:', error);
-        res.status(500).json({ error: 'Internal server error' });
-    }
-});
-// Demote admin
-router.post('/admins/demote', async (req, res) => {
-    const { adminId } = req.body;
-    try {
-        // Prevent demoting self (handled by frontend usually, but good to have check)
-        // Also prevent demoting super_admin if requester is not super_admin (we don't have requester info here easily without middleware, assuming trusted admin)
-        const { error } = await supabase_1.supabase
-            .from('users')
-            .update({ role: 'new_user' })
-            .eq('id', adminId)
-            .neq('role', 'super_admin'); // Prevent demoting super_admin via this simple endpoint
+            .gt('updated_at', '2000-01-01'); // Dummy condition to match all
         if (error)
             throw error;
         res.json({ success: true });
     }
     catch (error) {
-        console.error('Error demoting admin:', error);
+        console.error('Error updating support info:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
 });
