@@ -4,45 +4,6 @@ import { useTelegram } from '../../context/TelegramContext';
 import { Section } from '../../components/ui/Section';
 import { Send, Clock, Users, BookOpen } from 'lucide-react';
 
-// ... (lines 6-94)
-
-if (targetType === 'group') {
-    payload.group_ids = selectedGroupIds;
-} else if (targetType === 'all_students') {
-    payload.group_ids = ['all'];
-} else {
-    // Handle other target types if necessary, or ensure targetType is valid
-    // Since we only have 'all_students' and 'group' in the UI for now (based on previous edits),
-    // we can simplify or just keep the logic consistent.
-    // The error was comparing 'all_students' with 'all_teachers' | 'all_admins' which might not be in the state type anymore
-    // or the state type definition is wider than the checks.
-    // Let's check the state definition: 
-    // const [targetType, setTargetType] = useState<'all_students' | 'all_teachers' | 'all_admins' | 'group'>('all_students');
-    // The error says: types '"all_teachers" | "all_admins"' and '"all_students"' have no overlap.
-    // This likely happened in a check like `if (targetType === 'all_students')` inside an `else` block where TS inferred it couldn't be 'all_students'.
-
-    // Actually, looking at the code I see:
-    // } else if (targetType === 'all_students') { ... }
-    // inside the `handleSend` function.
-
-    // Wait, the previous code block I saw in `view_file` (lines 93-121) was:
-    /*
-    if (targetType === 'group') {
-        payload.group_ids = selectedGroupIds;
-    } else if (targetType === 'all_students') {
-        payload.group_ids = ['all']; 
-    } else {
-        // ... comments ...
-        if (targetType === 'all_students') { // <--- THIS IS THE ERROR
-            payload.group_ids = ['all'];
-        }
-    }
-    */
-    // Yes, if it enters `else`, it means `targetType` is NOT `group` AND NOT `all_students`.
-    // So checking `if (targetType === 'all_students')` inside the `else` block is impossible.
-
-    // I will remove that redundant check.
-}
 import { cn } from '../../lib/utils';
 
 interface BroadcastHistory {

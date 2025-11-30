@@ -171,7 +171,7 @@ export const setupApprovalHandlers = (bot: Telegraf) => {
 
             const { data: request, error: fetchError } = await supabase
                 .from('registration_requests')
-                .select('*, users(telegram_id, first_name)')
+                .select('*, users:users!registration_requests_user_id_fkey(telegram_id, first_name)')
                 .eq('id', requestId)
                 .single();
 
