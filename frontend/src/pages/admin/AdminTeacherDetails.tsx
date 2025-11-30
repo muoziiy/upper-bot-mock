@@ -3,11 +3,13 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useTelegram } from '../../context/TelegramContext';
 import { Section } from '../../components/ui/Section';
 import { ListItem } from '../../components/ui/ListItem';
-import { User, Phone, BookOpen } from 'lucide-react';
+import { User, Phone, BookOpen, CreditCard } from 'lucide-react';
+import AdminTeacherPaymentModal from './components/AdminTeacherPaymentModal';
 
 interface TeacherDetails {
     id: string;
     first_name: string;
+    onboarding_first_name?: string;
     surname: string | null;
     phone_number: string | null;
     bio: string | null;
@@ -30,18 +32,25 @@ const AdminTeacherDetails: React.FC = () => {
     const [teacher, setTeacher] = useState<TeacherDetails | null>(null);
     const [groups, setGroups] = useState<TeacherGroup[]>([]);
     const [loading, setLoading] = useState(true);
+    const [showPaymentModal, setShowPaymentModal] = useState(false);
 
     useEffect(() => {
         if (webApp) {
             webApp.BackButton.show();
-            const handleBack = () => navigate(-1);
+            const handleBack = () => {
+                if (showPaymentModal) {
+                    setShowPaymentModal(false);
+                } else {
+                    navigate(-1);
+                }
+            };
             webApp.BackButton.onClick(handleBack);
             return () => {
                 webApp.BackButton.offClick(handleBack);
-                webApp.BackButton.hide();
+                if (!showPaymentModal) webApp.BackButton.hide();
             };
         }
-    }, [webApp, navigate]);
+    }, [webApp, navigate, showPaymentModal]);
 
     useEffect(() => {
         if (id) {
@@ -87,7 +96,7 @@ const AdminTeacherDetails: React.FC = () => {
                     <div className="w-20 h-20 bg-tg-button/10 rounded-full flex items-center justify-center mb-3">
                         <User size={40} className="text-tg-button" />
                     </div>
-                    <h2 className="text-xl font-bold text-tg-text">{teacher.first_name} {teacher.surname}</h2>
+                    <h2 className="text-xl font-bold text-tg-text">{teacher.onboarding_first_name || teacher.first_name} {teacher.surname}</h2>
                     <p className="text-tg-hint text-sm">@{teacher.username || 'No username'}</p>
                 </div>
                 <ListItem
@@ -102,6 +111,17 @@ const AdminTeacherDetails: React.FC = () => {
                 />
             </Section>
 
+            {/* Payment Info Button */}
+            <div className="px-4 mb-6">
+                <button
+                    onClick={() => setShowPaymentModal(true)}
+                    className="w-full py-3 rounded-xl bg-tg-button text-white font-semibold shadow-lg shadow-tg-button/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                >
+                    <CreditCard size={20} />
+                    Payment Info
+                </button>
+            </div>
+
             {/* Stats Section */}
             <Section title="Overview">
                 <div className="grid grid-cols-2 gap-4 p-4">
@@ -115,7 +135,7 @@ const AdminTeacherDetails: React.FC = () => {
                     </div>
                     <div className="col-span-2 bg-tg-bg p-3 rounded-xl border border-tg-secondary">
                         <div className="text-tg-hint text-xs mb-1">Potential Monthly Revenue</div>
-                        <div className="text-xl font-bold text-green-500">${potentialRevenue.toLocaleString()}</div>
+                        <div className="text-xl font-bold text-green-500">{potentialRevenue.toLocaleString()} UZS</div>
                         <div className="text-xs text-tg-hint mt-1">Based on active students * group price</div>
                     </div>
                 </div>
@@ -128,7 +148,7 @@ const AdminTeacherDetails: React.FC = () => {
                         <ListItem
                             key={group.id}
                             title={group.name}
-                            subtitle={`${group.student_count} students • $${group.price}/month`}
+                            subtitle={`${group.student_count} students • ${group.price.toLocaleString()} UZS/month`}
                             icon={<BookOpen size={20} className="text-tg-button" />}
                             rightElement={
                                 <div className="text-xs text-tg-hint">
@@ -143,6 +163,14 @@ const AdminTeacherDetails: React.FC = () => {
                     <div className="p-4 text-center text-tg-hint">No groups assigned</div>
                 )}
             </Section>
+
+            {/* Payment Modal */}
+            <AdminTeacherPaymentModal
+                isOpen={showPaymentModal}
+                onClose={() => setShowPaymentModal(false)}
+                teacherId={id!}
+                teacherName={`${teacher.onboarding_first_name || teacher.first_name} ${teacher.surname || ''}`}
+            />
         </div>
     );
 };

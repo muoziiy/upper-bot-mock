@@ -2,27 +2,36 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTelegram } from '../../context/TelegramContext';
 import { Section } from '../../components/ui/Section';
-import { Plus, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ListItem } from '../../components/ui/ListItem';
+import { User, Phone, BookOpen, ChevronLeft, ChevronRight, CreditCard } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import AdminPaymentModal from './components/AdminPaymentModal';
 import AdminGroupManagementModal from './components/AdminGroupManagementModal';
+import AdminGroupDetailsModal from './components/AdminGroupDetailsModal';
 
 interface Student {
     id: string;
     student_id: string;
+    student_id_display?: string;
     first_name: string;
     onboarding_first_name?: string;
     surname: string;
     age: number;
     sex: 'male' | 'female' | null;
+    phone_number?: string;
+    username?: string;
     groups: {
         id: string;
         name: string;
         price: number;
-        teacher_name?: string;
+        teacher?: {
+            first_name: string;
+            onboarding_first_name?: string;
+        };
         joined_at?: string;
         payment_status?: 'paid' | 'overdue' | 'unpaid';
-        status?: 'active' | 'overdue' | 'unpaid';
+        lessons_remaining?: number;
+        next_due_date?: string;
     }[];
     payment_status?: 'paid' | 'unpaid' | 'overdue';
 }
@@ -43,9 +52,10 @@ const AdminStudentDetails: React.FC = () => {
     const [loading, setLoading] = useState(true);
 
     // Modal State
+    const [showGroupManagement, setShowGroupManagement] = useState(false);
     const [showPaymentModal, setShowPaymentModal] = useState(false);
     const [showGroupModal, setShowGroupModal] = useState(false);
-    const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
+    const [selectedGroup, setSelectedGroup] = useState<any>(null);
 
     // Calendar State
     const [currentDate, setCurrentDate] = useState(new Date());
@@ -54,9 +64,10 @@ const AdminStudentDetails: React.FC = () => {
         if (webApp) {
             webApp.BackButton.show();
             const handleBack = () => {
-                if (showPaymentModal || showGroupModal) {
+                if (showPaymentModal || showGroupModal || showGroupManagement) {
                     setShowPaymentModal(false);
                     setShowGroupModal(false);
+                    setShowGroupManagement(false);
                 } else {
                     navigate('/admin/students');
                 }
@@ -66,7 +77,7 @@ const AdminStudentDetails: React.FC = () => {
                 webApp.BackButton.offClick(handleBack);
             };
         }
-    }, [webApp, navigate, showPaymentModal, showGroupModal]);
+    }, [webApp, navigate, showPaymentModal, showGroupModal, showGroupManagement]);
 
     useEffect(() => {
         fetchStudentDetails();
@@ -101,9 +112,9 @@ const AdminStudentDetails: React.FC = () => {
         }
     };
 
-    const handleGroupClick = (groupId: string) => {
-        setSelectedGroupId(groupId);
-        setShowPaymentModal(true);
+    const handleGroupClick = (group: any) => {
+        setSelectedGroup(group);
+        setShowGroupModal(true);
     };
 
     // Calendar Logic
@@ -142,170 +153,136 @@ const AdminStudentDetails: React.FC = () => {
     }
 
     return (
-        <div className="min-h-screen bg-tg-secondary pb-20 animate-in slide-in-from-right duration-200">
-            {/* Header */}
-            <div className="bg-tg-bg sticky top-0 z-10 px-4 py-3 flex items-center justify-center border-b border-tg-hint/10">
-                <h2 className="text-lg font-semibold text-tg-text">Student Details</h2>
+        <div className="page-content pt-4 pb-20">
+            <h1 className="text-2xl font-bold mb-4 px-4 text-tg-text">Student Details</h1>
+
+            {/* Profile Section */}
+            <Section title="Profile">
+                <div className="p-4 flex flex-col items-center">
+                    <div className="w-20 h-20 bg-tg-button/10 rounded-full flex items-center justify-center mb-3">
+                        <User size={40} className="text-tg-button" />
+                    </div>
+                    <h2 className="text-xl font-bold text-tg-text">{student.onboarding_first_name || student.first_name} {student.surname}</h2>
+                    <p className="text-tg-hint text-sm">@{student.username || 'No username'}</p>
+                </div>
+                <ListItem
+                    title="Phone Number"
+                    subtitle={student.phone_number || 'Not provided'}
+                    icon={<Phone size={20} className="text-tg-hint" />}
+                />
+                <ListItem
+                    title="Student ID"
+                    subtitle={`#${student.student_id_display || student.student_id || 'N/A'}`}
+                    icon={<User size={20} className="text-tg-hint" />}
+                />
+            </Section>
+
+            {/* Payment Info Button */}
+            <div className="px-4 mb-6">
+                <button
+                    onClick={() => setShowPaymentModal(true)}
+                    className="w-full py-3 rounded-xl bg-tg-button text-white font-semibold shadow-lg shadow-tg-button/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                >
+                    <CreditCard size={20} />
+                    Payment Info
+                </button>
             </div>
 
-            <div className="pt-4 px-4 space-y-6">
-                {/* Profile Header */}
-                <div className="flex flex-col items-center">
-                    <div className="relative">
-                        <div className="w-24 h-24 rounded-full bg-tg-bg flex items-center justify-center text-4xl mb-3 shadow-sm border border-tg-hint/10">
-                            {student.sex === 'female' ? '👩' : '👨'}
+            {/* Groups Section */}
+            <Section title="Groups" action={<button onClick={() => setShowGroupManagement(true)} className="text-tg-button text-sm font-medium">Manage</button>}>
+                {student.groups && student.groups.length > 0 ? (
+                    student.groups.map((group: any) => (
+                        <div key={group.id} onClick={() => handleGroupClick(group)} className="active:scale-[0.99] transition-transform">
+                            <ListItem
+                                title={group.name}
+                                subtitle={`${group.payment_status === 'paid' ? '✅ Paid' : '⚠️ Overdue'} • ${group.lessons_remaining !== undefined ? `${group.lessons_remaining} lessons left` : `Due: ${group.next_due_date ? new Date(group.next_due_date).toLocaleDateString() : 'N/A'}`}`}
+                                icon={<BookOpen size={20} className="text-tg-button" />}
+                                rightElement={
+                                    <div className="text-xs text-tg-hint">
+                                        {group.teacher?.onboarding_first_name || group.teacher?.first_name || 'No Teacher'}
+                                    </div>
+                                }
+                            />
                         </div>
-                        {student.payment_status === 'overdue' && (
-                            <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-md border-2 border-tg-secondary">
-                                Overdue
-                            </div>
-                        )}
-                        {student.payment_status === 'paid' && (
-                            <div className="absolute -top-1 -right-1 bg-green-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-md border-2 border-tg-secondary">
-                                Paid
-                            </div>
-                        )}
-                    </div>
-                    <h1 className="text-2xl font-bold text-tg-text text-center">
-                        {student.onboarding_first_name || student.first_name}
-                    </h1>
-                    <p className="text-tg-hint font-medium mt-1">ID: {student.student_id}</p>
-                </div>
+                    ))
+                ) : (
+                    <div className="p-4 text-center text-tg-hint">No groups assigned</div>
+                )}
+            </Section>
 
-                {/* Groups Section */}
-                <div className="space-y-2">
-                    <div className="flex justify-between items-center px-2">
-                        <h3 className="text-sm font-medium text-tg-hint uppercase">Groups</h3>
-                        <button
-                            onClick={() => setShowGroupModal(true)}
-                            className="text-tg-button text-sm font-medium flex items-center gap-1"
-                        >
-                            <Plus size={16} /> Add
+            {/* Attendance Section */}
+            <Section title="Attendance">
+                <div className="p-4">
+                    {/* Calendar Header */}
+                    <div className="flex items-center justify-between mb-4">
+                        <button onClick={prevMonth} className="p-2 hover:bg-tg-secondary rounded-full text-tg-text">
+                            <ChevronLeft size={20} />
+                        </button>
+                        <h3 className="text-lg font-semibold text-tg-text">
+                            {currentDate.toLocaleString('default', { month: 'long', year: 'numeric' })}
+                        </h3>
+                        <button onClick={nextMonth} className="p-2 hover:bg-tg-secondary rounded-full text-tg-text">
+                            <ChevronRight size={20} />
                         </button>
                     </div>
-                    <Section>
-                        {student.groups.length > 0 ? (
-                            student.groups.map((group, idx) => (
-                                <div
-                                    key={group.id}
-                                    className={cn(
-                                        "bg-tg-bg p-4 flex justify-between items-center cursor-pointer active:bg-black/5 dark:active:bg-white/5 transition-colors",
-                                        idx !== student.groups.length - 1 && "border-b border-tg-hint/10"
-                                    )}
-                                    onClick={() => handleGroupClick(group.id)}
-                                >
-                                    <div>
-                                        <span className="font-semibold text-tg-text block">{group.name}</span>
-                                        <span className="text-sm text-tg-hint">{group.teacher_name || 'No Teacher'}</span>
-                                    </div>
-                                    <div className="flex flex-col items-end gap-1">
-                                        <span className="text-sm font-medium text-tg-text">{group.price.toLocaleString()} UZS</span>
-                                        {/* Status Badge */}
-                                        {group.payment_status === 'overdue' ? (
-                                            <span className="px-2 py-0.5 bg-red-500/10 text-red-500 text-xs font-bold rounded-full border border-red-500/20">
-                                                Overdue
-                                            </span>
-                                        ) : group.payment_status === 'paid' ? (
-                                            <span className="px-2 py-0.5 bg-green-500/10 text-green-500 text-xs font-bold rounded-full border border-green-500/20">
-                                                Paid
-                                            </span>
-                                        ) : (
-                                            <span className="px-2 py-0.5 bg-gray-500/10 text-gray-500 text-xs font-bold rounded-full border border-gray-500/20">
-                                                Unpaid
-                                            </span>
-                                        )}
-                                    </div>
-                                </div>
-                            ))
-                        ) : (
-                            <div className="p-4 text-center text-tg-hint">
-                                No active groups
-                            </div>
-                        )}
-                    </Section>
-                </div>
 
-                {/* Attendance Calendar Section */}
-                <div className="space-y-2">
-                    <h3 className="text-sm font-medium text-tg-hint uppercase ml-2">Attendance</h3>
-                    <div className="bg-tg-bg rounded-2xl p-4 shadow-sm border border-tg-hint/10">
-                        {/* Calendar Header */}
-                        <div className="flex items-center justify-between mb-4">
-                            <button onClick={prevMonth} className="p-1 hover:bg-tg-secondary rounded-full text-tg-hint">
-                                <ChevronLeft size={20} />
-                            </button>
-                            <span className="font-semibold text-tg-text">
-                                {currentDate.toLocaleString('default', { month: 'long', year: 'numeric' })}
-                            </span>
-                            <button onClick={nextMonth} className="p-1 hover:bg-tg-secondary rounded-full text-tg-hint">
-                                <ChevronRight size={20} />
-                            </button>
-                        </div>
+                    {/* Calendar Grid */}
+                    <div className="grid grid-cols-7 gap-1 text-center mb-2">
+                        {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(day => (
+                            <div key={day} className="text-xs font-medium text-tg-hint py-1">{day}</div>
+                        ))}
+                    </div>
+                    <div className="grid grid-cols-7 gap-1">
+                        {blanks.map(i => <div key={`blank-${i}`} className="aspect-square" />)}
+                        {days.map(day => {
+                            const status = getAttendanceStatus(day);
+                            let bgClass = "bg-tg-secondary text-tg-text";
+                            if (status === 'present') bgClass = "bg-green-500/20 text-green-500 font-bold";
+                            if (status === 'absent') bgClass = "bg-red-500/20 text-red-500 font-bold";
+                            if (status === 'late') bgClass = "bg-orange-500/20 text-orange-500 font-bold";
 
-                        {/* Calendar Grid */}
-                        <div className="grid grid-cols-7 gap-1 text-center mb-2">
-                            {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(day => (
-                                <div key={day} className="text-xs font-medium text-tg-hint py-1">
+                            return (
+                                <div key={day} className={`aspect-square flex items-center justify-center rounded-lg text-sm ${bgClass}`}>
                                     {day}
                                 </div>
-                            ))}
-                        </div>
-                        <div className="grid grid-cols-7 gap-1">
-                            {blanks.map(i => <div key={`blank-${i}`} />)}
-                            {days.map(day => {
-                                const status = getAttendanceStatus(day);
-                                return (
-                                    <div
-                                        key={day}
-                                        className={cn(
-                                            "aspect-square flex items-center justify-center text-sm rounded-lg",
-                                            status === 'present' && "bg-green-500/20 text-green-600 font-bold",
-                                            status === 'absent' && "bg-red-500/20 text-red-600 font-bold",
-                                            status === 'late' && "bg-orange-500/20 text-orange-600 font-bold",
-                                            !status && "text-tg-text hover:bg-tg-secondary/50"
-                                        )}
-                                    >
-                                        {day}
-                                    </div>
-                                );
-                            })}
-                        </div>
+                            );
+                        })}
+                    </div>
 
-                        {/* Legend */}
-                        <div className="flex gap-4 justify-center mt-4 text-xs text-tg-hint">
-                            <div className="flex items-center gap-1">
-                                <div className="w-2 h-2 rounded-full bg-green-500"></div> Present
-                            </div>
-                            <div className="flex items-center gap-1">
-                                <div className="w-2 h-2 rounded-full bg-red-500"></div> Absent
-                            </div>
-                            <div className="flex items-center gap-1">
-                                <div className="w-2 h-2 rounded-full bg-orange-500"></div> Late
-                            </div>
-                        </div>
+                    {/* Legend */}
+                    <div className="flex justify-center gap-4 mt-4 text-xs text-tg-hint">
+                        <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-green-500"></div> Present</div>
+                        <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-red-500"></div> Absent</div>
+                        <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-orange-500"></div> Late</div>
                     </div>
                 </div>
-            </div>
+            </Section>
 
             {/* Modals */}
-            <AdminPaymentModal
-                isOpen={showPaymentModal}
-                onClose={() => {
-                    setShowPaymentModal(false);
-                    setSelectedGroupId(null);
-                }}
-                studentId={student.id}
-                studentName={`${student.first_name} ${student.surname}`}
-                groups={student.groups}
-                defaultGroupId={selectedGroupId}
-            />
             <AdminGroupManagementModal
+                isOpen={showGroupManagement}
+                onClose={() => setShowGroupManagement(false)}
+                studentId={id!}
+                studentName={student.first_name}
+                currentGroups={student.groups || []}
+                onUpdate={fetchStudentDetails}
+            />
+
+            <AdminGroupDetailsModal
                 isOpen={showGroupModal}
                 onClose={() => setShowGroupModal(false)}
-                studentId={student.id}
-                studentName={`${student.first_name} ${student.surname}`}
-                currentGroups={student.groups}
+                studentId={id!}
+                studentName={student.first_name}
+                group={selectedGroup}
                 onUpdate={fetchStudentDetails}
+            />
+
+            <AdminPaymentModal
+                isOpen={showPaymentModal}
+                onClose={() => setShowPaymentModal(false)}
+                studentId={id!}
+                studentName={student.first_name}
+                groups={student.groups || []}
             />
         </div>
     );

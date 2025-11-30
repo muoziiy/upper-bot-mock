@@ -691,3 +691,31 @@ CREATE TABLE IF NOT EXISTS scheduled_broadcasts (
     status TEXT DEFAULT 'pending', -- 'pending', 'sent', 'failed'
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+-- Teacher Payments Table
+CREATE TABLE IF NOT EXISTS teacher_payments (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    teacher_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    amount DECIMAL(10, 2) NOT NULL,
+    payment_date DATE NOT NULL,
+    description TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- RLS for teacher_payments
+ALTER TABLE teacher_payments ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Admins can manage teacher payments"
+    ON teacher_payments FOR ALL
+    USING (
+        EXISTS (
+            SELECT 1 FROM users
+            WHERE users.id = auth.uid()
+            AND users.role = 'admin'
+        )
+    );
+
+CREATE POLICY "Teachers can view their own payments"
+    ON teacher_payments FOR SELECT
+    USING (
+        auth.uid() = teacher_id
+    );
