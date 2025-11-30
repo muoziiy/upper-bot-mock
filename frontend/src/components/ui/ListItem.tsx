@@ -33,7 +33,7 @@ export const ListItem: React.FC<ListItemProps> = ({
         <div
             onClick={!disabled ? onClick : undefined}
             className={cn(
-                "relative flex items-center gap-4 px-4 py-4 transition-colors",
+                "relative flex items-center gap-3 px-4 py-3 transition-colors",
                 onClick && !disabled && "cursor-pointer active:bg-black/5 dark:active:bg-white/10",
                 disabled && "opacity-50 cursor-not-allowed",
                 className
@@ -41,7 +41,7 @@ export const ListItem: React.FC<ListItemProps> = ({
         >
             {/* Icon */}
             {icon && (
-                <div className="flex-shrink-0 text-tg-button text-3xl w-10 flex justify-center">
+                <div className="flex-shrink-0 text-tg-button text-xl w-8 flex justify-center">
                     {icon}
                 </div>
             )}
@@ -73,7 +73,7 @@ export const ListItem: React.FC<ListItemProps> = ({
 
             {/* Separator (if not last) */}
             {!isLast && (
-                <div className="absolute bottom-0 left-[56px] right-0 h-[0.5px] bg-black/5 dark:bg-white/10" />
+                <div className="absolute bottom-0 left-[60px] right-0 h-[0.5px] bg-black/5 dark:bg-white/10" />
             )}
         </div>
     );

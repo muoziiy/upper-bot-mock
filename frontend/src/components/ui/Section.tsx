@@ -8,7 +8,7 @@ interface SectionProps extends React.HTMLAttributes<HTMLDivElement> {
 
 const Section = React.forwardRef<HTMLDivElement, SectionProps>(
     ({ className, title, action, children, ...props }, ref) => (
-        <div ref={ref} className={cn("mb-6", className)} {...props}>
+        <div ref={ref} className={cn("mb-6 mx-4", className)} {...props}>
             {(title || action) && (
                 <div className="mb-2 flex items-center justify-between px-4">
                     {title && (
