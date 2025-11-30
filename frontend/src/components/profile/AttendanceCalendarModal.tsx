@@ -165,6 +165,17 @@ const AttendanceCalendarModal: React.FC<AttendanceCalendarModalProps> = ({
                                     <span className="text-xs text-tg-hint">{t('status.late')}</span>
                                 </div>
                             </div>
+
+                            {/* Explanation */}
+                            <div className="mt-6 px-2">
+                                <p className="text-xs text-tg-hint leading-relaxed text-center">
+                                    <span className="font-semibold">How it works:</span>
+                                    <br />
+                                    Lesson Based: 1 credit deducted per Present/Late.
+                                    <br />
+                                    Monthly: Status based on payment date coverage.
+                                </p>
+                            </div>
                         </div>
                     </motion.div>
                 </motion.div>

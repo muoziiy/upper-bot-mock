@@ -48,6 +48,7 @@ const AdminStudentDetails: React.FC = () => {
     const { webApp } = useTelegram();
     const [student, setStudent] = useState<Student | null>(null);
     const [attendance, setAttendance] = useState<AttendanceRecord[]>([]);
+    const [payments, setPayments] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
     // Modal State
@@ -81,6 +82,7 @@ const AdminStudentDetails: React.FC = () => {
     useEffect(() => {
         fetchStudentDetails();
         fetchAttendance();
+        fetchPayments();
     }, [id]);
 
     const fetchStudentDetails = async () => {
@@ -108,6 +110,19 @@ const AdminStudentDetails: React.FC = () => {
             }
         } catch (e) {
             console.error('Failed to fetch attendance', e);
+        }
+    };
+
+    const fetchPayments = async () => {
+        if (!id) return;
+        try {
+            const res = await fetch(`${import.meta.env.VITE_API_URL}/admin/students/${id}/payments`);
+            if (res.ok) {
+                const data = await res.json();
+                setPayments(data);
+            }
+        } catch (e) {
+            console.error('Failed to fetch payments', e);
         }
     };
 
@@ -190,9 +205,22 @@ const AdminStudentDetails: React.FC = () => {
 
             {/* Finance Section */}
             <AdminSection title="Finance">
+                {payments.length > 0 ? (
+                    payments.slice(0, 3).map((payment, index) => (
+                        <AdminListItem
+                            key={payment.id}
+                            title={`${parseInt(payment.amount).toLocaleString()} UZS`}
+                            subtitle={`${new Date(payment.date).toLocaleDateString()} • ${payment.target}`}
+                            icon="💰"
+                            iconColor="bg-green-500"
+                            isLast={index === Math.min(payments.length, 3) - 1 && payments.length <= 3}
+                        />
+                    ))
+                ) : (
+                    <div className="p-4 text-center text-[#8E8E93] bg-white dark:bg-[#1C1C1E]">No payments found</div>
+                )}
                 <AdminListItem
-                    title="Payment History"
-                    // subtitle removed
+                    title="View All History"
                     icon="💳"
                     iconColor="bg-blue-500"
                     onClick={() => setShowPaymentModal(true)}
@@ -286,6 +314,17 @@ const AdminStudentDetails: React.FC = () => {
                     </div>
                 </div>
             </AdminSection>
+
+            {/* Attendance Explanation */}
+            <div className="px-4 mt-2 mb-6">
+                <p className="text-xs text-[#8E8E93] leading-relaxed">
+                    <span className="font-semibold">How it works:</span>
+                    <br />
+                    • <span className="font-medium">Lesson Based:</span> 1 credit is deducted for every "Present" or "Late" status.
+                    <br />
+                    • <span className="font-medium">Monthly:</span> Status is based on payment date coverage.
+                </p>
+            </div>
 
             {/* Modals */}
             <AdminGroupManagementModal

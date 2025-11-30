@@ -641,6 +641,49 @@ router.get('/students/:id', async (req, res) => {
     }
 });
 
+// Get Student Payments
+router.get('/students/:id/payments', async (req, res) => {
+    const { id } = req.params;
+
+    try {
+        const { data, error } = await supabase
+            .from('payment_records')
+            .select(`
+                id,
+                amount,
+                payment_date,
+                payment_method,
+                status,
+                month,
+                year,
+                notes,
+                groups (name),
+                subjects (name)
+            `)
+            .eq('student_id', id)
+            .order('payment_date', { ascending: false });
+
+        if (error) throw error;
+
+        const payments = data.map((p: any) => ({
+            id: p.id,
+            amount: p.amount,
+            date: p.payment_date,
+            method: p.payment_method,
+            status: p.status,
+            month: p.month,
+            year: p.year,
+            notes: p.notes,
+            target: p.groups?.name || p.subjects?.name || 'General'
+        }));
+
+        res.json(payments);
+    } catch (error) {
+        console.error('Error fetching student payments:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
 // Update Student Payment Day
 router.put('/students/:id/payment-day', async (req, res) => {
     const { id } = req.params;

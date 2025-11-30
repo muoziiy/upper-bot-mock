@@ -82,6 +82,14 @@ router.get('/dashboard', async (req: Request, res: Response) => {
             .in('group_id', groupIds)
             .order('payment_date', { ascending: false });
 
+        // Fetch Attendance for these groups
+        const { data: attendance } = await supabase
+            .from('attendance_records')
+            .select('*')
+            .eq('student_id', user.id)
+            .in('group_id', groupIds)
+            .order('attendance_date', { ascending: false });
+
         // Construct rich groups data for Profile
         const richGroups = groupMembers?.map((gm: any) => {
             const group = Array.isArray(gm.groups) ? gm.groups[0] : gm.groups;
@@ -89,6 +97,7 @@ router.get('/dashboard', async (req: Request, res: Response) => {
 
             const teacher = teachersMap.get(group.teacher_id);
             const groupPayments = payments?.filter(p => p.group_id === group.id) || [];
+            const groupAttendance = attendance?.filter(a => a.group_id === group.id) || [];
 
             return {
                 id: group.id,
@@ -105,7 +114,10 @@ router.get('/dashboard', async (req: Request, res: Response) => {
                     phone: teacher.phone_number
                 } : null,
                 payments: groupPayments,
-                attendance: []
+                attendance: groupAttendance.map(a => ({
+                    date: a.attendance_date,
+                    status: a.status
+                }))
             };
         }).filter(Boolean) || [];
 

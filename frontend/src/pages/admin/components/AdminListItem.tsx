@@ -5,6 +5,7 @@ import { cn } from '../../../lib/utils';
 interface AdminListItemProps {
     icon?: React.ReactNode;
     title: string;
+    subtitle?: string;
     value?: React.ReactNode;
     onClick?: () => void;
     rightElement?: React.ReactNode;
@@ -19,6 +20,7 @@ interface AdminListItemProps {
 export const AdminListItem: React.FC<AdminListItemProps> = ({
     icon,
     title,
+    subtitle,
     value,
     onClick,
     rightElement,
@@ -54,6 +56,11 @@ export const AdminListItem: React.FC<AdminListItemProps> = ({
                 <div className={cn("text-[17px] leading-snug font-normal", destructive ? 'text-red-500' : 'text-black dark:text-white')}>
                     {title}
                 </div>
+                {subtitle && (
+                    <div className="text-[13px] leading-snug text-[#8E8E93] mt-0.5">
+                        {subtitle}
+                    </div>
+                )}
             </div>
 
             {/* Right Side */}
