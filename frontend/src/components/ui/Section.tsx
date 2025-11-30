@@ -19,7 +19,7 @@ const Section = React.forwardRef<HTMLDivElement, SectionProps>(
                     {action && <div>{action}</div>}
                 </div>
             )}
-            <div className="bg-white dark:bg-tg-secondary overflow-hidden rounded-xl space-y-[1px]">
+            <div className="bg-white/70 dark:bg-black/50 backdrop-blur-md border border-white/20 overflow-hidden rounded-xl space-y-[1px]">
                 {children}
             </div>
         </div>
