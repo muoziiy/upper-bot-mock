@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import Lottie from 'lottie-react';
 import duckSuccess from '../../assets/animations/duck_success.json';
 import { AdminSection } from '../../pages/admin/components/AdminSection';
+import { useNavigate } from 'react-router-dom';
 
 interface CreateExamModalProps {
     isOpen: boolean;
@@ -13,8 +14,9 @@ interface CreateExamModalProps {
 }
 
 const CreateExamModal: React.FC<CreateExamModalProps> = ({ isOpen, onClose, groups }) => {
-    const { webApp } = useTelegram();
+    const { webApp, user } = useTelegram();
     const { t } = useTranslation();
+    const navigate = useNavigate();
     const [formData, setFormData] = useState({
         title: '',
         date: '',
@@ -29,6 +31,7 @@ const CreateExamModal: React.FC<CreateExamModalProps> = ({ isOpen, onClose, grou
         groupId: false
     });
     const [showSuccess, setShowSuccess] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     useEffect(() => {
         if (isOpen) {
@@ -44,7 +47,7 @@ const CreateExamModal: React.FC<CreateExamModalProps> = ({ isOpen, onClose, grou
         };
     }, [isOpen, onClose, webApp]);
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
         // Validate all required fields
@@ -63,23 +66,60 @@ const CreateExamModal: React.FC<CreateExamModalProps> = ({ isOpen, onClose, grou
             return;
         }
 
-        console.log('Create exam:', formData);
-        // TODO: Add API call to create exam
-        webApp.HapticFeedback.notificationOccurred('success');
-        setShowSuccess(true);
+        setIsSubmitting(true);
 
-        // Close after animation
-        setTimeout(() => {
-            setShowSuccess(false);
-            onClose();
-            setFormData({
-                title: '',
-                date: '',
-                time: '',
-                type: 'online',
-                groupId: ''
+        try {
+            const scheduledDate = new Date(`${formData.date}T${formData.time}`);
+
+            const response = await fetch(`${import.meta.env.VITE_API_URL}/exams/teacher/save`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-user-id': user?.id?.toString() || ''
+                },
+                body: JSON.stringify({
+                    title: formData.title,
+                    description: '',
+                    duration_minutes: 60, // Default
+                    type: formData.type,
+                    location: '',
+                    groups: [formData.groupId],
+                    scheduled_date: scheduledDate.toISOString()
+                })
             });
-        }, 2000);
+
+            if (response.ok) {
+                const data = await response.json();
+                webApp.HapticFeedback.notificationOccurred('success');
+                setShowSuccess(true);
+
+                // Close after animation and redirect
+                setTimeout(() => {
+                    setShowSuccess(false);
+                    onClose();
+                    setFormData({
+                        title: '',
+                        date: '',
+                        time: '',
+                        type: 'online',
+                        groupId: ''
+                    });
+
+                    // Redirect to edit questions if online
+                    if (formData.type === 'online') {
+                        navigate(`/admin/exams/${data.examId}`); // Reusing Admin Editor for now
+                    }
+                }, 2000);
+            } else {
+                webApp.HapticFeedback.notificationOccurred('error');
+                alert('Failed to create exam');
+            }
+        } catch (error) {
+            console.error('Error creating exam:', error);
+            webApp.HapticFeedback.notificationOccurred('error');
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     return (
@@ -112,8 +152,12 @@ const CreateExamModal: React.FC<CreateExamModalProps> = ({ isOpen, onClose, grou
                                     Cancel
                                 </button>
                                 <h1 className="text-[17px] font-semibold text-black dark:text-white">{t('teacher.create_exam')}</h1>
-                                <button onClick={handleSubmit} className="text-blue-500 text-[17px] font-semibold">
-                                    Create
+                                <button
+                                    onClick={handleSubmit}
+                                    disabled={isSubmitting}
+                                    className={`text-blue-500 text-[17px] font-semibold ${isSubmitting ? 'opacity-50' : ''}`}
+                                >
+                                    {isSubmitting ? 'Creating...' : 'Create'}
                                 </button>
                             </div>
 

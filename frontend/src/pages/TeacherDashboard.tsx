@@ -9,9 +9,12 @@ import ScheduleClassModal from '../components/teacher/ScheduleClassModal';
 import { AdminSection } from './admin/components/AdminSection';
 import { AdminListItem } from './admin/components/AdminListItem';
 
+import { useNavigate } from 'react-router-dom';
+
 const TeacherDashboard: React.FC = () => {
     const { teacherData, dashboardData, loading } = useAppData();
     const { t } = useTranslation();
+    const navigate = useNavigate();
     const [activeModal, setActiveModal] = useState<string | null>(null);
 
     if (loading) {
@@ -89,6 +92,13 @@ const TeacherDashboard: React.FC = () => {
                         icon="🏫"
                         iconColor="bg-purple-500"
                         value={teacherData?.groups.length}
+                    />
+                    <AdminListItem
+                        title={t('teacher.manage_exams', 'Manage Exams')}
+                        icon="📝"
+                        iconColor="bg-orange-500"
+                        onClick={() => navigate('/teacher/exams')}
+                        showChevron
                         isLast
                     />
                 </AdminSection>

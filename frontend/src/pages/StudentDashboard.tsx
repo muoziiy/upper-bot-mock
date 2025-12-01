@@ -9,9 +9,12 @@ import Lottie from 'lottie-react';
 import LottieAnimation from '../components/ui/LottieAnimation';
 import loadingAnimation from '../assets/animations/loading.json';
 
+import { useNavigate } from 'react-router-dom';
+
 const StudentDashboard: React.FC = () => {
     const { t } = useTranslation();
     const { } = useTelegram();
+    const navigate = useNavigate();
     const { dashboardData, loading } = useAppData();
     const [selectedSubjectId, setSelectedSubjectId] = useState<string | null>(null);
     const [hiAnimation, setHiAnimation] = useState<any>(null);
@@ -107,6 +110,20 @@ const StudentDashboard: React.FC = () => {
                         </div>
                     )
                 }
+
+                {/* Exams Section */}
+                <Section title={t('student.exams', 'Exams')}>
+                    <Card className="p-4 flex items-center justify-between cursor-pointer" onClick={() => navigate('/student/exams')}>
+                        <div className="flex items-center gap-3">
+                            <span className="text-2xl">📝</span>
+                            <div>
+                                <h3 className="font-semibold text-lg">{t('student.my_exams', 'My Exams')}</h3>
+                                <p className="text-sm text-tg-hint">{t('student.view_exams', 'View upcoming and past exams')}</p>
+                            </div>
+                        </div>
+                        <span className="text-tg-button text-xl">→</span>
+                    </Card>
+                </Section>
 
                 {/* Lesson Curriculum */}
                 <AnimatePresence mode="wait">
