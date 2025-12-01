@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Trash2, Plus } from 'lucide-react';
+import { Calendar, Trash2, Plus, Check, Clock, X as XIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTelegram } from '../../../context/TelegramContext';
 
@@ -8,6 +8,7 @@ interface Payment {
     amount: number;
     payment_date: string;
     description?: string;
+    status?: 'paid' | 'pending' | 'unpaid'; // Added status to interface
 }
 
 interface AdminTeacherPaymentModalProps {
@@ -59,7 +60,9 @@ const AdminTeacherPaymentModal: React.FC<AdminTeacherPaymentModalProps> = ({ isO
             const res = await fetch(`${import.meta.env.VITE_API_URL}/admin/teachers/${teacherId}/payments`);
             if (res.ok) {
                 const data = await res.json();
-                setPayments(data);
+                // Ensure status exists, default to 'paid' if missing for old records
+                const formattedData = data.map((p: any) => ({ ...p, status: p.status || 'paid' }));
+                setPayments(formattedData);
             }
         } catch (e) {
             console.error('Failed to fetch payments', e);
@@ -98,7 +101,8 @@ const AdminTeacherPaymentModal: React.FC<AdminTeacherPaymentModalProps> = ({ isO
                 body: JSON.stringify({
                     amount: parseFloat(amount),
                     payment_date: date,
-                    description
+                    description,
+                    status: 'paid' // Default to paid for admin payouts
                 })
             });
 
@@ -123,19 +127,31 @@ const AdminTeacherPaymentModal: React.FC<AdminTeacherPaymentModalProps> = ({ isO
         }
     };
 
+    const getStatusIcon = (status: string) => {
+        if (status === 'paid') return <Check className="w-4 h-4 text-green-500" />;
+        if (status === 'pending') return <Clock className="w-4 h-4 text-yellow-500" />;
+        return <XIcon className="w-4 h-4 text-red-500" />;
+    };
+
+    const getStatusBgColor = (status: string) => {
+        if (status === 'paid') return 'bg-green-500/10';
+        if (status === 'pending') return 'bg-yellow-500/10';
+        return 'bg-red-500/10';
+    };
+
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-[60] bg-tg-bg flex flex-col">
+        <div className="fixed inset-0 z-[60] bg-[#F2F2F7] dark:bg-[#000000] flex flex-col">
             {/* Header */}
-            <div className="px-4 py-3 border-b border-tg-hint/10 flex items-center justify-between bg-tg-bg">
-                <h2 className="text-lg font-semibold text-tg-text">
+            <div className="px-4 py-3 border-b border-[#C6C6C8] dark:border-[#38383A] flex items-center justify-between bg-[#F2F2F7] dark:bg-[#1C1C1E]">
+                <h2 className="text-lg font-semibold text-black dark:text-white">
                     {view === 'add' ? 'Add Payout' : `Payouts - ${teacherName}`}
                 </h2>
             </div>
 
             {/* Content */}
-            <div className="flex-1 overflow-y-auto p-4 bg-tg-bg">
+            <div className="flex-1 overflow-y-auto p-4">
                 <AnimatePresence mode="wait">
                     {view === 'history' ? (
                         <motion.div
@@ -148,40 +164,59 @@ const AdminTeacherPaymentModal: React.FC<AdminTeacherPaymentModalProps> = ({ isO
                             {/* Add Button */}
                             <button
                                 onClick={() => setView('add')}
-                                className="w-full py-3 rounded-xl bg-tg-button text-white font-semibold flex items-center justify-center gap-2 active:scale-95 transition-transform"
+                                className="w-full py-3 rounded-xl bg-blue-500 text-white font-semibold flex items-center justify-center gap-2 active:scale-95 transition-transform shadow-lg shadow-blue-500/20"
                             >
                                 <Plus size={20} />
                                 Add Payout
                             </button>
 
                             {/* List */}
-                            <div className="space-y-3">
+                            <div className="bg-white dark:bg-[#1C1C1E] rounded-xl overflow-hidden shadow-sm">
                                 {payments.length > 0 ? (
-                                    payments.map((payment) => (
-                                        <div key={payment.id} className="bg-tg-secondary p-4 rounded-xl border border-tg-hint/10 flex justify-between items-center">
+                                    payments.map((payment, index) => (
+                                        <motion.div
+                                            key={payment.id}
+                                            initial={{ opacity: 0, y: 20 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            transition={{ delay: index * 0.05 }}
+                                            className={`p-4 flex items-center justify-between ${index !== payments.length - 1 ? 'border-b border-[#C6C6C8]/50 dark:border-[#38383A]/50' : ''}`}
+                                        >
                                             <div>
-                                                <div className="font-semibold text-tg-text text-lg">
-                                                    {payment.amount.toLocaleString()} UZS
-                                                </div>
-                                                <div className="text-sm text-tg-hint flex items-center gap-2">
-                                                    <span>📅 {new Date(payment.payment_date).toLocaleDateString()}</span>
+                                                <h3 className="font-medium text-black dark:text-white">
+                                                    {new Date(payment.payment_date).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                                                </h3>
+                                                <div className="flex items-center gap-1.5 mt-1">
+                                                    {getStatusIcon(payment.status || 'paid')}
+                                                    <span className="text-xs text-[#8E8E93]">
+                                                        {payment.status === 'paid' ? `Paid on ${new Date(payment.payment_date).toLocaleDateString()}` : payment.status}
+                                                    </span>
                                                 </div>
                                                 {payment.description && (
-                                                    <div className="text-xs text-tg-hint mt-1 italic">
+                                                    <div className="text-xs text-[#8E8E93] mt-1 italic">
                                                         {payment.description}
                                                     </div>
                                                 )}
                                             </div>
-                                            <button
-                                                onClick={() => handleDelete(payment.id)}
-                                                className="p-2 text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
-                                            >
-                                                <Trash2 size={20} />
-                                            </button>
-                                        </div>
+                                            <div className="flex items-center gap-3">
+                                                <div className="text-right">
+                                                    <span className="text-lg font-bold block text-black dark:text-white">
+                                                        {payment.amount.toLocaleString()} UZS
+                                                    </span>
+                                                    <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${getStatusBgColor(payment.status || 'paid')} text-black dark:text-white`}>
+                                                        {(payment.status || 'paid').toUpperCase()}
+                                                    </span>
+                                                </div>
+                                                <button
+                                                    onClick={() => handleDelete(payment.id)}
+                                                    className="p-2 text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
+                                                >
+                                                    <Trash2 size={20} />
+                                                </button>
+                                            </div>
+                                        </motion.div>
                                     ))
                                 ) : (
-                                    <div className="text-center py-12 text-tg-hint">
+                                    <div className="text-center py-12 text-[#8E8E93]">
                                         No payout history found.
                                     </div>
                                 )}
@@ -197,38 +232,38 @@ const AdminTeacherPaymentModal: React.FC<AdminTeacherPaymentModalProps> = ({ isO
                         >
                             {/* Date */}
                             <div className="space-y-2">
-                                <label className="text-sm font-medium text-tg-hint ml-1">Date</label>
+                                <label className="text-sm font-medium text-[#8E8E93] ml-1">Date</label>
                                 <div className="relative">
-                                    <Calendar className="absolute left-3.5 top-1/2 -translate-y-1/2 text-tg-hint" size={18} />
+                                    <Calendar className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#8E8E93]" size={18} />
                                     <input
                                         type="date"
                                         value={date}
                                         onChange={(e) => setDate(e.target.value)}
-                                        className="w-full bg-tg-secondary text-tg-text pl-11 p-3.5 rounded-xl border-none outline-none focus:ring-2 focus:ring-tg-button/20"
+                                        className="w-full bg-white dark:bg-[#1C1C1E] text-black dark:text-white pl-11 p-3.5 rounded-xl border-none outline-none focus:ring-2 focus:ring-blue-500/20"
                                     />
                                 </div>
                             </div>
 
                             {/* Amount */}
                             <div className="space-y-2">
-                                <label className="text-sm font-medium text-tg-hint ml-1">Amount (UZS)</label>
+                                <label className="text-sm font-medium text-[#8E8E93] ml-1">Amount (UZS)</label>
                                 <input
                                     type="number"
                                     value={amount}
                                     onChange={(e) => setAmount(e.target.value)}
                                     placeholder="0"
-                                    className="w-full bg-tg-secondary text-tg-text p-3.5 rounded-xl border-none outline-none focus:ring-2 focus:ring-tg-button/20 text-lg font-semibold"
+                                    className="w-full bg-white dark:bg-[#1C1C1E] text-black dark:text-white p-3.5 rounded-xl border-none outline-none focus:ring-2 focus:ring-blue-500/20 text-lg font-semibold"
                                 />
                             </div>
 
                             {/* Description */}
                             <div className="space-y-2">
-                                <label className="text-sm font-medium text-tg-hint ml-1">Note (Optional)</label>
+                                <label className="text-sm font-medium text-[#8E8E93] ml-1">Note (Optional)</label>
                                 <textarea
                                     value={description}
                                     onChange={(e) => setDescription(e.target.value)}
                                     placeholder="e.g. Salary for October"
-                                    className="w-full bg-tg-secondary text-tg-text p-3.5 rounded-xl border-none outline-none focus:ring-2 focus:ring-tg-button/20 resize-none h-24"
+                                    className="w-full bg-white dark:bg-[#1C1C1E] text-black dark:text-white p-3.5 rounded-xl border-none outline-none focus:ring-2 focus:ring-blue-500/20 resize-none h-24"
                                 />
                             </div>
 
@@ -237,7 +272,7 @@ const AdminTeacherPaymentModal: React.FC<AdminTeacherPaymentModalProps> = ({ isO
                                 <button
                                     onClick={handleSave}
                                     disabled={loading}
-                                    className="w-full py-3.5 rounded-xl bg-tg-button text-white font-semibold active:scale-[0.98] transition-all shadow-lg shadow-tg-button/20"
+                                    className="w-full py-3.5 rounded-xl bg-blue-500 text-white font-semibold active:scale-[0.98] transition-all shadow-lg shadow-blue-500/20"
                                 >
                                     {loading ? 'Saving...' : 'Save Payout'}
                                 </button>

@@ -468,20 +468,19 @@ router.get('/students', async (req, res) => {
                     anchor_day,
                     lessons_remaining,
                     next_due_date,
-                    next_due_date,
                     last_payment_date,
                     payment_type,
-                        groups (
-                            id,
-                            name,
-                            price,
-                            payment_type,
-                            subject_id,
-                            teacher:users!groups_teacher_id_fkey (
-                                first_name,
-                                surname
-                            )
+                    groups (
+                        id,
+                        name,
+                        price,
+                        payment_type,
+                        subject_id,
+                        teacher:users!groups_teacher_id_fkey (
+                            first_name,
+                            surname
                         )
+                    )
                 )
             `)
             .eq('role', 'student')
@@ -647,7 +646,6 @@ router.get('/students/:id', async (req, res) => {
 // Get Student Payments
 router.get('/students/:id/payments', async (req, res) => {
     const { id } = req.params;
-
     try {
         const { data, error } = await supabase
             .from('payment_records')
@@ -660,52 +658,15 @@ router.get('/students/:id/payments', async (req, res) => {
                 month,
                 year,
                 notes,
-                groups (name),
                 subjects (name)
             `)
             .eq('student_id', id)
             .order('payment_date', { ascending: false });
 
         if (error) throw error;
-
-        const payments = data.map((p: any) => ({
-            id: p.id,
-            amount: p.amount,
-            date: p.payment_date,
-            method: p.payment_method,
-            status: p.status,
-            month: p.month,
-            year: p.year,
-            notes: p.notes,
-            target: p.groups?.name || p.subjects?.name || 'General'
-        }));
-
-        res.json(payments);
+        res.json(data);
     } catch (error) {
         console.error('Error fetching student payments:', error);
-        res.status(500).json({ error: 'Internal server error' });
-    }
-});
-
-// Update Student Payment Day
-router.put('/students/:id/payment-day', async (req, res) => {
-    const { id } = req.params;
-    const { payment_day } = req.body;
-
-    if (!payment_day || payment_day < 1 || payment_day > 31) {
-        return res.status(400).json({ error: 'Invalid payment day' });
-    }
-
-    try {
-        const { error } = await supabase
-            .from('users')
-            .update({ payment_day })
-            .eq('id', id);
-
-        if (error) throw error;
-        res.json({ success: true });
-    } catch (error) {
-        console.error('Error updating payment day:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
 });
@@ -713,24 +674,23 @@ router.put('/students/:id/payment-day', async (req, res) => {
 // Get Student Attendance
 router.get('/students/:id/attendance', async (req, res) => {
     const { id } = req.params;
-
     try {
         const { data, error } = await supabase
             .from('attendance_records')
             .select(`
                 id,
-                attendance_date,
+                date,
                 status,
                 groups (name)
             `)
             .eq('student_id', id)
-            .order('attendance_date', { ascending: false });
+            .order('date', { ascending: false });
 
         if (error) throw error;
 
         const attendance = data.map((record: any) => ({
             id: record.id,
-            date: record.attendance_date,
+            date: record.date,
             status: record.status,
             group_name: record.groups?.name
         }));
@@ -767,7 +727,7 @@ router.post('/students/:id/payments', async (req, res) => {
                 year,
                 notes
             })
-            .select(`*, subjects(name)`)
+            .select('*, subjects(name)')
             .single();
 
         if (paymentError) throw paymentError;
@@ -776,10 +736,6 @@ router.post('/students/:id/payments', async (req, res) => {
         if (group_id) {
             await recalculateStudentGroupStatus(id, group_id);
         }
-
-
-
-
 
         // Get student's telegram_id for notification
         const { data: student, error: studentError } = await supabase
@@ -833,8 +789,7 @@ router.put('/students/:id/payments/:paymentId', async (req, res) => {
             })
             .eq('id', paymentId)
             .eq('student_id', id)
-            .select(`*, subjects(name)`)
-            .eq('id', id)
+            .select('*, subjects(name)')
             .single();
 
         if (paymentError) throw paymentError;
@@ -868,7 +823,7 @@ router.delete('/students/:id/payments/:paymentId', async (req, res) => {
         // Get payment details before deleting (for notification)
         const { data: payment, error: fetchError } = await supabase
             .from('payment_records')
-            .select(`*, subjects(name)`)
+            .select('*, subjects(name)')
             .eq('id', paymentId)
             .eq('student_id', id)
             .single();
@@ -944,19 +899,14 @@ router.get('/groups/list', async (req, res) => {
         const { data, error } = await supabase
             .from('groups')
             .select(`
-                id, 
-                name, 
-                price, 
-                schedule, 
+                id,
+                name,
+                price,
+                schedule,
                 teacher_id,
                 subject_id,
-                teacher:users!groups_teacher_id_fkey (
-                    first_name,
-                    surname
-                ),
-                subjects (
-                    name
-                )
+                teacher:users!groups_teacher_id_fkey(first_name, surname),
+                subjects(name)
             `)
             .order('name');
 
@@ -1044,6 +994,53 @@ router.delete('/groups/:id', async (req, res) => {
         res.json({ success: true });
     } catch (error) {
         console.error('Error deleting group:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Get Single Group with Students
+router.get('/groups/:id', async (req, res) => {
+    const { id } = req.params;
+
+    try {
+        // 1. Get Group Details
+        const { data: group, error: groupError } = await supabase
+            .from('groups')
+            .select('*')
+            .eq('id', id)
+            .single();
+
+        if (groupError) throw groupError;
+
+        // 2. Get Students in Group
+        const { data: members, error: membersError } = await supabase
+            .from('group_members')
+            .select(`
+                student_id,
+                users (
+                    id,
+                    first_name,
+                    surname,
+                    telegram_id
+                ),
+                joined_at,
+                payment_status,
+                lessons_remaining
+            `)
+            .eq('group_id', id);
+
+        if (membersError) throw membersError;
+
+        const students = members.map((m: any) => ({
+            ...m.users,
+            joined_at: m.joined_at,
+            payment_status: m.payment_status,
+            lessons_remaining: m.lessons_remaining
+        }));
+
+        res.json({ group, students });
+    } catch (error) {
+        console.error('Error fetching group details:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
 });
@@ -1142,70 +1139,6 @@ router.put('/students/:id/groups', async (req, res) => {
     }
 });
 
-// Broadcast Message
-router.post('/broadcast', async (req, res) => {
-    const { message, group_ids, scheduled_at } = req.body;
-
-    if (!message) {
-        return res.status(400).json({ error: 'Message is required' });
-    }
-
-    try {
-        // 1. Handle Scheduling
-        if (scheduled_at && new Date(scheduled_at) > new Date()) {
-            const { error } = await supabase
-                .from('scheduled_broadcasts')
-                .insert({
-                    admin_id: (req as any).user?.id, // Assuming auth middleware populates this, or null if not
-                    message,
-                    group_ids: group_ids || [],
-                    scheduled_at,
-                    status: 'pending'
-                });
-
-            if (error) throw error;
-            return res.json({ success: true, message: 'Broadcast scheduled' });
-        }
-
-        // 2. Immediate Broadcast
-        let query = supabase
-            .from('group_members')
-            .select('users(telegram_id)')
-            .not('users', 'is', null);
-
-        if (group_ids && group_ids.length > 0 && !group_ids.includes('all')) {
-            query = query.in('group_id', group_ids);
-        }
-
-        const { data: members, error } = await query;
-
-        if (error) throw error;
-
-        const telegramIds = [...new Set(members?.map((m: any) => m.users?.telegram_id).filter(Boolean))];
-
-        // Send messages (using bot instance would be better, but here we might need a helper or axios)
-        // Assuming we have a helper or can import bot. 
-        // Since we are in routes, we can import bot from '../bot' if exported, or use axios to telegram API.
-        // Let's use the helper from scheduler.ts or similar if available, or just axios.
-        // Actually, `bot.ts` exports `bot`.
-
-        const results = await Promise.allSettled(telegramIds.map(id =>
-            bot.telegram.sendMessage(id, `📢 *Announcement*\n\n${message}`, { parse_mode: 'Markdown' })
-        ));
-
-        const sentCount = results.filter(r => r.status === 'fulfilled').length;
-
-        // Log to broadcast history (if table exists, otherwise skip)
-        // await supabase.from('broadcast_history').insert(...) 
-
-        res.json({ success: true, sent: sentCount, total: telegramIds.length });
-
-    } catch (error) {
-        console.error('Error sending broadcast:', error);
-        res.status(500).json({ error: 'Internal server error' });
-    }
-});
-
 // Mark Attendance
 router.post('/attendance', async (req, res) => {
     const { student_id, group_id, date, status } = req.body;
@@ -1217,7 +1150,7 @@ router.post('/attendance', async (req, res) => {
     try {
         // 1. Record Attendance
         const { error: attendanceError } = await supabase
-            .from('attendance')
+            .from('attendance_records')
             .insert({
                 student_id,
                 group_id,
@@ -1232,9 +1165,9 @@ router.post('/attendance', async (req, res) => {
             const { data: groupMember, error: gmError } = await supabase
                 .from('group_members')
                 .select(`
-                    lessons_remaining,
-                    groups (payment_type)
-                `)
+lessons_remaining,
+    groups(payment_type)
+        `)
                 .eq('student_id', student_id)
                 .eq('group_id', group_id)
                 .single();
@@ -1264,7 +1197,8 @@ router.post('/attendance', async (req, res) => {
                     if (student?.telegram_id) {
                         // Send a simple notification about low balance
                         try {
-                            await sendBroadcastNotification([student.telegram_id],
+                            await sendBroadcastNotification(
+                                [student.telegram_id],
                                 `⚠️ *Low Balance Warning*\n\nYou have ${newCredits} credits left for this group. Please top up soon.`
                             );
                         } catch (notifError) {
@@ -1281,8 +1215,6 @@ router.post('/attendance', async (req, res) => {
         res.status(500).json({ error: 'Internal server error' });
     }
 });
-
-
 
 // ==============================================================================
 // BROADCASTING
@@ -1316,16 +1248,6 @@ router.post('/broadcast', async (req, res) => {
                 .eq('group_id', target_id);
             recipients = data?.map((d: any) => d.users) || [];
         } else if (target_type === 'subject' && target_id) {
-            // This is trickier, need to find students in groups with this subject? 
-            // Or users with this subject assigned? Let's assume users with subject assigned for now.
-            // But subjects are array in users table... 
-            // Alternative: Find groups with this subject (if groups have subjects?)
-            // Groups don't have subject_id directly in the schema shown, but let's assume we use the user's subject list.
-            // For now, let's skip subject broadcasting or implement a simple version if possible.
-            // Let's stick to the ones we can easily query.
-            // If we want to broadcast to students studying a subject, we need to look at their groups -> teacher -> subject? 
-            // Or just broadcast to everyone for now if subject logic is complex.
-            // Let's implement 'group' and 'all' first reliably.
             recipients = [];
         }
 
@@ -1336,12 +1258,11 @@ router.post('/broadcast', async (req, res) => {
             .filter(id => id); // Filter out null/undefined
 
         if (telegramIds.length > 0) {
-            const broadcastMessage = `${message} \n\n📢 * Broadcast Message * `;
+            const broadcastMessage = `${message}\n\n📢 *Broadcast Message*`;
             const result = await sendBroadcastNotification(telegramIds, broadcastMessage);
             successCount = result.success;
         }
 
-        // 3. Log History
         // 3. Log History
         let userUuid = null;
         if (sender_id) {
@@ -1379,9 +1300,9 @@ router.get('/broadcast/history', async (req, res) => {
         const { data, error } = await supabase
             .from('broadcast_history')
             .select(`
-                    *,
-                    sender: users!broadcast_history_sender_id_fkey(first_name, surname)
-                        `)
+    *,
+    sender: users!broadcast_history_sender_id_fkey(first_name, surname)
+        `)
             .order('created_at', { ascending: false });
 
         if (error) throw error;
@@ -1398,11 +1319,11 @@ router.get('/teachers', async (req, res) => {
         const { data, error } = await supabase
             .from('users')
             .select(`
-                id,
-                    first_name,
-                    surname,
-                    subjects
-                        `)
+id,
+    first_name,
+    surname,
+    subjects
+        `)
             .eq('role', 'teacher')
             .order('first_name', { ascending: true });
 
@@ -1450,12 +1371,7 @@ router.post('/settings/payment-type', async (req, res) => {
         const { error: settingsError } = await supabase
             .from('education_center_settings')
             .update({ default_payment_type: payment_type, updated_at: new Date().toISOString() })
-            .neq('id', '00000000-0000-0000-0000-000000000000'); // Dummy condition to update all (should be only one)
-        // Better: use a known ID or just update all since it's a singleton
-
-        // Since we don't know the ID, and we have a unique index, we can upsert or just update all
-        // Let's try to update all rows (there should be only one)
-        await supabase.from('education_center_settings').update({ default_payment_type: payment_type }).gt('updated_at', '2000-01-01');
+            .neq('id', '00000000-0000-0000-0000-000000000000'); // Dummy condition to update all
 
         // 2. Update all group_members to use this payment type
         const { error } = await supabase
@@ -1472,7 +1388,6 @@ router.post('/settings/payment-type', async (req, res) => {
     }
 });
 
-// Update Support Info
 // Update Support Info
 router.post('/settings/support', async (req, res) => {
     const { support_info } = req.body;
@@ -1518,10 +1433,6 @@ router.delete('/students/:id/groups', async (req, res) => {
 
         if (error) throw error;
 
-        // Recalculate is not needed if record is gone, but maybe we want to update logs?
-        // Actually, if we remove the student from group, we don't need to recalc status for that group member (it's gone).
-        // But we might want to notify.
-
         // Get student's telegram_id for notification
         const { data: student } = await supabase
             .from('users')
@@ -1551,19 +1462,18 @@ router.delete('/students/:id/groups', async (req, res) => {
 // HELPER: RECALCULATE STUDENT GROUP STATUS
 // ==============================================================================
 
-// ==============================================================================
-// HELPER: RECALCULATE STUDENT GROUP STATUS
-// ==============================================================================
-
 async function recalculateStudentGroupStatus(studentId: string, groupId: string) {
     try {
         // 1. Get Group Config & Member Data
         const { data: groupMember, error: gmError } = await supabase
             .from('group_members')
             .select(`
-                    *,
-                    groups(price, payment_type)
-                        `)
+    *,
+    groups(
+        price,
+        payment_type
+    )
+        `)
             .eq('group_id', groupId)
             .eq('student_id', studentId)
             .single();
@@ -1628,10 +1538,6 @@ async function recalculateStudentGroupStatus(studentId: string, groupId: string)
                 }
             } else {
                 // No payments? 
-                // If never paid, we don't set next_due_date here, relying on initial setup or manual override.
-                // But we should mark as overdue if joined long ago? 
-                // For now, if no payments, let's assume overdue if joined > 1 month ago?
-                // Let's keep it simple: No payments = Overdue (unless just joined)
                 updates.payment_status = 'overdue';
             }
 
@@ -1745,7 +1651,11 @@ router.post('/teachers/:id/payments', async (req, res) => {
 
         if (teacher?.telegram_id) {
             try {
-                await bot.telegram.sendMessage(teacher.telegram_id, `💰 **New Payout Received**\n\nAmount: ${amount.toLocaleString()} UZS\nDate: ${payment_date}\n${description ? `Note: ${description}` : ''}`, { parse_mode: 'Markdown' });
+                await bot.telegram.sendMessage(
+                    teacher.telegram_id,
+                    `💰 *New Payout Received*\n\nAmount: ${amount.toLocaleString()} UZS\nDate: ${payment_date}\n${description ? `Note: ${description}` : ''}`,
+                    { parse_mode: 'Markdown' }
+                );
             } catch (e) {
                 console.error('Failed to send notification', e);
             }
@@ -1779,41 +1689,11 @@ router.delete('/teachers/:id/payments/:paymentId', async (req, res) => {
 
         if (teacher?.telegram_id) {
             try {
-                await bot.telegram.sendMessage(teacher.telegram_id, `❌ **Payout Cancelled**\n\nA payout record has been removed by admin.`, { parse_mode: 'Markdown' });
-            } catch (e) {
-                console.error('Failed to send notification', e);
-            }
-        }
-
-        res.json({ success: true });
-    } catch (error) {
-        console.error('Error adding teacher payment:', error);
-        res.status(500).json({ error: 'Internal server error' });
-    }
-});
-
-// Delete Teacher Payment
-router.delete('/teachers/:id/payments/:paymentId', async (req, res) => {
-    const { id, paymentId } = req.params;
-
-    try {
-        const { error } = await supabase
-            .from('teacher_payments')
-            .delete()
-            .eq('id', paymentId);
-
-        if (error) throw error;
-
-        // Notify Teacher
-        const { data: teacher } = await supabase
-            .from('users')
-            .select('telegram_id')
-            .eq('id', id)
-            .single();
-
-        if (teacher?.telegram_id) {
-            try {
-                await bot.telegram.sendMessage(teacher.telegram_id, `❌ **Payout Cancelled**\n\nA payout record has been removed by admin.`, { parse_mode: 'Markdown' });
+                await bot.telegram.sendMessage(
+                    teacher.telegram_id,
+                    `❌ *Payout Cancelled*\n\nA payout record has been removed by admin.`,
+                    { parse_mode: 'Markdown' }
+                );
             } catch (e) {
                 console.error('Failed to send notification', e);
             }

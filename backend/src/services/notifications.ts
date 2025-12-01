@@ -36,20 +36,26 @@ export async function sendStudentPaymentNotification(
     };
 
     const actionText = {
-        added: 'Payment Recorded',
-        updated: 'Payment Updated',
-        deleted: 'Payment Deleted'
+        added: "To'lov Qabul Qilindi",
+        updated: "To'lov Yangilandi",
+        deleted: "To'lov O'chirildi"
+    };
+
+    const statusText = {
+        paid: "To'langan",
+        pending: "Kutilmoqda",
+        unpaid: "To'lanmagan"
     };
 
     const message = `${actionEmoji[paymentInfo.action]} *${actionText[paymentInfo.action]}*
 
-📚 Subject: ${paymentInfo.subject}
-💵 Amount: $${paymentInfo.amount.toFixed(2)}
-📅 Date: ${paymentInfo.date}
-💳 Method: ${paymentInfo.method === 'cash' ? 'Cash' : 'Card'}
-${statusEmoji[paymentInfo.status]} Status: ${paymentInfo.status.charAt(0).toUpperCase() + paymentInfo.status.slice(1)}
+📚 Fan: ${paymentInfo.subject}
+💵 Miqdor: ${paymentInfo.amount.toLocaleString()} UZS
+📅 Sana: ${paymentInfo.date}
+💳 Usul: ${paymentInfo.method === 'cash' ? 'Naqd' : 'Karta'}
+${statusEmoji[paymentInfo.status]} Holat: ${statusText[paymentInfo.status]}
 
-${paymentInfo.action === 'deleted' ? 'The payment has been removed from your records.' : 'Your payment has been successfully recorded by the admin.'}`;
+${paymentInfo.action === 'deleted' ? "To'lov yozuvlaringizdan olib tashlandi." : "Sizning to'lovingiz admin tomonidan muvaffaqiyatli qayd etildi."}`;
 
     try {
         await axios.post(`${TELEGRAM_API_URL}/sendMessage`, {
@@ -76,10 +82,10 @@ export async function sendStudentGroupNotification(
         removed: string[];
     }
 ) {
-    let message = '👥 *Group Changes*\n\n';
+    let message = '👥 *Guruh O\'zgarishlari*\n\n';
 
     if (groupChanges.added.length > 0) {
-        message += '✅ *Added to groups:*\n';
+        message += '✅ *Guruhlarga qo\'shildi:*\n';
         groupChanges.added.forEach(group => {
             message += `• ${group}\n`;
         });
@@ -87,14 +93,14 @@ export async function sendStudentGroupNotification(
     }
 
     if (groupChanges.removed.length > 0) {
-        message += '❌ *Removed from groups:*\n';
+        message += '❌ *Guruhlardan olib tashlandi:*\n';
         groupChanges.removed.forEach(group => {
             message += `• ${group}\n`;
         });
         message += '\n';
     }
 
-    message += 'Your group assignments have been updated by the admin.';
+    message += 'Sizning guruhlaringiz admin tomonidan yangilandi.';
 
     try {
         await axios.post(`${TELEGRAM_API_URL}/sendMessage`, {
@@ -122,14 +128,14 @@ export async function sendStudentInfoNotification(
         newValue: string;
     }[]
 ) {
-    let message = 'ℹ️ *Profile Updated*\n\n';
-    message += 'The following information has been updated:\n\n';
+    let message = 'ℹ️ *Profil Yangilandi*\n\n';
+    message += 'Quyidagi ma\'lumotlar yangilandi:\n\n';
 
     changes.forEach(change => {
         message += `*${change.field}:* ${change.oldValue} → ${change.newValue}\n`;
     });
 
-    message += '\nYour profile has been updated by the admin.';
+    message += '\nSizning profilingiz admin tomonidan yangilandi.';
 
     try {
         await axios.post(`${TELEGRAM_API_URL}/sendMessage`, {
@@ -162,14 +168,14 @@ export async function sendTeacherPayoutNotification(
         notes?: string;
     }
 ) {
-    const message = `💵 *Payout Added*
+    const message = `💵 *To'lov Qo'shildi*
 
-💰 Amount: $${payoutInfo.amount.toFixed(2)}
-📅 Date: ${payoutInfo.date}
-💳 Method: ${payoutInfo.method === 'cash' ? 'Cash' : 'Card'}
-${payoutInfo.notes ? `📝 Notes: ${payoutInfo.notes}` : ''}
+💰 Miqdor: ${payoutInfo.amount.toLocaleString()} UZS
+📅 Sana: ${payoutInfo.date}
+💳 Usul: ${payoutInfo.method === 'cash' ? 'Naqd' : 'Karta'}
+${payoutInfo.notes ? `📝 Izohlar: ${payoutInfo.notes}` : ''}
 
-Your payout has been processed by the admin.`;
+Sizning to'lovingiz admin tomonidan amalga oshirildi.`;
 
     try {
         await axios.post(`${TELEGRAM_API_URL}/sendMessage`, {
@@ -196,10 +202,10 @@ export async function sendTeacherGroupNotification(
         removed: string[];
     }
 ) {
-    let message = '👥 *Group Assignment Changes*\n\n';
+    let message = '👥 *Guruh Tayinlovidagi O\'zgarishlar*\n\n';
 
     if (groupChanges.added.length > 0) {
-        message += '✅ *Assigned to new groups:*\n';
+        message += '✅ *Yangi guruhlarga tayinlandi:*\n';
         groupChanges.added.forEach(group => {
             message += `• ${group}\n`;
         });
@@ -207,14 +213,14 @@ export async function sendTeacherGroupNotification(
     }
 
     if (groupChanges.removed.length > 0) {
-        message += '❌ *Removed from groups:*\n';
+        message += '❌ *Guruhlardan olib tashlandi:*\n';
         groupChanges.removed.forEach(group => {
             message += `• ${group}\n`;
         });
         message += '\n';
     }
 
-    message += 'Your group assignments have been updated by the admin.';
+    message += 'Sizning guruh tayinlovlaringiz admin tomonidan yangilandi.';
 
     try {
         await axios.post(`${TELEGRAM_API_URL}/sendMessage`, {
@@ -241,10 +247,10 @@ export async function sendTeacherSubjectNotification(
         removed: string[];
     }
 ) {
-    let message = '📚 *Subject Assignment Changes*\n\n';
+    let message = '📚 *Fan Tayinlovidagi O\'zgarishlar*\n\n';
 
     if (subjectChanges.added.length > 0) {
-        message += '✅ *Assigned to teach:*\n';
+        message += '✅ *O\'qitish uchun tayinlandi:*\n';
         subjectChanges.added.forEach(subject => {
             message += `• ${subject}\n`;
         });
@@ -252,14 +258,14 @@ export async function sendTeacherSubjectNotification(
     }
 
     if (subjectChanges.removed.length > 0) {
-        message += '❌ *Removed from teaching:*\n';
+        message += '❌ *O\'qitishdan olib tashlandi:*\n';
         subjectChanges.removed.forEach(subject => {
             message += `• ${subject}\n`;
         });
         message += '\n';
     }
 
-    message += 'Your subject assignments have been updated by the admin.';
+    message += 'Sizning fan tayinlovlaringiz admin tomonidan yangilandi.';
 
     try {
         await axios.post(`${TELEGRAM_API_URL}/sendMessage`, {

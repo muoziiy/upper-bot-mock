@@ -10,6 +10,7 @@ const AdminCenterSettings: React.FC = () => {
     const { webApp } = useTelegram();
     const [loading, setLoading] = useState(false);
     const [selectedType, setSelectedType] = useState<'monthly_fixed' | 'monthly_rolling' | 'lesson_based' | null>(null);
+    const [shouldBroadcast, setShouldBroadcast] = useState(false);
 
     const [supportInfo, setSupportInfo] = useState({
         admin_profile_link: '',
@@ -61,7 +62,10 @@ const AdminCenterSettings: React.FC = () => {
             const res = await fetch(`${import.meta.env.VITE_API_URL}/admin/settings/payment-type`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ payment_type: type })
+                body: JSON.stringify({
+                    payment_type: type,
+                    broadcast: shouldBroadcast
+                })
             });
 
             if (res.ok) {
@@ -167,13 +171,24 @@ const AdminCenterSettings: React.FC = () => {
             </AdminSection>
 
             <AdminSection title="Global Payment System">
-                <div className="px-4 mb-4">
+                <div className="px-4 mb-4 space-y-3">
                     <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-[10px] p-3 flex gap-3 items-start">
                         <AlertTriangle className="text-yellow-500 shrink-0 mt-0.5" size={18} />
                         <p className="text-xs text-yellow-500/90">
                             Changing this setting will update the payment calculation logic for <strong>ALL</strong> active students.
                             Please allow some time for the changes to propagate.
                         </p>
+                    </div>
+
+                    {/* Broadcast Toggle */}
+                    <div className="flex items-center justify-between bg-white dark:bg-[#1C1C1E] p-3 rounded-[10px]">
+                        <span className="text-sm font-medium text-black dark:text-white">Broadcast changes to all students</span>
+                        <div
+                            className={`w-11 h-6 rounded-full transition-colors relative ${shouldBroadcast ? 'bg-green-500' : 'bg-[#E9E9EA] dark:bg-[#39393D]'}`}
+                            onClick={() => setShouldBroadcast(!shouldBroadcast)}
+                        >
+                            <div className={`w-5 h-5 bg-white rounded-full shadow absolute top-0.5 transition-transform ${shouldBroadcast ? 'translate-x-[22px]' : 'translate-x-0.5'}`} />
+                        </div>
                     </div>
                 </div>
 

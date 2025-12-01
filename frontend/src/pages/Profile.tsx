@@ -2,12 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { useAppData } from '../context/AppDataContext';
 import { useTelegram } from '../context/TelegramContext';
 import { useTranslation } from 'react-i18next';
-import { Settings, ChevronRight, Calendar, HelpCircle } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
 import TeacherInfoModal from '../components/profile/TeacherInfoModal';
 import AttendanceCalendarModal from '../components/profile/AttendanceCalendarModal';
 import SettingsModal from '../components/profile/SettingsModal';
 import PaymentHistoryModal from '../components/profile/PaymentHistoryModal';
 import SupportModal from '../components/profile/SupportModal';
+import { AdminSection } from './admin/components/AdminSection';
+import { AdminListItem } from './admin/components/AdminListItem';
 
 const Profile: React.FC = () => {
     const { t } = useTranslation();
@@ -19,6 +21,7 @@ const Profile: React.FC = () => {
     const [selectedTeacher, setSelectedTeacher] = useState<any>(null);
     const [selectedSubjectAttendance, setSelectedSubjectAttendance] = useState<any>(null);
     const [selectedSubjectPayments, setSelectedSubjectPayments] = useState<any>(null);
+    const [aiFeaturesEnabled, setAiFeaturesEnabled] = useState(false);
 
     // Use real student ID from DB, fallback to '---' if not set
     const studentId = dashboardData?.user.student_id || '---';
@@ -42,14 +45,14 @@ const Profile: React.FC = () => {
 
     if (loading) {
         return (
-            <div className="flex min-h-screen items-center justify-center bg-tg-secondary text-tg-text">
+            <div className="flex min-h-screen items-center justify-center bg-[#F2F2F7] dark:bg-[#000000] text-black dark:text-white">
                 <p>{t('common.loading')}</p>
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-tg-secondary pb-24 pt-6 text-tg-text">
+        <div className="min-h-screen bg-[#F2F2F7] dark:bg-[#000000] pb-24 pt-6 text-black dark:text-white">
             {/* Modals */}
             <SettingsModal isOpen={showSettings} onClose={() => setShowSettings(false)} />
             <SupportModal isOpen={showSupport} onClose={() => setShowSupport(false)} supportInfo={supportInfo} />
@@ -75,162 +78,137 @@ const Profile: React.FC = () => {
                 />
             )}
 
-            <div className="px-4 space-y-6">
-                {/* Profile Header */}
-                <div className="flex flex-col items-center justify-center space-y-3">
-                    <div className="w-24 h-24 rounded-full bg-gradient-to-br from-tg-button to-tg-accent flex items-center justify-center text-white text-4xl font-bold overflow-hidden shadow-lg">
-                        {user?.photo_url ? (
-                            <img src={user.photo_url} alt="Profile" className="w-full h-full object-cover" />
-                        ) : (
-                            <span>{dashboardData?.user.first_name?.[0] || 'U'}</span>
-                        )}
-                    </div>
-                    {/* Paid Badge */}
-                    <div className="absolute -top-1 -right-1">
-                        {dashboardData?.groups?.some((g: any) => g.status === 'overdue') ? (
-                            <div className="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-md border-2 border-tg-secondary">
-                                Overdue
-                            </div>
-                        ) : (
-                            <div className="bg-green-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-md border-2 border-tg-secondary flex items-center gap-1">
-                                <span>Paid</span>
-                                <span>{dashboardData?.user.sex === 'female' ? '👧' : '👦'}</span>
-                            </div>
-                        )}
-                    </div>
-                    <div className="text-center">
-                        <h1 className="text-2xl font-bold">{dashboardData?.user.onboarding_first_name || dashboardData?.user.first_name}</h1>
-                        <div className="flex items-center justify-center gap-2 text-sm text-tg-hint">
-                            <span className="capitalize">{dashboardData?.user.role}</span>
-                            <span>•</span>
-                            <span>ID: #{studentId}</span>
-                        </div>
-                    </div>
+            <div className="flex flex-col items-center justify-center mb-8">
+                <div className="w-24 h-24 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-4xl font-bold overflow-hidden shadow-lg mb-3 relative">
+                    {user?.photo_url ? (
+                        <img src={user.photo_url} alt="Profile" className="w-full h-full object-cover" />
+                    ) : (
+                        <span>{dashboardData?.user.first_name?.[0] || 'U'}</span>
+                    )}
                 </div>
-
-                {/* Actions Grid */}
-                <div className="grid grid-cols-2 gap-3">
-                    {/* Settings Button */}
-                    <button
-                        onClick={() => setShowSettings(true)}
-                        className="bg-tg-bg rounded-xl p-4 flex flex-col items-center justify-center gap-2 hover:bg-tg-bg/80 active:bg-tg-bg/60 transition-colors shadow-sm"
-                    >
-                        <div className="bg-tg-button/10 p-2 rounded-lg">
-                            <Settings size={24} className="text-tg-button" />
+                {/* Paid Badge */}
+                <div className="absolute top-[100px]">
+                    {dashboardData?.groups?.some((g: any) => g.status === 'overdue') ? (
+                        <div className="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-md border-2 border-[#F2F2F7] dark:border-black">
+                            Overdue
                         </div>
-                        <span className="text-tg-text font-medium text-sm">{t('profile.account_settings')}</span>
-                    </button>
-
-                    {/* Support Button */}
-                    <button
-                        onClick={() => setShowSupport(true)}
-                        className="bg-tg-bg rounded-xl p-4 flex flex-col items-center justify-center gap-2 hover:bg-tg-bg/80 active:bg-tg-bg/60 transition-colors shadow-sm"
-                    >
-                        <div className="bg-blue-500/10 p-2 rounded-lg">
-                            <HelpCircle size={24} className="text-blue-500" />
+                    ) : (
+                        <div className="bg-green-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-md border-2 border-[#F2F2F7] dark:border-black flex items-center gap-1">
+                            <span>Paid</span>
+                            <span>{dashboardData?.user.sex === 'female' ? '👧' : '👦'}</span>
                         </div>
-                        <span className="text-tg-text font-medium text-sm">Support & Info</span>
-                    </button>
+                    )}
                 </div>
-
-                {/* My Courses (Groups) */}
-                <div>
-                    <div className="px-4 pb-2 text-xs font-medium uppercase text-tg-hint">
-                        {t('profile.my_subjects')}
-                    </div>
-                    <div className="space-y-4">
-                        {dashboardData?.groups && dashboardData.groups.length > 0 ? (
-                            dashboardData.groups.map((group: any) => (
-                                <div key={group.id} className="bg-tg-bg rounded-xl overflow-hidden shadow-sm">
-                                    <div className="p-4 border-b border-tg-secondary/50 flex justify-between items-center">
-                                        <div>
-                                            <h3 className="text-lg font-semibold text-tg-text">{group.name}</h3>
-                                            <div className="text-xs text-tg-hint mt-0.5">
-                                                {group.payment_type === 'lesson_based' ? (
-                                                    <span className={group.lessons_remaining <= 2 ? "text-red-500 font-bold" : ""}>
-                                                        {group.lessons_remaining} Credits Left
-                                                    </span>
-                                                ) : group.next_due_date ? (
-                                                    <span className={new Date(group.next_due_date) < new Date() ? "text-red-500 font-bold" : ""}>
-                                                        Due: {new Date(group.next_due_date).toLocaleDateString()}
-                                                    </span>
-                                                ) : null}
-                                            </div>
-                                        </div>
-                                        {group.price && (
-                                            <span className="text-sm font-bold text-tg-button bg-tg-button/10 px-2 py-1 rounded-lg">
-                                                {group.price.toLocaleString()} UZS
-                                            </span>
-                                        )}
-                                    </div>
-
-                                    {/* Info Rows */}
-                                    <div className="divide-y divide-tg-secondary/50">
-                                        {/* Teacher */}
-                                        {group.teacher ? (
-                                            <button
-                                                onClick={() => setSelectedTeacher(group.teacher)}
-                                                className="w-full p-3 flex items-center justify-between hover:bg-tg-secondary/30 transition-colors active:bg-tg-secondary/50"
-                                            >
-                                                <span className="text-xs text-tg-hint uppercase">{t('profile.teacher')}</span>
-                                                <div className="flex items-center gap-1">
-                                                    <span className="font-medium text-tg-button">{group.teacher.first_name} {group.teacher.last_name}</span>
-                                                    <ChevronRight size={14} className="text-tg-hint" />
-                                                </div>
-                                            </button>
-                                        ) : (
-                                            <div className="p-3 flex items-center justify-between">
-                                                <span className="text-xs text-tg-hint uppercase">{t('profile.teacher')}</span>
-                                                <span className="text-sm text-tg-hint italic">Not assigned</span>
-                                            </div>
-                                        )}
-
-                                        {/* Payment Circles */}
-                                        <button
-                                            onClick={() => setSelectedSubjectPayments({ name: group.name, payments: group.payments })}
-                                            className="w-full p-4 flex flex-col items-center hover:bg-tg-secondary/30 transition-colors active:bg-tg-secondary/50"
-                                        >
-                                            <span className="text-xs text-tg-hint uppercase mb-3 flex items-center gap-1">
-                                                {t('profile.payment_history')} <ChevronRight size={12} />
-                                            </span>
-                                            <div className="grid grid-cols-6 gap-3">
-                                                {group.payments && group.payments.length > 0 ? (
-                                                    group.payments.slice(0, 12).map((payment: any, idx: number) => (
-                                                        <div
-                                                            key={idx}
-                                                            className={`
-                                                                w-3 h-3 rounded-full 
-                                                                ${payment.status === 'paid' ? 'bg-green-500' :
-                                                                    payment.status === 'pending' ? 'bg-yellow-500' : 'bg-red-500/50'}
-                                                            `}
-                                                            title={`${payment.status} - ${new Date(payment.payment_date).toLocaleDateString()}`}
-                                                        />
-                                                    ))
-                                                ) : (
-                                                    <span className="text-xs text-tg-hint col-span-6">No payments recorded</span>
-                                                )}
-                                            </div>
-                                        </button>
-
-                                        {/* Attendance Link */}
-                                        <button
-                                            onClick={() => setSelectedSubjectAttendance({ name: group.name, attendance: group.attendance })}
-                                            className="w-full p-3 flex items-center justify-center gap-2 hover:bg-tg-secondary/30 transition-colors active:bg-tg-secondary/50 text-tg-button"
-                                        >
-                                            <Calendar size={18} />
-                                            <span className="font-medium">{t('profile.view_attendance')}</span>
-                                        </button>
-                                    </div>
-                                </div>
-                            ))
-                        ) : (
-                            <div className="text-center py-8 text-tg-hint">
-                                <p>No courses found.</p>
-                            </div>
-                        )}
-                    </div>
+                <h1 className="text-2xl font-bold text-black dark:text-white mt-2">
+                    {dashboardData?.user.onboarding_first_name || dashboardData?.user.first_name}
+                </h1>
+                <div className="flex items-center gap-2 text-[#8E8E93]">
+                    <span className="capitalize">{dashboardData?.user.role}</span>
+                    <span>•</span>
+                    <span>ID: #{studentId}</span>
                 </div>
             </div>
+
+            {/* AI Features Section */}
+            <div className="px-4 mb-2">
+                <div className="flex items-center gap-2 mb-2">
+                    <Sparkles size={16} className="text-purple-500" />
+                    <span className="text-xs font-medium text-[#8E8E93] uppercase">AI Features</span>
+                </div>
+                <p className="text-xs text-[#8E8E93] mb-2 px-1">
+                    Turn on to enable experimental AI features. Talk to AI developers for more info.
+                </p>
+            </div>
+            <AdminSection>
+                <AdminListItem
+                    icon="✨"
+                    iconColor="bg-purple-500"
+                    title="Enable AI Features"
+                    rightElement={
+                        <div
+                            className={`w-11 h-6 rounded-full transition-colors relative ${aiFeaturesEnabled ? 'bg-green-500' : 'bg-[#E9E9EA] dark:bg-[#39393D]'}`}
+                            onClick={() => setAiFeaturesEnabled(!aiFeaturesEnabled)}
+                        >
+                            <div className={`w-5 h-5 bg-white rounded-full shadow absolute top-0.5 transition-transform ${aiFeaturesEnabled ? 'translate-x-[22px]' : 'translate-x-0.5'}`} />
+                        </div>
+                    }
+                />
+            </AdminSection>
+
+            {/* Account Settings */}
+            <AdminSection title="Account">
+                <AdminListItem
+                    icon="⚙️"
+                    iconColor="bg-gray-500"
+                    title={t('profile.account_settings')}
+                    onClick={() => setShowSettings(true)}
+                    showChevron
+                />
+                <AdminListItem
+                    icon="❓"
+                    iconColor="bg-blue-500"
+                    title="Support & Info"
+                    onClick={() => setShowSupport(true)}
+                    showChevron
+                    isLast
+                />
+            </AdminSection>
+
+            {/* My Subjects */}
+            <div className="px-4 mt-6 mb-2 text-xs font-medium text-[#8E8E93] uppercase">
+                {t('profile.my_subjects')}
+            </div>
+
+            {dashboardData?.groups && dashboardData.groups.length > 0 ? (
+                dashboardData.groups.map((group: any) => (
+                    <AdminSection key={group.id} title={group.name}>
+                        {/* Teacher */}
+                        <AdminListItem
+                            icon="👨‍🏫"
+                            iconColor="bg-orange-500"
+                            title={t('profile.teacher')}
+                            value={group.teacher ? `${group.teacher.first_name} ${group.teacher.last_name}` : "Not assigned"}
+                            onClick={group.teacher ? () => setSelectedTeacher(group.teacher) : undefined}
+                            showChevron={!!group.teacher}
+                        />
+
+                        {/* Payment History */}
+                        <AdminListItem
+                            icon="💰"
+                            iconColor="bg-green-500"
+                            title={t('profile.payment_history')}
+                            onClick={() => setSelectedSubjectPayments({ name: group.name, payments: group.payments })}
+                            showChevron
+                            rightElement={
+                                <div className="flex gap-1">
+                                    {group.payments && group.payments.length > 0 ? (
+                                        group.payments.slice(0, 3).map((payment: any, idx: number) => (
+                                            <div
+                                                key={idx}
+                                                className={`w-2 h-2 rounded-full ${payment.status === 'paid' ? 'bg-green-500' : payment.status === 'pending' ? 'bg-yellow-500' : 'bg-red-500'}`}
+                                            />
+                                        ))
+                                    ) : null}
+                                </div>
+                            }
+                        />
+
+                        {/* Attendance */}
+                        <AdminListItem
+                            icon="📅"
+                            iconColor="bg-blue-500"
+                            title={t('profile.view_attendance')}
+                            onClick={() => setSelectedSubjectAttendance({ name: group.name, attendance: group.attendance })}
+                            showChevron
+                            isLast
+                        />
+                    </AdminSection>
+                ))
+            ) : (
+                <div className="text-center py-8 text-[#8E8E93]">
+                    <p>No courses found.</p>
+                </div>
+            )}
         </div>
     );
 };
