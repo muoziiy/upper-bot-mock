@@ -7,6 +7,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import AdminPaymentModal from './components/AdminPaymentModal';
 import AdminGroupManagementModal from './components/AdminGroupManagementModal';
 import AdminGroupDetailsModal from './components/AdminGroupDetailsModal';
+import { mockService } from '../../services/mockData';
 
 interface Student {
     id: string;
@@ -91,11 +92,8 @@ const AdminStudentDetails: React.FC = () => {
     const fetchStudentDetails = async () => {
         if (!id) return;
         try {
-            const res = await fetch(`${import.meta.env.VITE_API_URL}/admin/students/${id}`);
-            if (res.ok) {
-                const data = await res.json();
-                setStudent(data);
-            }
+            const data = await mockService.getAdminStudentDetails(id);
+            setStudent(data as any);
         } catch (e) {
             console.error('Failed to fetch student details', e);
         } finally {
@@ -106,11 +104,8 @@ const AdminStudentDetails: React.FC = () => {
     const fetchAttendance = async () => {
         if (!id) return;
         try {
-            const res = await fetch(`${import.meta.env.VITE_API_URL}/admin/students/${id}/attendance`);
-            if (res.ok) {
-                const data = await res.json();
-                setAttendance(data);
-            }
+            const data = await mockService.getStudentAttendance(id);
+            setAttendance(data as any);
         } catch (e) {
             console.error('Failed to fetch attendance', e);
         }
@@ -119,11 +114,8 @@ const AdminStudentDetails: React.FC = () => {
     const fetchPayments = async () => {
         if (!id) return;
         try {
-            const res = await fetch(`${import.meta.env.VITE_API_URL}/admin/students/${id}/payments`);
-            if (res.ok) {
-                const data = await res.json();
-                setPayments(data);
-            }
+            const data = await mockService.getStudentPayments(id);
+            setPayments(data as any);
         } catch (e) {
             console.error('Failed to fetch payments', e);
         }

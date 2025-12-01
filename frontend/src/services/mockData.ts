@@ -491,6 +491,39 @@ export const mockService = {
         ];
     },
 
+    getAdminStudentDetails: async (id: string) => {
+        await new Promise(resolve => setTimeout(resolve, 500));
+        return {
+            id: id,
+            student_id: '1001',
+            first_name: 'John',
+            surname: 'Doe',
+            age: 16,
+            sex: 'male',
+            phone_number: '+998901234567',
+            username: 'johndoe',
+            groups: [
+                {
+                    id: 'g1',
+                    name: 'Math 101',
+                    price: 500000,
+                    teacher: { first_name: 'Mr.', surname: 'Smith' },
+                    payment_status: 'paid',
+                    schedule: { 'monday': ['10:00'], 'wednesday': ['10:00'] }
+                }
+            ],
+            payment_status: 'paid'
+        };
+    },
+
+    getStudentAttendance: async (_studentId: string) => {
+        await new Promise(resolve => setTimeout(resolve, 500));
+        return [
+            { id: 'a1', date: new Date().toISOString(), status: 'present' },
+            { id: 'a2', date: new Date(Date.now() - 86400000).toISOString(), status: 'absent' }
+        ];
+    },
+
     getAdminGroups: async () => {
         await new Promise(resolve => setTimeout(resolve, 500));
         return [
@@ -554,7 +587,7 @@ export const mockService = {
         return { success: true };
     },
 
-    updateStudentGroups: async (studentId: string, data: { groupId: string, action: 'add' | 'remove', joinedAt?: string }) => {
+    updateStudentGroups: async (studentId: string, data: { groupId: string, action: 'add' | 'remove' | 'update_date', joinedAt?: string }) => {
         await new Promise(resolve => setTimeout(resolve, 500));
         console.log('Mock update student groups:', studentId, data);
         return { success: true };

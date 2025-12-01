@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useTelegram } from '../../../context/TelegramContext';
 import { Trash2, CreditCard, ChevronLeft } from 'lucide-react';
 import AdminPaymentModal from './AdminPaymentModal';
+import { mockService } from '../../../services/mockData';
 
 interface Group {
     id: string;
@@ -57,18 +58,13 @@ const AdminGroupDetailsModal: React.FC<AdminGroupDetailsModalProps> = ({
         if (!group || !joinDate) return;
         setLoading(true);
         try {
-            const res = await fetch(`${import.meta.env.VITE_API_URL}/admin/students/${studentId}/groups`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ groupId: group.id, action: 'update_date', joinedAt: joinDate })
+            await mockService.updateStudentGroups(studentId, {
+                groupId: group.id,
+                action: 'update_date',
+                joinedAt: joinDate
             });
-
-            if (res.ok) {
-                webApp.showPopup({ title: 'Success', message: 'Join date updated', buttons: [{ type: 'ok' }] });
-                onUpdate();
-            } else {
-                throw new Error('Failed');
-            }
+            webApp.showPopup({ title: 'Success', message: 'Join date updated', buttons: [{ type: 'ok' }] });
+            onUpdate();
         } catch (e) {
             webApp.showAlert('Failed to update join date');
         } finally {
@@ -82,19 +78,13 @@ const AdminGroupDetailsModal: React.FC<AdminGroupDetailsModalProps> = ({
             if (confirm) {
                 setLoading(true);
                 try {
-                    const res = await fetch(`${import.meta.env.VITE_API_URL}/admin/students/${studentId}/groups`, {
-                        method: 'DELETE',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ groupId: group.id })
+                    await mockService.updateStudentGroups(studentId, {
+                        groupId: group.id,
+                        action: 'remove'
                     });
-
-                    if (res.ok) {
-                        webApp.showPopup({ title: 'Success', message: 'Group removed', buttons: [{ type: 'ok' }] });
-                        onUpdate();
-                        onClose();
-                    } else {
-                        throw new Error('Failed');
-                    }
+                    webApp.showPopup({ title: 'Success', message: 'Group removed', buttons: [{ type: 'ok' }] });
+                    onUpdate();
+                    onClose();
                 } catch (e) {
                     webApp.showAlert('Failed to remove group');
                 } finally {
