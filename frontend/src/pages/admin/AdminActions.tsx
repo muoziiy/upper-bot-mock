@@ -49,9 +49,20 @@ const AdminActions: React.FC = () => {
                     iconColor="bg-yellow-500"
                     onClick={() => navigate('/admin/requests')}
                     showChevron
+                    isLast
+                />
+            </AdminSection>
+
+            <AdminSection title="Exams">
+                <AdminListItem
+                    title="Create New Exam"
+                    icon="➕"
+                    iconColor="bg-blue-500"
+                    onClick={() => navigate('/admin/exams/new')}
+                    showChevron
                 />
                 <AdminListItem
-                    title="Create and Manage Exams"
+                    title="Manage Exams"
                     icon="✍️"
                     iconColor="bg-indigo-500"
                     onClick={() => navigate('/admin/exams')}
