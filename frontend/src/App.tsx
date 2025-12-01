@@ -47,9 +47,15 @@ const TeacherProfile = React.lazy(() => import('./pages/TeacherProfile'));
 const ParentProfile = React.lazy(() => import('./pages/ParentProfile'));
 
 const AppContent = () => {
-  const { user, isOnboarded } = useTelegram();
-  const { loading } = useAppData();
+  const { user } = useTelegram();
+  const { loading, dashboardData } = useAppData();
   const location = useLocation();
+
+  // Determine if user is onboarded based on dashboardData presence
+  // If loading is true, we wait. If loading is false and no dashboardData, maybe not onboarded?
+  // But fetchAllData tries to login. If login fails (404), dashboardData is null.
+  // So !!dashboardData is a good proxy for isOnboarded.
+  const isOnboarded = !!dashboardData?.user;
 
   const routes = [
     {

@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { AdminSection } from './admin/components/AdminSection';
 import { AdminListItem } from './admin/components/AdminListItem';
-import { useAppData } from '../context/AppDataContext';
 import { useTelegram } from '../context/TelegramContext';
 
 interface Exam {

@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useTelegram } from '../context/TelegramContext';
-import { motion, AnimatePresence } from 'framer-motion';
 import Lottie from 'lottie-react';
 import duckSuccess from '../assets/animations/duck_success.json';
 
@@ -182,8 +181,8 @@ const TakeExam: React.FC = () => {
                                 key={idx}
                                 onClick={() => handleAnswer(currentQuestion.id, option)}
                                 className={`w-full text-left p-4 rounded-xl border transition-all ${answers[currentQuestion.id] === option
-                                        ? 'bg-blue-500 border-blue-500 text-white shadow-md'
-                                        : 'bg-white dark:bg-[#1C1C1E] border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800'
+                                    ? 'bg-blue-500 border-blue-500 text-white shadow-md'
+                                    : 'bg-white dark:bg-[#1C1C1E] border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800'
                                     }`}
                             >
                                 <div className="flex items-center gap-3">
@@ -203,8 +202,8 @@ const TakeExam: React.FC = () => {
                                         key={option}
                                         onClick={() => handleAnswer(currentQuestion.id, option)}
                                         className={`p-6 rounded-xl border text-center font-semibold transition-all ${answers[currentQuestion.id] === option
-                                                ? 'bg-blue-500 border-blue-500 text-white shadow-md'
-                                                : 'bg-white dark:bg-[#1C1C1E] border-gray-200 dark:border-gray-800'
+                                            ? 'bg-blue-500 border-blue-500 text-white shadow-md'
+                                            : 'bg-white dark:bg-[#1C1C1E] border-gray-200 dark:border-gray-800'
                                             }`}
                                     >
                                         {option}
