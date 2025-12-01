@@ -45,11 +45,15 @@ Fill in the following details:
 ## Running the Bot Script (Optional)
 If you want the bot to reply to `/start` with a button to open the app:
 
-1.  Open `bot.js` and replace `'YOUR_TELEGRAM_BOT_TOKEN'` with your actual token.
-2.  Replace `'https://upper-bot-demo.onrender.com'` with your deployed Render URL.
+1.  Create a `.env` file in the root directory (based on `.env.example`).
+2.  Add your variables:
+    ```
+    TELEGRAM_BOT_TOKEN=your_token_here
+    WEB_APP_URL=https://your-app-url.onrender.com
+    ```
 3.  Run the script:
     ```bash
-    npm install node-telegram-bot-api
+    npm install node-telegram-bot-api dotenv
     node bot.js
     ```
     *Note: You will need Node.js installed on your machine or run this on a server.*

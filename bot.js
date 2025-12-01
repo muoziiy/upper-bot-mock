@@ -1,7 +1,19 @@
+require('dotenv').config();
 const TelegramBot = require('node-telegram-bot-api');
 
 // Replace with your token
-const token = 'YOUR_TELEGRAM_BOT_TOKEN';
+const token = process.env.TELEGRAM_BOT_TOKEN;
+const webAppUrl = process.env.WEB_APP_URL;
+
+if (!token) {
+    console.error('Error: TELEGRAM_BOT_TOKEN is not defined in .env');
+    process.exit(1);
+}
+
+if (!webAppUrl) {
+    console.error('Error: WEB_APP_URL is not defined in .env');
+    process.exit(1);
+}
 
 // Create a bot that uses 'polling' to fetch new updates
 const bot = new TelegramBot(token, { polling: true });
@@ -20,7 +32,7 @@ bot.on('message', (msg) => {
                     [
                         {
                             text: 'Open UpperBot',
-                            web_app: { url: 'https://upper-bot-demo.onrender.com' } // Replace with your actual Render URL
+                            web_app: { url: webAppUrl }
                         }
                     ]
                 ]

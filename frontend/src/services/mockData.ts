@@ -467,8 +467,8 @@ export const mockService = {
             {
                 id: 's1',
                 student_id: '1001',
-                first_name: 'John',
-                surname: 'Doe',
+                first_name: 'Jahongir',
+                surname: "Po'latov",
                 age: 16,
                 sex: 'male',
                 groups: [
@@ -479,14 +479,64 @@ export const mockService = {
             {
                 id: 's2',
                 student_id: '1002',
-                first_name: 'Jane',
-                surname: 'Smith',
+                first_name: 'Shahzod',
+                surname: 'Bahodirov',
                 age: 15,
-                sex: 'female',
+                sex: 'male',
                 groups: [
                     { id: 'g2', name: 'Physics 101', price: 450000, teacher_name: 'Mrs. Johnson', joined_at: '2023-09-05' }
                 ],
                 payment_status: 'overdue'
+            },
+            {
+                id: 's3',
+                student_id: '1003',
+                first_name: 'Temurbek',
+                surname: 'Adhamov',
+                age: 17,
+                sex: 'male',
+                groups: [],
+                payment_status: 'paid'
+            },
+            {
+                id: 's4',
+                student_id: '1004',
+                first_name: 'Bekzod',
+                surname: 'Mirahmedov',
+                age: 16,
+                sex: 'male',
+                groups: [],
+                payment_status: 'unpaid'
+            },
+            {
+                id: 's5',
+                student_id: '1005',
+                first_name: 'Avazbek',
+                surname: 'Tulovov',
+                age: 15,
+                sex: 'male',
+                groups: [],
+                payment_status: 'paid'
+            },
+            {
+                id: 's6',
+                student_id: '1006',
+                first_name: 'Xurshid',
+                surname: "O'roqov",
+                age: 16,
+                sex: 'male',
+                groups: [],
+                payment_status: 'paid'
+            },
+            {
+                id: 's7',
+                student_id: '1007',
+                first_name: 'Azam',
+                surname: 'Qahramoniy',
+                age: 16,
+                sex: 'male',
+                groups: [],
+                payment_status: 'paid'
             }
         ];
     },
