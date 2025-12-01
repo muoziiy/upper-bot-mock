@@ -62,10 +62,10 @@ const AppContent = () => {
       path: '/',
       element: !user ? <GuestDashboard /> :
         !isOnboarded ? <Navigate to="/onboarding" /> :
-          user.role === 'student' ? <StudentDashboard /> :
-            user.role === 'teacher' ? <TeacherDashboard /> :
-              user.role === 'parent' ? <ParentDashboard /> :
-                user.role === 'admin' ? <AdminDashboard /> :
+          dashboardData?.user?.role === 'student' ? <StudentDashboard /> :
+            dashboardData?.user?.role === 'teacher' ? <TeacherDashboard /> :
+              dashboardData?.user?.role === 'parent' ? <ParentDashboard /> :
+                dashboardData?.user?.role === 'admin' || dashboardData?.user?.role === 'super_admin' ? <AdminDashboard /> :
                   <WaitingPage />
     },
     { path: '/onboarding', element: <Onboarding /> },

@@ -6,7 +6,7 @@ import { useTelegram } from '../../context/TelegramContext';
 
 const AdminActions: React.FC = () => {
     const navigate = useNavigate();
-    const { webApp } = useTelegram();
+    // const { webApp } = useTelegram();
 
 
     return (
@@ -54,7 +54,7 @@ const AdminActions: React.FC = () => {
                     title="Create and Manage Exams"
                     icon="✍️"
                     iconColor="bg-indigo-500"
-                    onClick={() => webApp.showPopup({ message: 'Coming Soon' })}
+                    onClick={() => navigate('/admin/exams')}
                     showChevron
                     isLast
                 />
