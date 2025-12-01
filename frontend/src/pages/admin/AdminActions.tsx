@@ -2,7 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AdminSection } from './components/AdminSection';
 import { AdminListItem } from './components/AdminListItem';
-import { useTelegram } from '../../context/TelegramContext';
+
 
 const AdminActions: React.FC = () => {
     const navigate = useNavigate();
