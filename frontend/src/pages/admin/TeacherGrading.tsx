@@ -57,6 +57,27 @@ const TeacherGrading: React.FC = () => {
           id,
           submitted_at,
           score,
+          answers,
+          student:users (first_name, last_name)
+        `)
+                .eq('exam_id', examId);
+
+            if (subError) throw subError;
+
+            // Transform data if necessary or cast to any to avoid strict type issues with joins
+            const formattedSubmissions = (subData || []).map((sub: any) => ({
+                ...sub,
+                // Handle case where student might be returned as an array or object depending on Supabase client version/setup
+                student: Array.isArray(sub.student) ? sub.student[0] : sub.student
+            }));
+
+            setSubmissions(formattedSubmissions);
+        } catch (error) {
+            console.error('Error fetching grading data:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const handleSelectSubmission = (sub: Submission) => {
         setSelectedSubmission(sub);
@@ -133,7 +154,7 @@ const TeacherGrading: React.FC = () => {
                         <div
                             key={sub.id}
                             onClick={() => handleSelectSubmission(sub)}
-                            className={`p - 4 border - b dark: border - gray - 800 cursor - pointer hover: bg - gray - 50 dark: hover: bg - gray - 800 transition - colors ${ selectedSubmission?.id === sub.id ? 'bg-blue-50 dark:bg-blue-900/20 border-l-4 border-l-blue-500' : ''
+                            className={`p-4 border-b dark:border-gray-800 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors ${selectedSubmission?.id === sub.id ? 'bg-blue-50 dark:bg-blue-900/20 border-l-4 border-l-blue-500' : ''
                                 }`}
                         >
                             <div className="font-medium">{sub.student?.first_name} {sub.student?.last_name}</div>
@@ -180,7 +201,7 @@ const TeacherGrading: React.FC = () => {
                                             <div className="flex justify-between mb-2">
                                                 <span className="font-bold text-gray-500">Question {idx + 1} ({q.points} pts)</span>
                                                 {isAutoGraded && (
-                                                    <span className={`flex items - center gap - 1 text - sm font - bold ${ isCorrect ? 'text-green-600' : 'text-red-500' } `}>
+                                                    <span className={`flex items-center gap-1 text-sm font-bold ${isCorrect ? 'text-green-600' : 'text-red-500'}`}>
                                                         {isCorrect ? <CheckCircle size={16} /> : <XCircle size={16} />}
                                                         {isCorrect ? 'Correct' : 'Incorrect'}
                                                     </span>

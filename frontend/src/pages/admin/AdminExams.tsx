@@ -1,9 +1,19 @@
-duration_minutes: number;
-created_at: string;
-is_published: boolean;
-type: 'online' | 'offline';
-location ?: string;
-questions: any[];
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import { Plus } from 'lucide-react';
+import { supabase } from '../../lib/supabase';
+
+interface Exam {
+    id: string;
+    title: string;
+    description: string;
+    duration_minutes: number;
+    created_at: string;
+    is_published: boolean;
+    type: 'online' | 'offline';
+    location?: string;
+    questions: any[];
 }
 
 const AdminExams: React.FC = () => {
