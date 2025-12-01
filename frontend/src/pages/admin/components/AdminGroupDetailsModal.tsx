@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useTelegram } from '../../../context/TelegramContext';
-import { Trash2, CreditCard, Calendar, Settings } from 'lucide-react';
+import { Trash2, CreditCard, ChevronLeft } from 'lucide-react';
 import AdminPaymentModal from './AdminPaymentModal';
 
 interface Group {
@@ -103,17 +103,25 @@ const AdminGroupDetailsModal: React.FC<AdminGroupDetailsModalProps> = ({
             }
         });
     };
-
     if (!isOpen || !group) return null;
 
     return (
         <>
-            <div className="fixed inset-0 z-[60] bg-tg-bg flex flex-col">
+            <div className="fixed inset-0 z-[60] bg-[#F2F2F7] dark:bg-[#000000] flex flex-col">
                 {/* Header */}
-                <div className="px-4 py-3 border-b border-tg-hint/10 flex items-center justify-between bg-tg-bg">
-                    <h2 className="text-lg font-semibold text-tg-text">
+                <div className="px-4 py-3 bg-[#F2F2F7] dark:bg-[#000000] flex items-center justify-between sticky top-0 z-10">
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={onClose}
+                            className="text-blue-500 flex items-center gap-1 p-2 -ml-2"
+                        >
+                            <ChevronLeft size={24} />
+                        </button>
+                    </div>
+                    <h2 className="text-lg font-semibold text-black dark:text-white absolute left-1/2 -translate-x-1/2">
                         {group.name}
                     </h2>
+                    <div className="w-16"></div>
                 </div>
 
                 {/* Content */}
@@ -123,54 +131,54 @@ const AdminGroupDetailsModal: React.FC<AdminGroupDetailsModalProps> = ({
                     <div className="grid grid-cols-2 gap-3">
                         <button
                             onClick={() => setShowPaymentModal(true)}
-                            className="flex flex-col items-center justify-center p-4 bg-tg-secondary rounded-xl border border-tg-hint/10 active:scale-95 transition-transform"
+                            className="flex flex-col items-center justify-center p-4 bg-white dark:bg-[#1C1C1E] rounded-xl active:scale-95 transition-transform shadow-sm"
                         >
-                            <CreditCard className="text-tg-button mb-2" size={24} />
-                            <span className="text-sm font-medium text-tg-text">Payment Info</span>
+                            <div className="w-10 h-10 rounded-full bg-blue-500/10 flex items-center justify-center mb-2">
+                                <CreditCard className="text-blue-500" size={24} />
+                            </div>
+                            <span className="text-sm font-medium text-black dark:text-white">Payment Info</span>
                         </button>
                         <button
                             onClick={handleRemoveGroup}
                             disabled={loading}
-                            className="flex flex-col items-center justify-center p-4 bg-tg-secondary rounded-xl border border-tg-hint/10 active:scale-95 transition-transform"
+                            className="flex flex-col items-center justify-center p-4 bg-white dark:bg-[#1C1C1E] rounded-xl active:scale-95 transition-transform shadow-sm"
                         >
-                            <Trash2 className="text-red-500 mb-2" size={24} />
-                            <span className="text-sm font-medium text-tg-text">Remove Group</span>
+                            <div className="w-10 h-10 rounded-full bg-red-500/10 flex items-center justify-center mb-2">
+                                <Trash2 className="text-red-500" size={24} />
+                            </div>
+                            <span className="text-sm font-medium text-red-500">Remove Group</span>
                         </button>
                     </div>
 
                     {/* Settings */}
-                    <div className="space-y-4">
-                        <h3 className="text-md font-semibold text-tg-text flex items-center gap-2">
-                            <Settings size={18} /> Settings
-                        </h3>
-
-                        <div className="bg-tg-secondary p-4 rounded-xl border border-tg-hint/10 space-y-4">
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium text-tg-hint ml-1">Join Date</label>
-                                <div className="relative">
-                                    <Calendar className="absolute left-3.5 top-1/2 -translate-y-1/2 text-tg-hint" size={18} />
-                                    <input
-                                        type="date"
-                                        value={joinDate}
-                                        onChange={(e) => setJoinDate(e.target.value)}
-                                        className="w-full bg-tg-bg text-tg-text pl-11 p-3 rounded-lg border-none outline-none focus:ring-2 focus:ring-tg-button/20"
-                                    />
-                                </div>
+                    <div className="space-y-2">
+                        <label className="text-sm font-medium text-[#8E8E93] ml-4 uppercase">Settings</label>
+                        <div className="bg-white dark:bg-[#1C1C1E] rounded-xl overflow-hidden">
+                            <div className="p-4 border-b border-[#C6C6C8] dark:border-[#38383A]">
+                                <span className="text-sm text-[#8E8E93] block mb-1">Join Date</span>
+                                <input
+                                    type="date"
+                                    value={joinDate}
+                                    onChange={(e) => setJoinDate(e.target.value)}
+                                    className="w-full bg-transparent text-black dark:text-white text-lg outline-none"
+                                />
                             </div>
                             <button
                                 onClick={handleUpdateJoinDate}
                                 disabled={loading}
-                                className="w-full py-3 rounded-lg bg-tg-button text-white font-semibold text-sm active:scale-[0.98] transition-all"
+                                className="w-full p-4 text-center text-blue-500 font-medium active:bg-[#E5E5EA] dark:active:bg-[#2C2C2E] transition-colors"
                             >
-                                Update Date
+                                {loading ? 'Updating...' : 'Update Date'}
                             </button>
                         </div>
+                        <p className="text-xs text-[#8E8E93] ml-4">
+                            Payments will be calculated starting from this date.
+                        </p>
                     </div>
 
                 </div>
             </div>
 
-            {/* Payment Modal */}
             <AdminPaymentModal
                 isOpen={showPaymentModal}
                 onClose={() => setShowPaymentModal(false)}

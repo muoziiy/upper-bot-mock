@@ -9,7 +9,6 @@ interface AdminFilterModalProps {
     onClose: () => void;
     filters: {
         status: 'all' | 'paid' | 'unpaid' | 'overdue';
-        month: number;
         year: number;
         subjectId: string;
     };
@@ -21,10 +20,7 @@ const AdminFilterModal: React.FC<AdminFilterModalProps> = ({ isOpen, onClose, fi
     const { webApp } = useTelegram();
     const [localFilters, setLocalFilters] = React.useState(filters);
 
-    const months = [
-        'January', 'February', 'March', 'April', 'May', 'June',
-        'July', 'August', 'September', 'October', 'November', 'December'
-    ];
+
 
     useEffect(() => {
         if (isOpen) {
@@ -58,7 +54,7 @@ const AdminFilterModal: React.FC<AdminFilterModalProps> = ({ isOpen, onClose, fi
                     <div className="flex gap-2">
                         {/* Clear All Button */}
                         <button
-                            onClick={() => setLocalFilters({ status: 'all', month: new Date().getMonth() + 1, year: new Date().getFullYear(), subjectId: 'all' })}
+                            onClick={() => setLocalFilters({ status: 'all', year: new Date().getFullYear(), subjectId: 'all' })}
                             className="text-xs font-medium text-blue-500 hover:opacity-80 px-2 py-1"
                         >
                             Clear All
@@ -123,26 +119,7 @@ const AdminFilterModal: React.FC<AdminFilterModalProps> = ({ isOpen, onClose, fi
                         </div>
                     </div>
 
-                    {/* Month Filter */}
-                    <div className="space-y-3">
-                        <label className="text-sm font-medium text-[#8E8E93] uppercase ml-1">Month</label>
-                        <div className="grid grid-cols-3 gap-2">
-                            {months.map((month, idx) => (
-                                <button
-                                    key={month}
-                                    onClick={() => setLocalFilters({ ...localFilters, month: idx + 1 })}
-                                    className={cn(
-                                        "px-2 py-2 rounded-lg text-xs font-medium transition-all text-center border",
-                                        localFilters.month === idx + 1
-                                            ? "bg-blue-500 text-white border-blue-500 shadow-md"
-                                            : "bg-white dark:bg-[#1C1C1E] text-black dark:text-white border-transparent hover:bg-white/80 dark:hover:bg-[#2C2C2E]"
-                                    )}
-                                >
-                                    {month}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
+
 
                     {/* Apply Button */}
                     <div className="pt-4">

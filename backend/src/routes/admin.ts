@@ -627,7 +627,8 @@ router.get('/students/:id', async (req, res) => {
             joined_at: gm.joined_at,
             payment_status: gm.payment_status,
             next_due_date: gm.next_due_date,
-            lessons_remaining: gm.lessons_remaining
+            lessons_remaining: gm.lessons_remaining,
+            schedule: gm.groups.schedule
         }));
 
         res.json({
@@ -1098,6 +1099,13 @@ router.put('/students/:id/groups', async (req, res) => {
             const { error } = await supabase
                 .from('group_members')
                 .delete()
+                .eq('student_id', id)
+                .eq('group_id', groupId);
+            if (error) throw error;
+        } else if (action === 'update_date') {
+            const { error } = await supabase
+                .from('group_members')
+                .update({ joined_at: req.body.joinedAt })
                 .eq('student_id', id)
                 .eq('group_id', groupId);
             if (error) throw error;

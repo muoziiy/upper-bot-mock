@@ -2,9 +2,11 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AdminSection } from './components/AdminSection';
 import { AdminListItem } from './components/AdminListItem';
+import { useTelegram } from '../../context/TelegramContext';
 
 const AdminActions: React.FC = () => {
     const navigate = useNavigate();
+    const { webApp } = useTelegram();
 
     return (
         <div className="min-h-screen pt-4 pb-20 bg-[#F2F2F7] dark:bg-[#000000]">
@@ -45,6 +47,13 @@ const AdminActions: React.FC = () => {
                     icon="📝"
                     iconColor="bg-yellow-500"
                     onClick={() => navigate('/admin/requests')}
+                    showChevron
+                />
+                <AdminListItem
+                    title="Create and Manage Exams"
+                    icon="✍️"
+                    iconColor="bg-indigo-500"
+                    onClick={() => webApp.showPopup({ message: 'Coming Soon' })}
                     showChevron
                     isLast
                 />

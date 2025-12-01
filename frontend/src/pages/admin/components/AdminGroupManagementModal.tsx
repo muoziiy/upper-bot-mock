@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTelegram } from '../../../context/TelegramContext';
-import { Plus } from 'lucide-react';
+import { Plus, ChevronLeft } from 'lucide-react';
 
 interface Group {
     id: string;
@@ -136,7 +136,6 @@ const AdminGroupManagementModal: React.FC<AdminGroupManagementModalProps> = ({
     };
 
     if (!isOpen) return null;
-
     return (
         <div className="fixed inset-0 z-[60] bg-[#F2F2F7] dark:bg-[#000000] flex flex-col">
             {/* Header */}
@@ -148,9 +147,9 @@ const AdminGroupManagementModal: React.FC<AdminGroupManagementModalProps> = ({
                             else if (isAdding) setIsAdding(false);
                             else onClose();
                         }}
-                        className="text-blue-500 flex items-center gap-1"
+                        className="text-blue-500 flex items-center gap-1 p-2 -ml-2"
                     >
-                        <span className="text-lg">Back</span>
+                        <ChevronLeft size={24} />
                     </button>
                 </div>
                 <h2 className="text-lg font-semibold text-black dark:text-white absolute left-1/2 -translate-x-1/2">
