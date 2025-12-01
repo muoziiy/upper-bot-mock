@@ -29,6 +29,304 @@ router.get('/users', async (req, res) => {
     }
 });
 
+// Get all students (with search and details)
+router.get('/students', async (req, res) => {
+    const { search } = req.query;
+
+    try {
+        let query = supabase
+            .from('users')
+            .select(`
+                *,
+                group_members (
+                    payment_status,
+                    joined_at,
+                    groups (
+                        id,
+                        name,
+                        price,
+                        users (first_name, surname)
+                    )
+                )
+            `)
+            .eq('role', 'student')
+            .order('created_at', { ascending: false });
+
+        if (search) {
+            const searchStr = String(search);
+            query = query.or(`first_name.ilike.%${searchStr}%,surname.ilike.%${searchStr}%,onboarding_first_name.ilike.%${searchStr}%`);
+        }
+
+        const { data, error } = await query;
+
+        if (error) throw error;
+
+        // Transform data
+        const formattedData = data.map((student: any) => {
+            const groups = student.group_members?.map((gm: any) => ({
+                id: gm.groups?.id,
+                name: gm.groups?.name,
+                price: gm.groups?.price,
+                teacher_name: gm.groups?.users ? `${gm.groups.users.first_name} ${gm.groups.users.surname || ''}`.trim() : undefined,
+                joined_at: gm.joined_at,
+                payment_status: gm.payment_status
+            })).filter((g: any) => g.id); // Filter out null groups if any
+
+            // Determine overall status
+            let payment_status = 'paid';
+            if (groups.some((g: any) => g.payment_status === 'overdue')) {
+                payment_status = 'overdue';
+            } else if (groups.some((g: any) => g.payment_status === 'unpaid')) {
+                payment_status = 'unpaid';
+            }
+
+            return {
+                id: student.id,
+                student_id: student.student_id || '---',
+                first_name: student.first_name,
+                onboarding_first_name: student.onboarding_first_name,
+                surname: student.surname || '',
+                age: student.age,
+                sex: student.sex,
+                groups,
+                payment_status
+            };
+        });
+
+        res.json(formattedData);
+    } catch (error) {
+        console.error('Error fetching students:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Get all groups list
+router.get('/groups/list', async (req, res) => {
+    try {
+        const { data, error } = await supabase
+            .from('groups')
+            .select('*')
+            .order('name');
+
+        if (error) throw error;
+        res.json(data);
+    } catch (error) {
+        console.error('Error fetching groups:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Get Group Details (with students)
+router.get('/groups/:id', async (req, res) => {
+    const { id } = req.params;
+    try {
+        const { data: group, error: groupError } = await supabase
+            .from('groups')
+            .select('*')
+            .eq('id', id)
+            .single();
+
+        if (groupError) throw groupError;
+
+        // Get students in group
+        const { data: members, error: membersError } = await supabase
+            .from('group_members')
+            .select(`
+                student_id,
+                users (
+                    id,
+                    first_name,
+                    surname,
+                    student_id
+                )
+            `)
+            .eq('group_id', id);
+
+        if (membersError) throw membersError;
+
+        const students = members.map((m: any) => ({
+            id: m.users.id,
+            first_name: m.users.first_name,
+            surname: m.users.surname,
+            student_id: m.users.student_id
+        }));
+
+        res.json({ ...group, students });
+    } catch (error) {
+        console.error('Error fetching group details:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Get Student Details
+router.get('/students/:id', async (req, res) => {
+    const { id } = req.params;
+    try {
+        const { data, error } = await supabase
+            .from('users')
+            .select(`
+                *,
+                group_members (
+                    joined_at,
+                    payment_status,
+                    groups (
+                        id,
+                        name,
+                        price,
+                        teacher_id,
+                        users (first_name, surname)
+                    )
+                )
+            `)
+            .eq('id', id)
+            .single();
+
+        if (error) throw error;
+
+        // Format groups
+        const groups = data.group_members ? data.group_members.map((gm: any) => ({
+            id: gm.groups?.id,
+            name: gm.groups?.name,
+            price: gm.groups?.price,
+            teacher_name: gm.groups?.users ? `${gm.groups.users.first_name} ${gm.groups.users.surname || ''}`.trim() : undefined,
+            joined_at: gm.joined_at,
+            payment_status: gm.payment_status
+        })) : [];
+
+        res.json({ ...data, groups });
+    } catch (error) {
+        console.error('Error fetching student details:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Get Student Payments
+router.get('/students/:id/payments', async (req, res) => {
+    const { id } = req.params;
+    try {
+        const { data, error } = await supabase
+            .from('payment_records')
+            .select(`
+                *,
+                groups (name)
+            `)
+            .eq('student_id', id)
+            .order('payment_date', { ascending: false });
+
+        if (error) throw error;
+
+        const formatted = data.map((p: any) => ({
+            ...p,
+            subject_name: p.groups?.name
+        }));
+
+        res.json(formatted);
+    } catch (error) {
+        console.error('Error fetching payments:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Add Student Payment
+router.post('/students/:id/payments', async (req, res) => {
+    const { id } = req.params;
+    const { amount, payment_date, payment_method, group_id, lessons_attended, status, month, year } = req.body;
+
+    try {
+        const { data, error } = await supabase
+            .from('payment_records')
+            .insert([{
+                student_id: id,
+                amount,
+                payment_date,
+                payment_method,
+                group_id,
+                lessons_attended,
+                status,
+                month,
+                year
+            }])
+            .select()
+            .single();
+
+        if (error) throw error;
+
+        // Recalculate status
+        if (group_id) {
+            await recalculateStudentGroupStatus(id, group_id);
+        }
+
+        res.json(data);
+    } catch (error) {
+        console.error('Error adding payment:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Delete Student Payment
+router.delete('/students/:id/payments/:paymentId', async (req, res) => {
+    const { id, paymentId } = req.params;
+    try {
+        // Get payment to know group_id for recalculation
+        const { data: payment } = await supabase
+            .from('payment_records')
+            .select('group_id')
+            .eq('id', paymentId)
+            .single();
+
+        const { error } = await supabase
+            .from('payment_records')
+            .delete()
+            .eq('id', paymentId);
+
+        if (error) throw error;
+
+        if (payment?.group_id) {
+            await recalculateStudentGroupStatus(id, payment.group_id);
+        }
+
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Error deleting payment:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Manage Student Groups (Add/Remove)
+router.put('/students/:id/groups', async (req, res) => {
+    const { id } = req.params;
+    const { groupId, action, joinedAt } = req.body;
+
+    try {
+        if (action === 'add') {
+            const { error } = await supabase
+                .from('group_members')
+                .insert([{
+                    student_id: id,
+                    group_id: groupId,
+                    joined_at: joinedAt || new Date().toISOString()
+                }]);
+            if (error) throw error;
+
+            // Recalculate status to set initial due date
+            await recalculateStudentGroupStatus(id, groupId);
+
+        } else if (action === 'remove') {
+            const { error } = await supabase
+                .from('group_members')
+                .delete()
+                .eq('student_id', id)
+                .eq('group_id', groupId);
+            if (error) throw error;
+        }
+
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Error managing student groups:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
 // Assign role to user
 router.post('/users/:userId/role', async (req, res) => {
     const { userId } = req.params;
@@ -613,15 +911,28 @@ async function recalculateStudentGroupStatus(studentId: string, groupId: string)
                     updates.last_payment_date = lastPayment.payment_date;
                 }
             } else {
-                // No payments? 
-                updates.payment_status = 'overdue';
+                // No payments? Use joined_at as the first due date
+                if (groupMember.joined_at) {
+                    updates.next_due_date = groupMember.joined_at;
+                } else {
+                    // Fallback if no joined_at (shouldn't happen usually)
+                    updates.next_due_date = new Date().toISOString();
+                }
+                updates.payment_status = 'overdue'; // Initially overdue until paid
             }
 
             // Check Status if we have a due date
             if (updates.next_due_date) {
                 const today = new Date();
                 const dueDate = new Date(updates.next_due_date);
-                updates.payment_status = dueDate > today ? 'paid' : 'overdue';
+                // If due date is in the future, it's paid (or pending). If past/today, it's overdue.
+                // Actually, if I just joined and haven't paid, I am overdue immediately if prepaid.
+                // But if we want to give grace period? For now, strict: overdue if not paid.
+                // Logic above sets 'overdue' if no payments.
+                // If payments exist, we check:
+                if (validPayments.length > 0) {
+                    updates.payment_status = dueDate > today ? 'paid' : 'overdue';
+                }
             }
         }
 

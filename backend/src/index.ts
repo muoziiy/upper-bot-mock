@@ -12,6 +12,8 @@ import leaderboardRoutes from './routes/leaderboard';
 import journeyRoutes from './routes/journey';
 import onboardingRoutes from './routes/onboarding';
 import schedulerRoutes from './routes/scheduler';
+import subjectsRoutes from './routes/subjects';
+import attendanceRoutes from './routes/attendance';
 import bot from './bot';
 
 import { startScheduler } from './scheduler';
@@ -34,6 +36,8 @@ app.use('/api/students', journeyRoutes);
 app.use('/api/leaderboard', leaderboardRoutes);
 app.use('/api/teachers', teacherRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/subjects', subjectsRoutes);
+app.use('/api/attendance', attendanceRoutes);
 app.use('/api/cron', schedulerRoutes);
 
 app.get('/', (req, res) => {
