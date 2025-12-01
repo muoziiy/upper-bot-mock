@@ -34,12 +34,15 @@ const AdminStudents: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
 
+    const [subjects, setSubjects] = useState<{ id: string; name: string }[]>([]);
+
     // Filter State
     const [showFilterModal, setShowFilterModal] = useState(false);
     const [filters, setFilters] = useState({
         status: 'all' as 'all' | 'paid' | 'unpaid' | 'overdue',
         month: new Date().getMonth() + 1,
-        year: new Date().getFullYear()
+        year: new Date().getFullYear(),
+        subjectId: 'all'
     });
 
     // Modal State
@@ -50,6 +53,23 @@ const AdminStudents: React.FC = () => {
     const [showAttendanceModal, setShowAttendanceModal] = useState(false);
 
     const [error, setError] = useState<string | null>(null);
+
+    // Fetch subjects
+    const fetchSubjects = async () => {
+        try {
+            const res = await fetch(`${import.meta.env.VITE_API_URL}/subjects/list`);
+            if (res.ok) {
+                const data = await res.json();
+                setSubjects(data);
+            }
+        } catch (e) {
+            console.error('Failed to fetch subjects', e);
+        }
+    };
+
+    useEffect(() => {
+        fetchSubjects();
+    }, []);
 
     // Fetch students
     const fetchStudents = async () => {
@@ -64,6 +84,8 @@ const AdminStudents: React.FC = () => {
                 const data = await res.json();
                 // Client-side filtering
                 let filtered = data;
+
+                // Status Filter
                 if (filters.status !== 'all') {
                     if (filters.status === 'unpaid') {
                         filtered = filtered.filter((s: Student) => s.payment_status === 'unpaid' || s.payment_status === 'overdue');
@@ -71,6 +93,14 @@ const AdminStudents: React.FC = () => {
                         filtered = filtered.filter((s: Student) => s.payment_status === filters.status);
                     }
                 }
+
+                // Subject Filter
+                if (filters.subjectId !== 'all') {
+                    filtered = filtered.filter((s: Student) =>
+                        s.groups.some((g: any) => g.subject_id === filters.subjectId)
+                    );
+                }
+
                 setStudents(filtered);
 
                 // Update selectedStudent if it exists
@@ -218,6 +248,7 @@ const AdminStudents: React.FC = () => {
                     onClose={() => setShowFilterModal(false)}
                     filters={filters}
                     onApply={setFilters}
+                    subjects={subjects}
                 />
             )}
         </div>

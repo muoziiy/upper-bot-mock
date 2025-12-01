@@ -78,6 +78,11 @@ DO $$ BEGIN
     ALTER TABLE groups ADD COLUMN payment_type payment_type NOT NULL DEFAULT 'monthly_fixed';
 EXCEPTION WHEN duplicate_column THEN null; END $$;
 
+-- Add subject_id column
+DO $$ BEGIN
+    ALTER TABLE groups ADD COLUMN IF NOT EXISTS subject_id UUID REFERENCES subjects(id) ON DELETE SET NULL;
+EXCEPTION WHEN duplicate_column THEN null; END $$;
+
 -- GROUP MEMBERS
 CREATE TABLE IF NOT EXISTS group_members (
     group_id UUID REFERENCES groups(id) ON DELETE CASCADE,

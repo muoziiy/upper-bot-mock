@@ -26,7 +26,9 @@ interface Student {
         teacher?: {
             first_name: string;
             onboarding_first_name?: string;
+            surname: string;
         };
+        schedule?: Record<string, string[]>;
         joined_at?: string;
         payment_status?: 'paid' | 'overdue' | 'unpaid';
         lessons_remaining?: number;
@@ -59,6 +61,7 @@ const AdminStudentDetails: React.FC = () => {
 
     // Calendar State
     const [currentDate, setCurrentDate] = useState(new Date());
+    const [selectedDate, setSelectedDate] = useState<Date | null>(null);
 
     useEffect(() => {
         if (webApp) {
@@ -150,12 +153,48 @@ const AdminStudentDetails: React.FC = () => {
         return record ? record.status : null;
     };
 
+    const hasLesson = (day: number) => {
+        if (!student?.groups) return false;
+        const date = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
+        const dayName = date.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
+
+        return student.groups.some(g =>
+            g.schedule && g.schedule[dayName] && g.schedule[dayName].length > 0
+        );
+    };
+
+    const getLessonDetails = (date: Date) => {
+        if (!student?.groups) return [];
+        const dayName = date.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
+
+        const lessons: { groupName: string, time: string }[] = [];
+        student.groups.forEach(g => {
+            if (g.schedule && g.schedule[dayName]) {
+                g.schedule[dayName].forEach(time => {
+                    lessons.push({ groupName: g.name, time });
+                });
+            }
+        });
+        return lessons;
+    };
+
     const nextMonth = () => {
         setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
+        setSelectedDate(null);
     };
 
     const prevMonth = () => {
         setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
+        setSelectedDate(null);
+    };
+
+    const handleDayClick = (day: number) => {
+        const date = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
+        if (selectedDate && selectedDate.getTime() === date.getTime()) {
+            setSelectedDate(null);
+        } else {
+            setSelectedDate(date);
+        }
     };
 
     if (loading) {
@@ -293,15 +332,28 @@ const AdminStudentDetails: React.FC = () => {
                         {blanks.map(i => <div key={`blank-${i}`} className="aspect-square" />)}
                         {days.map(day => {
                             const status = getAttendanceStatus(day);
+                            const isLessonDay = hasLesson(day);
+                            const isSelected = selectedDate && selectedDate.getDate() === day && selectedDate.getMonth() === currentDate.getMonth();
+
                             let bgClass = "bg-transparent text-black dark:text-white";
+
                             if (status === 'present') bgClass = "bg-green-500/20 text-green-500 font-bold";
-                            if (status === 'absent') bgClass = "bg-red-500/20 text-red-500 font-bold";
-                            if (status === 'late') bgClass = "bg-orange-500/20 text-orange-500 font-bold";
+                            else if (status === 'absent') bgClass = "bg-red-500/20 text-red-500 font-bold";
+                            else if (status === 'late') bgClass = "bg-orange-500/20 text-orange-500 font-bold";
+                            else if (isLessonDay) bgClass = "bg-blue-500/10 text-blue-500 font-medium"; // Light theme color for lessons
+
+                            if (isSelected) {
+                                bgClass += " ring-2 ring-blue-500";
+                            }
 
                             return (
-                                <div key={day} className={`aspect-square flex items-center justify-center rounded-lg text-sm ${bgClass}`}>
+                                <button
+                                    key={day}
+                                    onClick={() => handleDayClick(day)}
+                                    className={`aspect-square flex items-center justify-center rounded-lg text-sm transition-all ${bgClass}`}
+                                >
                                     {day}
-                                </div>
+                                </button>
                             );
                         })}
                     </div>
@@ -310,19 +362,36 @@ const AdminStudentDetails: React.FC = () => {
                     <div className="flex justify-center gap-4 mt-4 text-xs text-[#8E8E93]">
                         <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-green-500"></div> Present</div>
                         <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-red-500"></div> Absent</div>
-                        <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-orange-500"></div> Late</div>
+                        <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-blue-500/50"></div> Lesson</div>
                     </div>
                 </div>
+
+                {/* Selected Day Lesson Details */}
+                {selectedDate && (
+                    <div className="border-t border-[#C6C6C8] dark:border-[#38383A] bg-white dark:bg-[#1C1C1E] p-4 animate-in slide-in-from-top-2 duration-200">
+                        <h4 className="text-sm font-semibold text-black dark:text-white mb-2">
+                            {selectedDate.toLocaleDateString('default', { weekday: 'long', month: 'long', day: 'numeric' })}
+                        </h4>
+                        {getLessonDetails(selectedDate).length > 0 ? (
+                            <div className="space-y-2">
+                                {getLessonDetails(selectedDate).map((lesson, idx) => (
+                                    <div key={idx} className="flex justify-between items-center text-sm">
+                                        <span className="text-black dark:text-white">{lesson.groupName}</span>
+                                        <span className="text-[#8E8E93]">{lesson.time}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <p className="text-sm text-[#8E8E93]">No lessons scheduled for this day.</p>
+                        )}
+                    </div>
+                )}
             </AdminSection>
 
             {/* Attendance Explanation */}
             <div className="px-4 mt-2 mb-6">
-                <p className="text-xs text-[#8E8E93] leading-relaxed">
-                    <span className="font-semibold">How it works:</span>
-                    <br />
-                    • <span className="font-medium">Lesson Based:</span> 1 credit is deducted for every "Present" or "Late" status.
-                    <br />
-                    • <span className="font-medium">Monthly:</span> Status is based on payment date coverage.
+                <p className="text-xs text-[#8E8E93] leading-relaxed text-center">
+                    Based on education centre settings
                 </p>
             </div>
 

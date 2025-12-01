@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTelegram } from '../../context/TelegramContext';
 import { AdminSection } from './components/AdminSection';
 import { AdminListItem } from './components/AdminListItem';
-import { Check, ChevronDown } from 'lucide-react';
+import { Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../../lib/utils';
 
@@ -53,7 +53,7 @@ const AdminAttendance: React.FC = () => {
 
     const fetchGroups = async () => {
         try {
-            const res = await fetch(`${import.meta.env.VITE_API_URL}/admin/groups`);
+            const res = await fetch(`${import.meta.env.VITE_API_URL}/admin/groups/list`);
             if (res.ok) {
                 const data = await res.json();
                 setGroups(data);
@@ -67,17 +67,12 @@ const AdminAttendance: React.FC = () => {
         setLoading(true);
         try {
             // Fetch students in group
+            // We use the /groups/:id endpoint which returns group details + students
             const resStudents = await fetch(`${import.meta.env.VITE_API_URL}/admin/groups/${groupId}`);
             if (!resStudents.ok) throw new Error('Failed to fetch students');
             const groupData = await resStudents.json();
 
-            // Fetch existing attendance for date
-            // Note: We might need a specific endpoint for this, but for now let's assume we start fresh or need to fetch it.
-            // Since we don't have a bulk fetch attendance for a group on a date endpoint yet, 
-            // we will just list students and default to 'present' or empty.
-            // Ideally we should fetch attendance if it exists.
-
-            // For MVP, let's just list students.
+            // Map students
             const mappedStudents = groupData.students.map((s: any) => ({
                 id: s.id,
                 first_name: s.first_name,
@@ -107,10 +102,6 @@ const AdminAttendance: React.FC = () => {
         if (!selectedGroup) return;
         setSaving(true);
         try {
-            // We need to send attendance for each student
-            // The backend expects POST /attendance with { student_id, group_id, date, status }
-            // We can loop through students. Ideally backend supports bulk insert.
-
             const promises = students.map(s =>
                 fetch(`${import.meta.env.VITE_API_URL}/attendance`, {
                     method: 'POST',
@@ -144,7 +135,7 @@ const AdminAttendance: React.FC = () => {
             case 'present': return 'text-green-500';
             case 'absent': return 'text-red-500';
             case 'late': return 'text-orange-500';
-            default: return 'text-gray-400';
+            default: return 'text-[#8E8E93]';
         }
     };
 
@@ -161,37 +152,32 @@ const AdminAttendance: React.FC = () => {
         <div className="min-h-screen bg-[#F2F2F7] dark:bg-[#000000] pt-4 pb-20">
             <h1 className="text-3xl font-bold mb-6 px-4 text-black dark:text-white">Attendance</h1>
 
-            {/* Group Selector */}
-            <div className="px-4 mb-6">
-                <button
+            {/* Configuration Section */}
+            <AdminSection title="Configuration">
+                <AdminListItem
+                    title="Group"
+                    value={selectedGroup ? selectedGroup.name : "Select Group"}
                     onClick={() => setIsGroupSelectOpen(true)}
-                    className="w-full bg-white dark:bg-[#1C1C1E] p-4 rounded-[10px] flex items-center justify-between shadow-sm"
-                >
-                    <span className={selectedGroup ? "text-black dark:text-white font-medium" : "text-[#8E8E93]"}>
-                        {selectedGroup ? selectedGroup.name : "Select Group"}
-                    </span>
-                    <ChevronDown className="text-[#8E8E93]" />
-                </button>
-            </div>
-
-            {/* Date Picker */}
-            {selectedGroup && (
-                <div className="px-4 mb-6">
-                    <div className="bg-white dark:bg-[#1C1C1E] p-4 rounded-[10px] flex items-center justify-between shadow-sm">
+                    showChevron
+                    icon="👥"
+                    iconColor="bg-blue-500"
+                />
+                {selectedGroup && (
+                    <div className="flex items-center justify-between p-4 bg-white dark:bg-[#1C1C1E]">
                         <span className="text-black dark:text-white font-medium">Date</span>
                         <input
                             type="date"
                             value={date}
                             onChange={(e) => setDate(e.target.value)}
-                            className="bg-transparent text-right text-blue-500 outline-none"
+                            className="bg-transparent text-right text-blue-500 outline-none font-medium"
                         />
                     </div>
-                </div>
-            )}
+                )}
+            </AdminSection>
 
             {/* Student List */}
             {selectedGroup && (
-                <AdminSection title={`Students (${students.length})`}>
+                <AdminSection title={`Students (${students.length})`} footer="Tap to toggle status">
                     {loading ? (
                         <div className="p-4 text-center text-[#8E8E93]">Loading students...</div>
                     ) : students.length > 0 ? (
@@ -200,10 +186,10 @@ const AdminAttendance: React.FC = () => {
                                 key={student.id}
                                 title={`${student.first_name} ${student.surname}`}
                                 icon={getStatusIcon(student.attendance_status)}
-                                iconColor="bg-transparent" // Emoji icon doesn't need bg
+                                iconColor="bg-transparent"
                                 onClick={() => toggleStatus(student.id)}
                                 rightElement={
-                                    <span className={cn("text-sm font-medium capitalize", getStatusColor(student.attendance_status))}>
+                                    <span className={cn("text-sm font-medium capitalize transition-colors", getStatusColor(student.attendance_status))}>
                                         {student.attendance_status}
                                     </span>
                                 }
@@ -218,7 +204,7 @@ const AdminAttendance: React.FC = () => {
 
             {/* Save Button */}
             {selectedGroup && students.length > 0 && (
-                <div className="fixed bottom-0 left-0 right-0 p-4 bg-[#F2F2F7] dark:bg-[#000000] border-t border-[#C6C6C8] dark:border-[#38383A]">
+                <div className="fixed bottom-0 left-0 right-0 p-4 bg-[#F2F2F7]/80 dark:bg-[#000000]/80 backdrop-blur-md border-t border-[#C6C6C8] dark:border-[#38383A]">
                     <button
                         onClick={handleSave}
                         disabled={saving}
@@ -240,7 +226,7 @@ const AdminAttendance: React.FC = () => {
                             exit={{ opacity: 0, y: 100 }}
                             className="fixed bottom-0 left-0 right-0 z-[80] bg-[#F2F2F7] dark:bg-[#1C1C1E] rounded-t-2xl max-h-[70vh] flex flex-col"
                         >
-                            <div className="px-4 py-3 border-b border-[#C6C6C8] dark:border-[#38383A] flex justify-between items-center">
+                            <div className="px-4 py-3 border-b border-[#C6C6C8] dark:border-[#38383A] flex justify-between items-center bg-[#F2F2F7] dark:bg-[#1C1C1E] sticky top-0 z-10 rounded-t-2xl">
                                 <span className="text-[17px] font-semibold text-black dark:text-white">Select Group</span>
                                 <button onClick={() => setIsGroupSelectOpen(false)} className="text-blue-500 font-medium">Done</button>
                             </div>

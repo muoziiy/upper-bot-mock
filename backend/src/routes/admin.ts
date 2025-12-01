@@ -471,16 +471,17 @@ router.get('/students', async (req, res) => {
                     next_due_date,
                     last_payment_date,
                     payment_type,
-                    groups (
-                        id,
-                        name,
-                        price,
-                        payment_type,
-                        teacher:users!groups_teacher_id_fkey (
-                            first_name,
-                            surname
+                        groups (
+                            id,
+                            name,
+                            price,
+                            payment_type,
+                            subject_id,
+                            teacher:users!groups_teacher_id_fkey (
+                                first_name,
+                                surname
+                            )
                         )
-                    )
                 )
             `)
             .eq('role', 'student')
@@ -594,16 +595,17 @@ router.get('/students/:id', async (req, res) => {
                 payment_status,
                 next_due_date,
                 lessons_remaining,
-                groups (
-                    id,
-                    name,
-                    price,
-                    teacher:users!groups_teacher_id_fkey (
-                        first_name,
-                        onboarding_first_name,
-                        surname
+                    groups (
+                        id,
+                        name,
+                        price,
+                        schedule,
+                        teacher:users!groups_teacher_id_fkey (
+                            first_name,
+                            onboarding_first_name,
+                            surname
+                        )
                     )
-                )
             `)
             .eq('student_id', id);
 
@@ -946,9 +948,13 @@ router.get('/groups/list', async (req, res) => {
                 price, 
                 schedule, 
                 teacher_id,
+                subject_id,
                 teacher:users!groups_teacher_id_fkey (
                     first_name,
                     surname
+                ),
+                subjects (
+                    name
                 )
             `)
             .order('name');
@@ -958,7 +964,8 @@ router.get('/groups/list', async (req, res) => {
         // Flatten teacher name
         const groups = data.map((g: any) => ({
             ...g,
-            teacher_name: g.teacher ? `${g.teacher.first_name} ${g.teacher.surname}` : 'No Teacher'
+            teacher_name: g.teacher ? `${g.teacher.first_name} ${g.teacher.surname}` : 'No Teacher',
+            subject_name: g.subjects ? g.subjects.name : 'No Subject'
         }));
 
         res.json(groups);
@@ -969,7 +976,7 @@ router.get('/groups/list', async (req, res) => {
 
 // Create Group
 router.post('/groups', async (req, res) => {
-    const { name, teacher_id, price, schedule, payment_type } = req.body;
+    const { name, teacher_id, price, schedule, payment_type, subject_id } = req.body;
 
     try {
         const { data, error } = await supabase
@@ -979,7 +986,8 @@ router.post('/groups', async (req, res) => {
                 teacher_id: teacher_id || null,
                 price: price || 0,
                 schedule: schedule || {},
-                payment_type: payment_type || 'monthly_fixed'
+                payment_type: payment_type || 'monthly_fixed',
+                subject_id: subject_id || null
             })
             .select()
             .single();
@@ -995,7 +1003,7 @@ router.post('/groups', async (req, res) => {
 // Update Group
 router.put('/groups/:id', async (req, res) => {
     const { id } = req.params;
-    const { name, teacher_id, price, schedule, payment_type } = req.body;
+    const { name, teacher_id, price, schedule, payment_type, subject_id } = req.body;
 
     try {
         const { data, error } = await supabase
@@ -1006,6 +1014,7 @@ router.put('/groups/:id', async (req, res) => {
                 price: price || 0,
                 schedule: schedule || {},
                 payment_type: payment_type,
+                subject_id: subject_id,
                 updated_at: new Date().toISOString()
             })
             .eq('id', id)
