@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { supabase } from '../lib/supabase';
+import { supabase } from '../supabase';
 
 const router = Router();
 
@@ -129,7 +129,7 @@ router.get('/student/list', async (req, res) => {
             .eq('user_id', userId);
 
         if (gmError) throw gmError;
-        const groupIds = groupMembers.map(gm => gm.group_id);
+        const groupIds = groupMembers.map((gm: { group_id: string }) => gm.group_id);
 
         if (groupIds.length === 0) return res.json([]);
 
@@ -162,7 +162,7 @@ router.get('/student/list', async (req, res) => {
             .eq('student_id', userId);
 
         const examsWithStatus = assignments.map((assignment: any) => {
-            const submission = submissions?.find(s => s.exam_id === assignment.exam.id);
+            const submission = submissions?.find((s: { exam_id: string; status: string; score: number }) => s.exam_id === assignment.exam.id);
             return {
                 ...assignment.exam,
                 scheduled_date: assignment.scheduled_date,
