@@ -31,7 +31,8 @@ const AdminExams = React.lazy(() => import('./pages/admin/AdminExams'));
 const ExamEditor = React.lazy(() => import('./pages/admin/ExamEditor'));
 const TeacherGrading = React.lazy(() => import('./pages/admin/TeacherGrading'));
 const StudentExams = React.lazy(() => import('./pages/StudentExams'));
-const ExamTaker = React.lazy(() => import('./pages/ExamTaker'));
+const TakeExam = React.lazy(() => import('./pages/TakeExam'));
+const TeacherExams = React.lazy(() => import('./pages/TeacherExams'));
 
 const Onboarding = React.lazy(() => import('./pages/Onboarding'));
 const GuestDashboard = React.lazy(() => import('./pages/GuestDashboard'));
@@ -45,7 +46,80 @@ const Groups = React.lazy(() => import('./pages/Groups'));
 const TeacherProfile = React.lazy(() => import('./pages/TeacherProfile'));
 const ParentProfile = React.lazy(() => import('./pages/ParentProfile'));
 
-function App() {
+const AppContent = () => {
+  const { user, isOnboarded } = useTelegram();
+  const { loading } = useAppData();
+  const location = useLocation();
+
+  const routes = [
+    {
+      path: '/',
+      element: !user ? <GuestDashboard /> :
+        !isOnboarded ? <Navigate to="/onboarding" /> :
+          user.role === 'student' ? <StudentDashboard /> :
+            user.role === 'teacher' ? <TeacherDashboard /> :
+              user.role === 'parent' ? <ParentDashboard /> :
+                user.role === 'admin' ? <AdminDashboard /> :
+                  <WaitingPage />
+    },
+    { path: '/onboarding', element: <Onboarding /> },
+    { path: '/waiting', element: <WaitingPage /> },
+    { path: '/leaderboard', element: <Leaderboard /> },
+    { path: '/profile', element: <Profile /> },
+
+    // Student Routes
+    { path: '/student/exams', element: <StudentExams /> },
+    { path: '/student/exams/:id/take', element: <TakeExam /> },
+
+    // Teacher Routes
+    { path: '/teacher/lessons', element: <Lessons /> },
+    { path: '/teacher/groups', element: <Groups /> },
+    { path: '/teacher/profile', element: <TeacherProfile /> },
+    { path: '/teacher/exams', element: <TeacherExams /> },
+    { path: '/teacher/exams/:id', element: <ExamEditor /> }, // Reusing Admin Editor for now
+
+    // Parent Routes
+    { path: '/parent/exams', element: <ParentExams /> },
+    { path: '/parent/profile', element: <ParentProfile /> },
+
+    // Admin Routes
+    { path: '/admin/stats', element: <AdminStats /> },
+    { path: '/admin/groups', element: <AdminGroups /> },
+    { path: '/admin/teachers', element: <AdminTeachers /> },
+    { path: '/admin/actions', element: <AdminActions /> },
+    { path: '/admin/subjects', element: <AdminSubjects /> },
+    { path: '/admin/students', element: <AdminStudents /> },
+    { path: '/admin/students/:id', element: <AdminStudentDetails /> },
+    { path: '/admin/teachers/:id', element: <AdminTeacherDetails /> },
+    { path: '/admin/profile', element: <AdminProfile /> },
+    { path: '/admin/broadcast', element: <AdminBroadcast /> },
+    { path: '/admin/notifications', element: <AdminNotifications /> },
+    { path: '/admin/bot-settings', element: <AdminBotSettings /> },
+    { path: '/admin/center-settings', element: <AdminCenterSettings /> },
+    { path: '/admin/export', element: <AdminExportData /> },
+    { path: '/admin/requests', element: <AdminRequests /> },
+    { path: '/admin/admins', element: <AdminManageAdmins /> },
+    { path: '/admin/attendance', element: <AdminAttendance /> },
+    { path: '/admin/exams', element: <AdminExams /> },
+    { path: '/admin/exams/:id', element: <ExamEditor /> },
+    { path: '/admin/grading', element: <TeacherGrading /> },
+
+    { path: '*', element: <Navigate to="/" /> }
+  ];
+
+  const element = useRoutes(routes);
+
+  // Hide bottom nav on specific pages
+  const hideNavPaths = [
+    '/onboarding',
+    '/waiting',
+    '/admin/students/',
+    '/student/exams/',
+    '/teacher/exams/',
+    '/admin/exams/'
+  ];
+  const shouldShowNav = user && isOnboarded && !hideNavPaths.some(path => location.pathname.startsWith(path));
+
   if (loading) {
     return <div className="flex h-screen items-center justify-center bg-tg-secondary text-tg-text">Loading...</div>;
   }
@@ -59,5 +133,17 @@ function App() {
     </div>
   );
 };
+
+function App() {
+  return (
+    <TelegramProvider>
+      <AppDataProvider>
+        <Router>
+          <AppContent />
+        </Router>
+      </AppDataProvider>
+    </TelegramProvider>
+  );
+}
 
 export default App;
