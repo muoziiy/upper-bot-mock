@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useAppData } from '../context/AppDataContext';
 import { useTelegram } from '../context/TelegramContext';
 import { useTranslation } from 'react-i18next';
-import { Sparkles } from 'lucide-react';
 import TeacherInfoModal from '../components/profile/TeacherInfoModal';
 import AttendanceCalendarModal from '../components/profile/AttendanceCalendarModal';
 import SettingsModal from '../components/profile/SettingsModal';
@@ -21,7 +20,6 @@ const Profile: React.FC = () => {
     const [selectedTeacher, setSelectedTeacher] = useState<any>(null);
     const [selectedSubjectAttendance, setSelectedSubjectAttendance] = useState<any>(null);
     const [selectedSubjectPayments, setSelectedSubjectPayments] = useState<any>(null);
-    const [aiFeaturesEnabled, setAiFeaturesEnabled] = useState(false);
 
     // Use real student ID from DB, fallback to '---' if not set
     const studentId = dashboardData?.user.student_id || '---';
@@ -109,31 +107,7 @@ const Profile: React.FC = () => {
                 </div>
             </div>
 
-            {/* AI Features Section */}
-            <div className="px-4 mb-2">
-                <div className="flex items-center gap-2 mb-2">
-                    <Sparkles size={16} className="text-purple-500" />
-                    <span className="text-xs font-medium text-[#8E8E93] uppercase">AI Features</span>
-                </div>
-                <p className="text-xs text-[#8E8E93] mb-2 px-1">
-                    This can be turned on by talking to AI developers in Admin's Quick Actions.
-                </p>
-            </div>
-            <AdminSection>
-                <AdminListItem
-                    icon="✨"
-                    iconColor="bg-purple-500"
-                    title="Enable AI Features"
-                    rightElement={
-                        <div
-                            className={`w-11 h-6 rounded-full transition-colors relative ${aiFeaturesEnabled ? 'bg-green-500' : 'bg-[#E9E9EA] dark:bg-[#39393D]'}`}
-                            onClick={() => setAiFeaturesEnabled(!aiFeaturesEnabled)}
-                        >
-                            <div className={`w-5 h-5 bg-white rounded-full shadow absolute top-0.5 transition-transform ${aiFeaturesEnabled ? 'translate-x-[22px]' : 'translate-x-0.5'}`} />
-                        </div>
-                    }
-                />
-            </AdminSection>
+
 
             {/* Account Settings */}
             <AdminSection title="Account">
