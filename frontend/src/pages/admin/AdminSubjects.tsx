@@ -1,9 +1,13 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { AdminSection } from './components/AdminSection';
 import { AdminListItem } from './components/AdminListItem';
-import { Plus } from 'lucide-react';
+import { Plus, Trash2 } from 'lucide-react';
+import { useTelegram } from '../../context/TelegramContext';
 
 const AdminSubjects: React.FC = () => {
+    const { webApp } = useTelegram();
+    const navigate = useNavigate();
     const [subjects, setSubjects] = useState<any[]>([]);
     const [newSubject, setNewSubject] = useState('');
     const [loading, setLoading] = useState(false);
@@ -11,6 +15,15 @@ const AdminSubjects: React.FC = () => {
     useEffect(() => {
         fetchSubjects();
     }, []);
+
+    useEffect(() => {
+        webApp.BackButton.show();
+        webApp.BackButton.onClick(() => navigate(-1));
+        return () => {
+            webApp.BackButton.offClick(() => navigate(-1));
+            webApp.BackButton.hide();
+        };
+    }, [webApp, navigate]);
 
     const fetchSubjects = async () => {
         try {
@@ -47,6 +60,26 @@ const AdminSubjects: React.FC = () => {
         }
     };
 
+    const handleDeleteSubject = async (id: string) => {
+        webApp.showConfirm('Are you sure you want to delete this subject?', async (confirm) => {
+            if (confirm) {
+                try {
+                    const res = await fetch(`${import.meta.env.VITE_API_URL}/admin/subjects/${id}`, {
+                        method: 'DELETE'
+                    });
+                    if (res.ok) {
+                        fetchSubjects();
+                    } else {
+                        webApp.showAlert('Failed to delete subject');
+                    }
+                } catch (e) {
+                    console.error('Error deleting subject', e);
+                    webApp.showAlert('Error deleting subject');
+                }
+            }
+        });
+    };
+
     return (
         <div className="min-h-screen bg-[#F2F2F7] dark:bg-[#000000] pt-4 pb-20">
             <h1 className="text-3xl font-bold mb-6 px-4 text-black dark:text-white">Manage Subjects</h1>
@@ -77,6 +110,14 @@ const AdminSubjects: React.FC = () => {
                         title={subject.name}
                         icon="📚"
                         iconColor="bg-pink-500"
+                        rightElement={
+                            <button
+                                onClick={() => handleDeleteSubject(subject.id)}
+                                className="p-2 text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
+                            >
+                                <Trash2 size={20} />
+                            </button>
+                        }
                         isLast={index === subjects.length - 1}
                     />
                 ))}

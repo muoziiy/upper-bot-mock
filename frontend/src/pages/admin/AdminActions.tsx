@@ -37,11 +37,7 @@ const AdminActions: React.FC = () => {
                     title="Attendance"
                     icon="📅"
                     iconColor="bg-orange-500"
-                    onClick={() => {
-                        // TODO: Implement Attendance Page
-                        // navigate('/admin/attendance')
-                        alert('Attendance page coming soon');
-                    }}
+                    onClick={() => navigate('/admin/attendance')}
                     showChevron
                 />
                 <AdminListItem

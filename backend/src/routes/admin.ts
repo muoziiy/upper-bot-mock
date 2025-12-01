@@ -1770,7 +1770,60 @@ router.delete('/teachers/:id/payments/:paymentId', async (req, res) => {
 
         res.json({ success: true });
     } catch (error) {
+        console.error('Error adding teacher payment:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Delete Teacher Payment
+router.delete('/teachers/:id/payments/:paymentId', async (req, res) => {
+    const { id, paymentId } = req.params;
+
+    try {
+        const { error } = await supabase
+            .from('teacher_payments')
+            .delete()
+            .eq('id', paymentId);
+
+        if (error) throw error;
+
+        // Notify Teacher
+        const { data: teacher } = await supabase
+            .from('users')
+            .select('telegram_id')
+            .eq('id', id)
+            .single();
+
+        if (teacher?.telegram_id) {
+            try {
+                await bot.telegram.sendMessage(teacher.telegram_id, `❌ **Payout Cancelled**\n\nA payout record has been removed by admin.`, { parse_mode: 'Markdown' });
+            } catch (e) {
+                console.error('Failed to send notification', e);
+            }
+        }
+
+        res.json({ success: true });
+    } catch (error) {
         console.error('Error deleting teacher payment:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Delete Subject
+router.delete('/subjects/:id', async (req, res) => {
+    const { id } = req.params;
+
+    try {
+        const { error } = await supabase
+            .from('subjects')
+            .delete()
+            .eq('id', id);
+
+        if (error) throw error;
+
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Error deleting subject:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
 });

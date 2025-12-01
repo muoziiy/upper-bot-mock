@@ -26,6 +26,7 @@ const AdminCenterSettings = React.lazy(() => import('./pages/admin/AdminCenterSe
 const AdminExportData = React.lazy(() => import('./pages/admin/AdminExportData'));
 const AdminRequests = React.lazy(() => import('./pages/admin/AdminRequests'));
 const AdminManageAdmins = React.lazy(() => import('./pages/admin/AdminManageAdmins'));
+const AdminAttendance = React.lazy(() => import('./pages/admin/AdminAttendance'));
 const Onboarding = React.lazy(() => import('./pages/Onboarding'));
 const GuestDashboard = React.lazy(() => import('./pages/GuestDashboard'));
 const WaitingPage = React.lazy(() => import('./pages/WaitingPage'));
@@ -119,6 +120,7 @@ const AppContent: React.FC = () => {
     { path: "/admin/export", element: <AdminExportData /> },
     { path: "/admin/requests", element: <AdminRequests /> },
     { path: "/admin/admins", element: <AdminManageAdmins /> },
+    { path: "/admin/attendance", element: <AdminAttendance /> },
   ]);
 
   if (loading) {

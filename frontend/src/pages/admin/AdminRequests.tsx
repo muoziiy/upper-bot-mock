@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAppData } from '../../context/AppDataContext';
+import { useTelegram } from '../../context/TelegramContext';
 import { AdminSection } from './components/AdminSection';
 import { AdminListItem } from './components/AdminListItem';
 
@@ -21,6 +23,8 @@ interface PendingRequest {
 }
 
 const AdminRequests: React.FC = () => {
+    const { webApp } = useTelegram();
+    const navigate = useNavigate();
     const { adminRequests } = useAppData();
     const [pendingStudentStaff, setPendingStudentStaff] = useState<PendingRequest[]>([]);
     const [loading, setLoading] = useState(false);
@@ -31,6 +35,15 @@ const AdminRequests: React.FC = () => {
     useEffect(() => {
         fetchPendingRequests();
     }, []);
+
+    useEffect(() => {
+        webApp.BackButton.show();
+        webApp.BackButton.onClick(() => navigate(-1));
+        return () => {
+            webApp.BackButton.offClick(() => navigate(-1));
+            webApp.BackButton.hide();
+        };
+    }, [webApp, navigate]);
 
     const fetchPendingRequests = async () => {
         try {
