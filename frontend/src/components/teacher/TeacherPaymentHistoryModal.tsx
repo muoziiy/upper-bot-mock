@@ -2,7 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useTelegram } from '../../context/TelegramContext';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Check } from 'lucide-react';
+import { AdminSection } from '../../pages/admin/components/AdminSection';
+import { AdminListItem } from '../../pages/admin/components/AdminListItem';
 
 interface TeacherPaymentHistoryModalProps {
     isOpen: boolean;
@@ -59,15 +60,6 @@ const TeacherPaymentHistoryModal: React.FC<TeacherPaymentHistoryModalProps> = ({
         }
     }, [isOpen, webApp]);
 
-    const getStatusIcon = () => {
-        // All payments in this table are considered paid/completed
-        return <Check className="w-4 h-4 text-green-500" />;
-    };
-
-    const getStatusBgColor = () => {
-        return 'bg-green-500/10';
-    };
-
     const formatDate = (dateString: string) => {
         const date = new Date(dateString);
         return new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric' }).format(date);
@@ -80,7 +72,7 @@ const TeacherPaymentHistoryModal: React.FC<TeacherPaymentHistoryModalProps> = ({
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
-                    className="fixed inset-0 z-[60] bg-tg-secondary"
+                    className="fixed inset-0 z-[60] bg-[#F2F2F7] dark:bg-[#000000]"
                 >
                     <motion.div
                         initial={{ x: '100%' }}
@@ -90,52 +82,38 @@ const TeacherPaymentHistoryModal: React.FC<TeacherPaymentHistoryModalProps> = ({
                         className="h-full overflow-y-auto"
                     >
                         {/* Header */}
-                        <div className="sticky top-0 bg-tg-bg/95 backdrop-blur-xl border-b border-tg-secondary/50 px-4 py-3 flex items-center justify-center z-10">
-                            <h2 className="text-lg font-bold text-tg-text">{t('teacher_profile.payment_history')}</h2>
+                        <div className="sticky top-0 bg-[#F2F2F7]/95 dark:bg-[#1C1C1E]/95 backdrop-blur-xl border-b border-[#C6C6C8] dark:border-[#38383A] px-4 py-3 flex items-center justify-between z-10">
+                            <button onClick={onClose} className="text-blue-500 text-[17px]">
+                                Cancel
+                            </button>
+                            <h2 className="text-[17px] font-semibold text-black dark:text-white">{t('teacher_profile.payment_history')}</h2>
+                            <div className="w-[50px]"></div> {/* Spacer for centering */}
                         </div>
 
                         {/* Content */}
-                        <div className="p-4 pb-24">
+                        <div className="pt-6 pb-24">
                             {loading ? (
                                 <div className="flex justify-center py-8">
-                                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-tg-button"></div>
+                                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
                                 </div>
                             ) : payments.length === 0 ? (
-                                <div className="text-center py-8 text-tg-hint">
+                                <div className="text-center py-8 text-[#8E8E93]">
                                     {t('teacher_profile.no_payments')}
                                 </div>
                             ) : (
-                                <div className="bg-tg-bg rounded-xl overflow-hidden">
+                                <AdminSection>
                                     {payments.map((payment, index) => (
-                                        <motion.div
+                                        <AdminListItem
                                             key={payment.id}
-                                            initial={{ opacity: 0, y: 20 }}
-                                            animate={{ opacity: 1, y: 0 }}
-                                            transition={{ delay: index * 0.05 }}
-                                            className={`p-4 flex items-center justify-between ${index !== payments.length - 1 ? 'border-b border-tg-secondary/50' : ''
-                                                }`}
-                                        >
-                                            <div>
-                                                <h3 className="font-medium text-tg-text">{formatDate(payment.payment_date)}</h3>
-                                                <div className="flex items-center gap-1.5 mt-1">
-                                                    {getStatusIcon()}
-                                                    <span className="text-xs text-tg-hint">
-                                                        {t('teacher_profile.paid_on')} {new Date(payment.payment_date).toLocaleDateString()}
-                                                    </span>
-                                                </div>
-                                                {payment.description && (
-                                                    <p className="text-xs text-tg-hint mt-1">{payment.description}</p>
-                                                )}
-                                            </div>
-                                            <div className="text-right">
-                                                <span className="text-lg font-bold block text-tg-text">{payment.amount.toLocaleString()} UZS</span>
-                                                <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${getStatusBgColor()}`}>
-                                                    PAID
-                                                </span>
-                                            </div>
-                                        </motion.div>
+                                            title={formatDate(payment.payment_date)}
+                                            subtitle={payment.description || t('teacher_profile.paid_on') + ' ' + new Date(payment.payment_date).toLocaleDateString()}
+                                            icon="✅"
+                                            iconColor="bg-green-500"
+                                            value={`${payment.amount.toLocaleString()} UZS`}
+                                            isLast={index === payments.length - 1}
+                                        />
                                     ))}
-                                </div>
+                                </AdminSection>
                             )}
                         </div>
                     </motion.div>

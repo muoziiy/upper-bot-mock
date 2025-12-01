@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Users, Clock, ChevronRight, MoreVertical, MessageCircle, Calendar } from 'lucide-react';
 import { useTelegram } from '../../context/TelegramContext';
 import { useAppData } from '../../context/AppDataContext';
 import GroupChatView from './GroupChatView';
 import GroupScheduleView from './GroupScheduleView';
+import { AdminSection } from '../../pages/admin/components/AdminSection';
+import { AdminListItem } from '../../pages/admin/components/AdminListItem';
 
 interface GroupDetailsModalProps {
     isOpen: boolean;
@@ -56,7 +57,7 @@ const GroupDetailsModal: React.FC<GroupDetailsModalProps> = ({ isOpen, onClose, 
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="fixed inset-0 z-[60] bg-tg-secondary"
+                        className="fixed inset-0 z-[60] bg-[#F2F2F7] dark:bg-[#000000]"
                     >
                         <motion.div
                             initial={{ x: '100%' }}
@@ -66,86 +67,63 @@ const GroupDetailsModal: React.FC<GroupDetailsModalProps> = ({ isOpen, onClose, 
                             className="h-full overflow-y-auto"
                         >
                             {/* Header */}
-                            <div className="sticky top-0 bg-tg-bg/95 backdrop-blur-xl border-b border-tg-secondary/50 px-4 py-3 flex items-center justify-between z-10">
-                                <div className="w-10" /> {/* Spacer */}
-                                <h1 className="text-lg font-bold text-tg-text">{group.name}</h1>
-                                <button className="w-10 flex justify-end text-tg-button">
-                                    <MoreVertical size={24} />
+                            <div className="sticky top-0 bg-[#F2F2F7]/95 dark:bg-[#1C1C1E]/95 backdrop-blur-xl border-b border-[#C6C6C8] dark:border-[#38383A] px-4 py-3 flex items-center justify-between z-10">
+                                <button onClick={onClose} className="text-blue-500 text-[17px]">
+                                    Back
+                                </button>
+                                <h1 className="text-[17px] font-semibold text-black dark:text-white">{group.name}</h1>
+                                <button className="text-blue-500 text-[17px]">
+                                    Edit
                                 </button>
                             </div>
 
-                            <div className="p-4 space-y-6 pb-24">
+                            <div className="pt-6 pb-24">
                                 {/* Group Stats */}
-                                <div className="grid grid-cols-2 gap-3">
-                                    <div className="bg-tg-bg p-4 rounded-xl flex flex-col items-center justify-center text-center shadow-sm">
-                                        <div className="w-10 h-10 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-500 mb-2">
-                                            <Users size={20} />
+                                <AdminSection>
+                                    <div className="flex items-center justify-between px-2 py-1">
+                                        <div className="flex flex-col items-center gap-1 flex-1">
+                                            <span className="text-2xl font-bold text-blue-500">{group.student_count}</span>
+                                            <span className="text-[10px] text-[#8E8E93] uppercase font-medium">Students</span>
                                         </div>
-                                        <p className="text-2xl font-bold text-tg-text">{group.student_count}</p>
-                                        <p className="text-xs text-tg-hint uppercase font-medium">Students</p>
-                                    </div>
-                                    <div className="bg-tg-bg p-4 rounded-xl flex flex-col items-center justify-center text-center shadow-sm">
-                                        <div className="w-10 h-10 rounded-full bg-purple-500/10 flex items-center justify-center text-purple-500 mb-2">
-                                            <Clock size={20} />
+                                        <div className="w-[0.5px] h-10 bg-[#C6C6C8] dark:bg-[#38383A]" />
+                                        <div className="flex flex-col items-center gap-1 flex-1">
+                                            <span className="text-lg font-bold text-purple-500 truncate max-w-[120px]">{group.next_class || 'No class'}</span>
+                                            <span className="text-[10px] text-[#8E8E93] uppercase font-medium">Next Class</span>
                                         </div>
-                                        <p className="text-lg font-bold text-tg-text truncate w-full">{group.next_class || 'No class'}</p>
-                                        <p className="text-xs text-tg-hint uppercase font-medium">Next Class</p>
                                     </div>
-                                </div>
+                                </AdminSection>
 
                                 {/* Actions */}
-                                <div className="bg-tg-bg rounded-xl overflow-hidden">
-                                    <button
+                                <AdminSection>
+                                    <AdminListItem
+                                        title="Message Group"
+                                        icon="💬"
+                                        iconColor="bg-green-500"
                                         onClick={() => setActiveView('chat')}
-                                        className="w-full flex items-center gap-3 px-4 py-3 border-b border-tg-secondary/50 active:bg-tg-secondary/50 transition-colors"
-                                    >
-                                        <div className="w-8 h-8 rounded-full bg-green-500/10 flex items-center justify-center text-green-500">
-                                            <MessageCircle size={18} />
-                                        </div>
-                                        <span className="flex-1 text-left font-medium text-tg-text">Message Group</span>
-                                        <ChevronRight size={20} className="text-tg-hint/50" />
-                                    </button>
-                                    <button
+                                    />
+                                    <AdminListItem
+                                        title="View Schedule"
+                                        icon="📅"
+                                        iconColor="bg-orange-500"
                                         onClick={() => setActiveView('schedule')}
-                                        className="w-full flex items-center gap-3 px-4 py-3 active:bg-tg-secondary/50 transition-colors"
-                                    >
-                                        <div className="w-8 h-8 rounded-full bg-orange-500/10 flex items-center justify-center text-orange-500">
-                                            <Calendar size={18} />
-                                        </div>
-                                        <span className="flex-1 text-left font-medium text-tg-text">View Schedule</span>
-                                        <ChevronRight size={20} className="text-tg-hint/50" />
-                                    </button>
-                                </div>
+                                        isLast
+                                    />
+                                </AdminSection>
 
                                 {/* Students List */}
-                                <div className="space-y-2">
-                                    <h3 className="text-xs font-medium text-tg-hint uppercase px-4">Students</h3>
-                                    <div className="bg-tg-bg rounded-xl overflow-hidden">
-                                        {students.map((student, index) => (
-                                            <div
-                                                key={student.id}
-                                                className={`flex items-center justify-between p-3 ${index !== students.length - 1 ? 'border-b border-tg-secondary/50' : ''
-                                                    }`}
-                                            >
-                                                <div className="flex items-center gap-3">
-                                                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-tg-button to-tg-button/70 flex items-center justify-center text-tg-button-text font-bold text-sm">
-                                                        {student.name[0]}
-                                                    </div>
-                                                    <div>
-                                                        <p className="font-medium text-tg-text text-sm">{student.name}</p>
-                                                        <p className="text-xs text-tg-hint">Attendance: {student.attendance}</p>
-                                                    </div>
-                                                </div>
-                                                <div className="flex items-center gap-2">
-                                                    <span className="px-2 py-0.5 rounded-md bg-green-500/10 text-green-500 text-xs font-bold">
-                                                        {student.performance}
-                                                    </span>
-                                                    <ChevronRight size={20} className="text-tg-hint/30" />
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
+                                <AdminSection title="Students">
+                                    {students.map((student, index) => (
+                                        <AdminListItem
+                                            key={student.id}
+                                            title={student.name}
+                                            subtitle={`Attendance: ${student.attendance}`}
+                                            icon={student.name[0]}
+                                            iconColor="bg-blue-500"
+                                            value={student.performance}
+                                            isLast={index === students.length - 1}
+                                        />
+                                    ))}
+                                </AdminSection>
                             </div>
                         </motion.div>
                     </motion.div>

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useTelegram } from '../../context/TelegramContext';
 import { motion, AnimatePresence } from 'framer-motion';
+import { AdminSection } from '../../pages/admin/components/AdminSection';
 
 interface TeacherAccountSettingsModalProps {
     isOpen: boolean;
@@ -49,7 +50,7 @@ const TeacherAccountSettingsModal: React.FC<TeacherAccountSettingsModalProps> = 
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
-                    className="fixed inset-0 z-[60] bg-tg-secondary"
+                    className="fixed inset-0 z-[60] bg-[#F2F2F7] dark:bg-[#000000]"
                 >
                     <motion.div
                         initial={{ x: '100%' }}
@@ -59,101 +60,90 @@ const TeacherAccountSettingsModal: React.FC<TeacherAccountSettingsModalProps> = 
                         className="h-full overflow-y-auto"
                     >
                         {/* Header */}
-                        <div className="sticky top-0 bg-tg-bg/95 backdrop-blur-xl border-b border-tg-secondary/50 px-4 py-3 flex items-center justify-center z-10">
-                            <h2 className="text-lg font-bold text-tg-text">{t('teacher_profile.account_settings')}</h2>
+                        <div className="sticky top-0 bg-[#F2F2F7]/95 dark:bg-[#1C1C1E]/95 backdrop-blur-xl border-b border-[#C6C6C8] dark:border-[#38383A] px-4 py-3 flex items-center justify-between z-10">
+                            <button onClick={onClose} className="text-blue-500 text-[17px]">
+                                Cancel
+                            </button>
+                            <h2 className="text-[17px] font-semibold text-black dark:text-white">{t('teacher_profile.account_settings')}</h2>
+                            <button onClick={handleSave} className="text-blue-500 text-[17px] font-semibold">
+                                Done
+                            </button>
                         </div>
 
                         {/* Content */}
-                        <div className="p-4 space-y-6 pb-24">
+                        <div className="pt-6 pb-24">
                             {/* Edit Info Section */}
-                            <div className="space-y-2">
-                                <h3 className="text-xs font-medium text-tg-hint uppercase px-4">{t('teacher_profile.edit_info')}</h3>
-
-                                <div className="bg-tg-bg rounded-xl overflow-hidden">
-                                    {/* First Name */}
-                                    <div className="flex items-center px-4 py-3 border-b border-tg-secondary/50">
-                                        <label className="w-24 text-tg-text font-medium">{t('settings.first_name')}</label>
-                                        <input
-                                            type="text"
-                                            value={teacherInfo.first_name}
-                                            onChange={(e) => setTeacherInfo({ ...teacherInfo, first_name: e.target.value })}
-                                            className="flex-1 bg-transparent text-tg-text focus:outline-none text-right placeholder-tg-hint"
-                                        />
-                                    </div>
-
-                                    {/* Last Name */}
-                                    <div className="flex items-center px-4 py-3 border-b border-tg-secondary/50">
-                                        <label className="w-24 text-tg-text font-medium">{t('settings.last_name')}</label>
-                                        <input
-                                            type="text"
-                                            value={teacherInfo.last_name}
-                                            onChange={(e) => setTeacherInfo({ ...teacherInfo, last_name: e.target.value })}
-                                            className="flex-1 bg-transparent text-tg-text focus:outline-none text-right placeholder-tg-hint"
-                                        />
-                                    </div>
-
-                                    {/* Email */}
-                                    <div className="flex items-center px-4 py-3 border-b border-tg-secondary/50">
-                                        <label className="w-24 text-tg-text font-medium">{t('teacher_profile.email')}</label>
-                                        <input
-                                            type="email"
-                                            value={teacherInfo.email}
-                                            onChange={(e) => setTeacherInfo({ ...teacherInfo, email: e.target.value })}
-                                            className="flex-1 bg-transparent text-tg-text focus:outline-none text-right placeholder-tg-hint"
-                                        />
-                                    </div>
-
-                                    {/* Phone */}
-                                    <div className="flex items-center px-4 py-3">
-                                        <label className="w-24 text-tg-text font-medium">{t('teacher_profile.phone')}</label>
-                                        <input
-                                            type="tel"
-                                            value={teacherInfo.phone}
-                                            onChange={(e) => setTeacherInfo({ ...teacherInfo, phone: e.target.value })}
-                                            className="flex-1 bg-transparent text-tg-text focus:outline-none text-right placeholder-tg-hint"
-                                        />
-                                    </div>
+                            <AdminSection title={t('teacher_profile.edit_info')}>
+                                {/* First Name */}
+                                <div className="flex items-center justify-between px-4 py-3 bg-white dark:bg-[#1C1C1E] border-b border-[#C6C6C8] dark:border-[#38383A]">
+                                    <label className="text-[17px] text-black dark:text-white">{t('settings.first_name')}</label>
+                                    <input
+                                        type="text"
+                                        value={teacherInfo.first_name}
+                                        onChange={(e) => setTeacherInfo({ ...teacherInfo, first_name: e.target.value })}
+                                        className="bg-transparent text-[17px] text-[#8E8E93] text-right focus:outline-none"
+                                    />
                                 </div>
-                            </div>
+
+                                {/* Last Name */}
+                                <div className="flex items-center justify-between px-4 py-3 bg-white dark:bg-[#1C1C1E] border-b border-[#C6C6C8] dark:border-[#38383A]">
+                                    <label className="text-[17px] text-black dark:text-white">{t('settings.last_name')}</label>
+                                    <input
+                                        type="text"
+                                        value={teacherInfo.last_name}
+                                        onChange={(e) => setTeacherInfo({ ...teacherInfo, last_name: e.target.value })}
+                                        className="bg-transparent text-[17px] text-[#8E8E93] text-right focus:outline-none"
+                                    />
+                                </div>
+
+                                {/* Email */}
+                                <div className="flex items-center justify-between px-4 py-3 bg-white dark:bg-[#1C1C1E] border-b border-[#C6C6C8] dark:border-[#38383A]">
+                                    <label className="text-[17px] text-black dark:text-white">{t('teacher_profile.email')}</label>
+                                    <input
+                                        type="email"
+                                        value={teacherInfo.email}
+                                        onChange={(e) => setTeacherInfo({ ...teacherInfo, email: e.target.value })}
+                                        className="bg-transparent text-[17px] text-[#8E8E93] text-right focus:outline-none"
+                                    />
+                                </div>
+
+                                {/* Phone */}
+                                <div className="flex items-center justify-between px-4 py-3 bg-white dark:bg-[#1C1C1E]">
+                                    <label className="text-[17px] text-black dark:text-white">{t('teacher_profile.phone')}</label>
+                                    <input
+                                        type="tel"
+                                        value={teacherInfo.phone}
+                                        onChange={(e) => setTeacherInfo({ ...teacherInfo, phone: e.target.value })}
+                                        className="bg-transparent text-[17px] text-[#8E8E93] text-right focus:outline-none"
+                                    />
+                                </div>
+                            </AdminSection>
 
                             {/* Bio Section */}
-                            <div className="space-y-2">
-                                <h3 className="text-xs font-medium text-tg-hint uppercase px-4">{t('teacher_profile.bio')}</h3>
-                                <div className="bg-tg-bg rounded-xl p-4">
+                            <AdminSection title={t('teacher_profile.bio')}>
+                                <div className="bg-white dark:bg-[#1C1C1E] p-4">
                                     <textarea
                                         value={teacherInfo.bio}
                                         onChange={(e) => setTeacherInfo({ ...teacherInfo, bio: e.target.value })}
                                         rows={4}
-                                        className="w-full bg-transparent text-tg-text focus:outline-none resize-none placeholder-tg-hint"
+                                        className="w-full bg-transparent text-[17px] text-black dark:text-white focus:outline-none resize-none"
                                     />
                                 </div>
-                            </div>
+                            </AdminSection>
 
                             {/* Subjects Section */}
-                            <div className="space-y-2">
-                                <h3 className="text-xs font-medium text-tg-hint uppercase px-4">{t('teacher_profile.subjects')}</h3>
-                                <div className="bg-tg-bg rounded-xl p-4 flex flex-wrap gap-2">
+                            <AdminSection title={t('teacher_profile.subjects')}>
+                                <div className="bg-white dark:bg-[#1C1C1E] p-4 flex flex-wrap gap-2">
                                     {teacherInfo.subjects.map((subject, index) => (
                                         <span
                                             key={index}
-                                            className="px-3 py-1.5 bg-tg-button/10 text-tg-button rounded-full text-sm font-medium"
+                                            className="px-3 py-1.5 bg-blue-500/10 text-blue-500 rounded-full text-[15px] font-medium"
                                         >
                                             {subject}
                                         </span>
                                     ))}
                                 </div>
-                            </div>
-
-                            {/* Save Button */}
-                            <div className="pt-4">
-                                <motion.button
-                                    onClick={handleSave}
-                                    whileTap={{ scale: 0.98 }}
-                                    className="w-full bg-tg-button text-tg-button-text py-3 rounded-xl font-bold text-lg shadow-sm"
-                                >
-                                    {t('teacher_profile.save_changes')}
-                                </motion.button>
-                            </div>
+                            </AdminSection>
                         </div>
                     </motion.div>
                 </motion.div>

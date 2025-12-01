@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Calendar, Clock, Users } from 'lucide-react';
 import { useTelegram } from '../../context/TelegramContext';
 import { useTranslation } from 'react-i18next';
 import Lottie from 'lottie-react';
 import duckSuccess from '../../assets/animations/duck_success.json';
+import { AdminSection } from '../../pages/admin/components/AdminSection';
 
 interface CreateExamModalProps {
     isOpen: boolean;
@@ -89,14 +89,14 @@ const CreateExamModal: React.FC<CreateExamModalProps> = ({ isOpen, onClose, grou
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
-                    className="fixed inset-0 z-[60] bg-tg-bg"
+                    className="fixed inset-0 z-[60] bg-[#F2F2F7] dark:bg-[#000000]"
                 >
                     {showSuccess ? (
                         <div className="flex flex-col items-center justify-center h-full">
                             <div className="w-48 h-48">
                                 <Lottie animationData={duckSuccess} loop={false} />
                             </div>
-                            <h2 className="text-xl font-bold mt-4 text-tg-text">{t('teacher.exam_created')}</h2>
+                            <h2 className="text-xl font-bold mt-4 text-black dark:text-white">{t('teacher.exam_created')}</h2>
                         </div>
                     ) : (
                         <motion.div
@@ -107,157 +107,94 @@ const CreateExamModal: React.FC<CreateExamModalProps> = ({ isOpen, onClose, grou
                             className="h-full overflow-y-auto"
                         >
                             {/* Header */}
-                            <div className="sticky top-0 bg-tg-bg/95 backdrop-blur-xl border-b border-tg-hint/10 px-4 py-4 z-10">
-                                <h1 className="text-xl font-bold text-tg-text">{t('teacher.create_exam')}</h1>
+                            <div className="sticky top-0 bg-[#F2F2F7]/95 dark:bg-[#1C1C1E]/95 backdrop-blur-xl border-b border-[#C6C6C8] dark:border-[#38383A] px-4 py-3 flex items-center justify-between z-10">
+                                <button onClick={onClose} className="text-blue-500 text-[17px]">
+                                    Cancel
+                                </button>
+                                <h1 className="text-[17px] font-semibold text-black dark:text-white">{t('teacher.create_exam')}</h1>
+                                <button onClick={handleSubmit} className="text-blue-500 text-[17px] font-semibold">
+                                    Create
+                                </button>
                             </div>
 
                             {/* Form */}
-                            <form onSubmit={handleSubmit} className="p-4 space-y-4">
+                            <form onSubmit={handleSubmit} className="pt-6 pb-24">
                                 {/* Title */}
-                                <div>
-                                    <label className="block text-sm font-medium text-tg-hint mb-2">
-                                        {t('teacher.exam_title')} <span className="text-red-500">*</span>
-                                    </label>
-                                    <input
-                                        type="text"
-                                        value={formData.title}
-                                        onChange={(e) => {
-                                            setFormData({ ...formData, title: e.target.value });
-                                            setErrors({ ...errors, title: false });
-                                        }}
-                                        className={`w-full bg-tg-secondary text-tg-text px-4 py-3 rounded-xl border-2 focus:outline-none transition-colors ${errors.title
-                                            ? 'border-red-500 focus:border-red-500'
-                                            : 'border-tg-hint/10 focus:border-tg-button'
-                                            }`}
-                                        placeholder="e.g., Mid-Term Exam"
-                                    />
-                                    {errors.title && (
-                                        <p className="text-red-500 text-xs mt-1">Please enter exam title</p>
-                                    )}
-                                </div>
+                                <AdminSection title={t('teacher.exam_title')}>
+                                    <div className="px-4 py-3 bg-white dark:bg-[#1C1C1E]">
+                                        <input
+                                            type="text"
+                                            value={formData.title}
+                                            onChange={(e) => {
+                                                setFormData({ ...formData, title: e.target.value });
+                                                setErrors({ ...errors, title: false });
+                                            }}
+                                            className={`w-full bg-transparent text-[17px] text-black dark:text-white focus:outline-none ${errors.title ? 'placeholder-red-500' : ''}`}
+                                            placeholder="e.g., Mid-Term Exam"
+                                        />
+                                    </div>
+                                </AdminSection>
 
-                                {/* Date */}
-                                <div>
-                                    <label className="block text-sm font-medium text-tg-hint mb-2">
-                                        <Calendar size={16} className="inline mr-1" />
-                                        {t('teacher.exam_date')} <span className="text-red-500">*</span>
-                                    </label>
-                                    <input
-                                        type="date"
-                                        value={formData.date}
-                                        onChange={(e) => {
-                                            setFormData({ ...formData, date: e.target.value });
-                                            setErrors({ ...errors, date: false });
-                                        }}
-                                        className={`w-full bg-tg-secondary text-tg-text px-4 py-3 rounded-xl border-2 focus:outline-none transition-colors ${errors.date
-                                            ? 'border-red-500 focus:border-red-500'
-                                            : 'border-tg-hint/10 focus:border-tg-button'
-                                            }`}
-                                    />
-                                    {errors.date && (
-                                        <p className="text-red-500 text-xs mt-1">Please select a date</p>
-                                    )}
-                                </div>
-
-                                {/* Time */}
-                                <div>
-                                    <label className="block text-sm font-medium text-tg-hint mb-2">
-                                        <Clock size={16} className="inline mr-1" />
-                                        {t('teacher.exam_time')} <span className="text-red-500">*</span>
-                                    </label>
-                                    <input
-                                        type="time"
-                                        value={formData.time}
-                                        onChange={(e) => {
-                                            setFormData({ ...formData, time: e.target.value });
-                                            setErrors({ ...errors, time: false });
-                                        }}
-                                        className={`w-full bg-tg-secondary text-tg-text px-4 py-3 rounded-xl border-2 focus:outline-none transition-colors ${errors.time
-                                            ? 'border-red-500 focus:border-red-500'
-                                            : 'border-tg-hint/10 focus:border-tg-button'
-                                            }`}
-                                    />
-                                    {errors.time && (
-                                        <p className="text-red-500 text-xs mt-1">Please select a time</p>
-                                    )}
-                                </div>
+                                {/* Date & Time */}
+                                <AdminSection title="Date & Time">
+                                    <div className="flex items-center justify-between px-4 py-3 bg-white dark:bg-[#1C1C1E] border-b border-[#C6C6C8] dark:border-[#38383A]">
+                                        <label className="text-[17px] text-black dark:text-white">{t('teacher.exam_date')}</label>
+                                        <input
+                                            type="date"
+                                            value={formData.date}
+                                            onChange={(e) => {
+                                                setFormData({ ...formData, date: e.target.value });
+                                                setErrors({ ...errors, date: false });
+                                            }}
+                                            className={`bg-transparent text-[17px] text-[#8E8E93] text-right focus:outline-none ${errors.date ? 'text-red-500' : ''}`}
+                                        />
+                                    </div>
+                                    <div className="flex items-center justify-between px-4 py-3 bg-white dark:bg-[#1C1C1E]">
+                                        <label className="text-[17px] text-black dark:text-white">{t('teacher.exam_time')}</label>
+                                        <input
+                                            type="time"
+                                            value={formData.time}
+                                            onChange={(e) => {
+                                                setFormData({ ...formData, time: e.target.value });
+                                                setErrors({ ...errors, time: false });
+                                            }}
+                                            className={`bg-transparent text-[17px] text-[#8E8E93] text-right focus:outline-none ${errors.time ? 'text-red-500' : ''}`}
+                                        />
+                                    </div>
+                                </AdminSection>
 
                                 {/* Type */}
-                                <div>
-                                    <label className="block text-sm font-medium text-tg-hint mb-2">
-                                        {t('teacher.exam_type')}
-                                    </label>
-                                    <div className="grid grid-cols-2 gap-3">
-                                        <button
-                                            type="button"
-                                            onClick={() => setFormData({ ...formData, type: 'online' })}
-                                            className={`p-3 rounded-xl border-2 transition-all ${formData.type === 'online'
-                                                ? 'border-tg-button bg-tg-button/10 text-tg-button'
-                                                : 'border-tg-hint/10 bg-tg-secondary text-tg-text'
-                                                }`}
-                                        >
-                                            {t('teacher.online')}
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={() => setFormData({ ...formData, type: 'offline' })}
-                                            className={`p-3 rounded-xl border-2 transition-all ${formData.type === 'offline'
-                                                ? 'border-tg-button bg-tg-button/10 text-tg-button'
-                                                : 'border-tg-hint/10 bg-tg-secondary text-tg-text'
-                                                }`}
-                                        >
-                                            {t('teacher.offline')}
-                                        </button>
+                                <AdminSection title={t('teacher.exam_type')}>
+                                    <div className="flex items-center justify-between px-4 py-3 bg-white dark:bg-[#1C1C1E] border-b border-[#C6C6C8] dark:border-[#38383A]" onClick={() => setFormData({ ...formData, type: 'online' })}>
+                                        <span className="text-[17px] text-black dark:text-white">{t('teacher.online')}</span>
+                                        {formData.type === 'online' && <span className="text-blue-500 text-[17px]">✓</span>}
                                     </div>
-                                </div>
+                                    <div className="flex items-center justify-between px-4 py-3 bg-white dark:bg-[#1C1C1E]" onClick={() => setFormData({ ...formData, type: 'offline' })}>
+                                        <span className="text-[17px] text-black dark:text-white">{t('teacher.offline')}</span>
+                                        {formData.type === 'offline' && <span className="text-blue-500 text-[17px]">✓</span>}
+                                    </div>
+                                </AdminSection>
 
                                 {/* Group */}
-                                <div>
-                                    <label className="block text-sm font-medium text-tg-hint mb-2">
-                                        <Users size={16} className="inline mr-1" />
-                                        {t('teacher.select_group')} <span className="text-red-500">*</span>
-                                    </label>
-                                    <select
-                                        value={formData.groupId}
-                                        onChange={(e) => {
-                                            setFormData({ ...formData, groupId: e.target.value });
-                                            setErrors({ ...errors, groupId: false });
-                                        }}
-                                        className={`w-full bg-tg-secondary text-tg-text px-4 py-3 rounded-xl border-2 focus:outline-none transition-colors ${errors.groupId
-                                            ? 'border-red-500 focus:border-red-500'
-                                            : 'border-tg-hint/10 focus:border-tg-button'
-                                            }`}
-                                    >
-                                        <option value="">Select a group...</option>
-                                        {groups.map((group) => (
-                                            <option key={group.id} value={group.id}>
-                                                {group.name}
-                                            </option>
-                                        ))}
-                                    </select>
-                                    {errors.groupId && (
-                                        <p className="text-red-500 text-xs mt-1">Please select a group</p>
-                                    )}
-                                </div>
-
-                                {/* Buttons */}
-                                <div className="flex gap-3 pt-4">
-                                    <motion.button
-                                        type="button"
-                                        whileTap={{ scale: 0.98 }}
-                                        onClick={onClose}
-                                        className="flex-1 bg-tg-secondary text-tg-text py-3 rounded-xl font-medium"
-                                    >
-                                        {t('teacher.cancel')}
-                                    </motion.button>
-                                    <motion.button
-                                        type="submit"
-                                        whileTap={{ scale: 0.98 }}
-                                        className="flex-1 bg-tg-button text-tg-button-text py-3 rounded-xl font-medium"
-                                    >
-                                        {t('teacher.create')}
-                                    </motion.button>
-                                </div>
+                                <AdminSection title={t('teacher.select_group')}>
+                                    <div className="px-4 py-3 bg-white dark:bg-[#1C1C1E]">
+                                        <select
+                                            value={formData.groupId}
+                                            onChange={(e) => {
+                                                setFormData({ ...formData, groupId: e.target.value });
+                                                setErrors({ ...errors, groupId: false });
+                                            }}
+                                            className={`w-full bg-transparent text-[17px] text-black dark:text-white focus:outline-none ${errors.groupId ? 'text-red-500' : ''}`}
+                                        >
+                                            <option value="">Select a group...</option>
+                                            {groups.map((group) => (
+                                                <option key={group.id} value={group.id}>
+                                                    {group.name}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                </AdminSection>
                             </form>
                         </motion.div>
                     )}

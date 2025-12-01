@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { useAppData } from '../context/AppDataContext';
 import { motion } from 'framer-motion';
-import { Plus, CheckSquare, BookOpen, Calendar as CalendarIcon, Users } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import CreateExamModal from '../components/teacher/CreateExamModal';
 import AttendanceModal from '../components/teacher/AttendanceModal';
 import EditCurriculumModal from '../components/teacher/EditCurriculumModal';
 import ScheduleClassModal from '../components/teacher/ScheduleClassModal';
+import { AdminSection } from './admin/components/AdminSection';
+import { AdminListItem } from './admin/components/AdminListItem';
 
 const TeacherDashboard: React.FC = () => {
     const { teacherData, dashboardData, loading } = useAppData();
@@ -14,31 +15,18 @@ const TeacherDashboard: React.FC = () => {
     const [activeModal, setActiveModal] = useState<string | null>(null);
 
     if (loading) {
-        return <div className="flex min-h-screen items-center justify-center bg-tg-secondary text-tg-text">Loading...</div>;
+        return <div className="flex min-h-screen items-center justify-center bg-[#F2F2F7] dark:bg-[#000000] text-black dark:text-white">Loading...</div>;
     }
 
-    const containerVariants = {
-        hidden: { opacity: 0 },
-        visible: {
-            opacity: 1,
-            transition: { staggerChildren: 0.1 }
-        }
-    };
-
-    const itemVariants = {
-        hidden: { opacity: 0, y: 20 },
-        visible: { opacity: 1, y: 0 }
-    };
-
     const actions = [
-        { id: 'create_exam', label: t('teacher.create_exam'), icon: Plus, color: 'bg-blue-500' },
-        { id: 'attendance', label: t('teacher.mark_attendance'), icon: CheckSquare, color: 'bg-green-500' },
-        { id: 'curriculum', label: t('teacher.edit_curriculum'), icon: BookOpen, color: 'bg-orange-500' },
-        { id: 'schedule', label: t('teacher.schedule_class'), icon: CalendarIcon, color: 'bg-purple-500' },
+        { id: 'create_exam', label: t('teacher.create_exam'), icon: '📝', color: 'bg-blue-500' },
+        { id: 'attendance', label: t('teacher.mark_attendance'), icon: '✅', color: 'bg-green-500' },
+        { id: 'curriculum', label: t('teacher.edit_curriculum'), icon: '📚', color: 'bg-orange-500' },
+        { id: 'schedule', label: t('teacher.schedule_class'), icon: '📅', color: 'bg-purple-500' },
     ];
 
     return (
-        <div className="min-h-screen bg-tg-secondary pb-24 pt-4 text-tg-text px-4">
+        <div className="min-h-screen bg-[#F2F2F7] dark:bg-[#000000] pb-24 pt-4 text-black dark:text-white">
             <CreateExamModal
                 isOpen={activeModal === 'create_exam'}
                 onClose={() => setActiveModal(null)}
@@ -60,63 +48,50 @@ const TeacherDashboard: React.FC = () => {
             />
 
             <motion.div
-                initial="hidden"
-                animate="visible"
-                variants={containerVariants}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
             >
-                <header className="mb-6">
+                <header className="mb-6 px-4">
                     <div className="flex items-center gap-2">
-                        <h1 className="text-3xl font-bold bg-gradient-to-r from-tg-button to-tg-accent bg-clip-text text-transparent">
+                        <h1 className="text-3xl font-bold text-black dark:text-white">
                             {t('teacher.welcome')}
                         </h1>
-                        <motion.div
-                            className="text-3xl"
-                        >
-                            👨‍🏫
-                        </motion.div>
+                        <span className="text-3xl">👨‍🏫</span>
                     </div>
-                    <p className="text-tg-hint text-lg">
+                    <p className="text-[#8E8E93] text-lg">
                         {dashboardData?.user.onboarding_first_name || dashboardData?.user.first_name} {dashboardData?.user.last_name}
                     </p>
                 </header>
 
-                {/* Quick Actions Grid */}
-                <div className="grid grid-cols-2 gap-3 mb-6">
-                    {actions.map((action) => (
-                        <motion.button
+                <AdminSection title="Quick Actions">
+                    {actions.map((action, index) => (
+                        <AdminListItem
                             key={action.id}
-                            variants={itemVariants}
-                            whileTap={{ scale: 0.98 }}
+                            title={action.label}
+                            icon={action.icon}
+                            iconColor={action.color}
                             onClick={() => setActiveModal(action.id)}
-                            className="bg-tg-bg p-4 rounded-xl shadow-sm flex flex-col items-start gap-3 border border-tg-hint/10"
-                        >
-                            <div className={`p-2 rounded-lg ${action.color} text-white`}>
-                                <action.icon size={20} />
-                            </div>
-                            <span className="text-sm font-semibold text-left leading-tight">
-                                {action.label}
-                            </span>
-                        </motion.button>
+                            showChevron
+                            isLast={index === actions.length - 1}
+                        />
                     ))}
-                </div>
+                </AdminSection>
 
-                {/* Stats Section */}
-                <div className="grid grid-cols-2 gap-3">
-                    <motion.div variants={itemVariants} className="bg-tg-bg p-4 rounded-xl shadow-sm border border-tg-hint/10">
-                        <div className="flex items-center gap-2 mb-2">
-                            <Users size={16} className="text-tg-hint" />
-                            <p className="text-tg-hint text-xs font-medium uppercase">{t('teacher.total_students')}</p>
-                        </div>
-                        <p className="text-2xl font-bold">{teacherData?.stats.total_students}</p>
-                    </motion.div>
-                    <motion.div variants={itemVariants} className="bg-tg-bg p-4 rounded-xl shadow-sm border border-tg-hint/10">
-                        <div className="flex items-center gap-2 mb-2">
-                            <Users size={16} className="text-tg-hint" />
-                            <p className="text-tg-hint text-xs font-medium uppercase">{t('teacher.active_groups')}</p>
-                        </div>
-                        <p className="text-2xl font-bold">{teacherData?.groups.length}</p>
-                    </motion.div>
-                </div>
+                <AdminSection title="Overview">
+                    <AdminListItem
+                        title={t('teacher.total_students')}
+                        icon="👥"
+                        iconColor="bg-blue-500"
+                        value={teacherData?.stats.total_students}
+                    />
+                    <AdminListItem
+                        title={t('teacher.active_groups')}
+                        icon="🏫"
+                        iconColor="bg-purple-500"
+                        value={teacherData?.groups.length}
+                        isLast
+                    />
+                </AdminSection>
             </motion.div>
         </div>
     );
