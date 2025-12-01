@@ -101,36 +101,44 @@ const AdminExams: React.FC = () => {
                 <div className="text-center py-8 text-gray-500">Loading...</div>
             ) : (
                 <div className="space-y-3">
-                    {displayedExams.map((exam) => (
-                        <div
-                            key={exam.id}
-                            onClick={() => navigate(`/admin/exams/${exam.id}`)}
-                            className="bg-white dark:bg-gray-900 p-4 rounded-xl active:scale-[0.98] transition-transform cursor-pointer border-b border-gray-100 dark:border-gray-800 last:border-0"
-                        >
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-xl">
-                                    {exam.type === 'offline' ? '🏫' : '📝'}
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                    <h3 className="font-semibold text-base truncate">{exam.title}</h3>
-                                    <div className="flex items-center gap-2 text-sm text-gray-500">
-                                        <span>{exam.type === 'offline' ? 'Offline' : 'Online'}</span>
-                                        <span>•</span>
-                                        <span>{exam.duration_minutes} min</span>
-                                        {exam.questions && exam.questions.length > 0 && exam.questions[0]?.count > 0 && (
-                                            <>
-                                                <span>•</span>
-                                                <span>{exam.questions[0].count} Qs</span>
-                                            </>
-                                        )}
+                    {displayedExams.length === 0 ? (
+                        <div className="text-center py-12 text-gray-500">
+                            <p className="text-4xl mb-2">📝</p>
+                            <p>No exams found</p>
+                            <p className="text-sm mt-1">Create your first exam by tapping the + button</p>
+                        </div>
+                    ) : (
+                        displayedExams.map((exam) => (
+                            <div
+                                key={exam.id}
+                                onClick={() => navigate(`/admin/exams/${exam.id}`)}
+                                className="bg-white dark:bg-gray-900 p-4 rounded-xl active:scale-[0.98] transition-transform cursor-pointer border-b border-gray-100 dark:border-gray-800 last:border-0"
+                            >
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-xl">
+                                        {exam.type === 'offline' ? '🏫' : '📝'}
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <h3 className="font-semibold text-base truncate">{exam.title}</h3>
+                                        <div className="flex items-center gap-2 text-sm text-gray-500">
+                                            <span>{exam.type === 'offline' ? 'Offline' : 'Online'}</span>
+                                            <span>•</span>
+                                            <span>{exam.duration_minutes} min</span>
+                                            {exam.questions && exam.questions.length > 0 && exam.questions[0]?.count > 0 && (
+                                                <>
+                                                    <span>•</span>
+                                                    <span>{exam.questions[0].count} Qs</span>
+                                                </>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <div className="text-gray-400">
+                                        ›
                                     </div>
                                 </div>
-                                <div className="text-gray-400">
-                                    ›
-                                </div>
                             </div>
-                        </div>
-                    ))}
+                        ))
+                    )}
                 </div>
             )}
         </div>
