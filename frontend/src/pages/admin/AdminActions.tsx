@@ -112,7 +112,7 @@ const AdminActions: React.FC = () => {
             </AdminSection>
             <div className="px-4 mt-2">
                 <p className="text-xs text-[#8E8E93]">
-                    AI features can be turn by talking to devlopers
+                    AI features can be turned on by talking to developers
                 </p>
             </div>
         </div>

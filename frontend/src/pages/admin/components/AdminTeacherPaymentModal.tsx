@@ -88,6 +88,17 @@ const AdminTeacherPaymentModal: React.FC<AdminTeacherPaymentModalProps> = ({ isO
         });
     };
 
+    const formatAmount = (value: string) => {
+        const number = value.replace(/\D/g, '');
+        return number.replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+    };
+
+    const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const rawValue = e.target.value.replace(/\s/g, '');
+        if (!/^\d*$/.test(rawValue)) return;
+        setAmount(rawValue);
+    };
+
     const handleSave = async () => {
         if (!amount || !date) {
             webApp.showAlert('Please fill in amount and date');
@@ -100,7 +111,7 @@ const AdminTeacherPaymentModal: React.FC<AdminTeacherPaymentModalProps> = ({ isO
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    amount: parseFloat(amount),
+                    amount: parseFloat(amount.replace(/\s/g, '')),
                     payment_date: date,
                     description,
                     status: 'paid'
@@ -217,9 +228,10 @@ const AdminTeacherPaymentModal: React.FC<AdminTeacherPaymentModalProps> = ({ isO
                                 <div className="px-4 py-3 bg-white dark:bg-[#1C1C1E] border-b border-[#C6C6C8] dark:border-[#38383A] flex items-center justify-between">
                                     <span className="text-[17px] text-black dark:text-white">Amount</span>
                                     <input
-                                        type="number"
-                                        value={amount}
-                                        onChange={(e) => setAmount(e.target.value)}
+                                        type="text"
+                                        inputMode="numeric"
+                                        value={formatAmount(amount)}
+                                        onChange={handleAmountChange}
                                         placeholder="0"
                                         className="bg-transparent text-right text-[17px] text-blue-500 outline-none w-32"
                                     />

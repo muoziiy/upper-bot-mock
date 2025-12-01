@@ -254,7 +254,7 @@ router.post('/students/:id/payments', async (req, res) => {
 
         // Recalculate status
         if (group_id) {
-            await recalculateStudentGroupStatus(id, group_id);
+            await calculateStudentStatus(id, group_id);
         }
 
         res.json(data);
@@ -283,7 +283,7 @@ router.delete('/students/:id/payments/:paymentId', async (req, res) => {
         if (error) throw error;
 
         if (payment?.group_id) {
-            await recalculateStudentGroupStatus(id, payment.group_id);
+            await calculateStudentStatus(id, payment.group_id);
         }
 
         res.json({ success: true });
@@ -310,7 +310,7 @@ router.put('/students/:id/groups', async (req, res) => {
             if (error) throw error;
 
             // Recalculate status to set initial due date
-            await recalculateStudentGroupStatus(id, groupId);
+            await calculateStudentStatus(id, groupId);
 
         } else if (action === 'remove') {
             const { error } = await supabase
@@ -837,18 +837,18 @@ router.delete('/students/:id/groups', async (req, res) => {
 // HELPER: RECALCULATE STUDENT GROUP STATUS
 // ==============================================================================
 
-async function recalculateStudentGroupStatus(studentId: string, groupId: string) {
+async function calculateStudentStatus(studentId: string, groupId: string) {
     try {
         // 1. Get Group Config & Member Data
         const { data: groupMember, error: gmError } = await supabase
             .from('group_members')
             .select(`
-    *,
-    groups(
-        price,
-        payment_type
-    )
-        `)
+                *,
+                groups (
+                    price,
+                    payment_type
+                )
+            `)
             .eq('group_id', groupId)
             .eq('student_id', studentId)
             .single();
@@ -856,27 +856,23 @@ async function recalculateStudentGroupStatus(studentId: string, groupId: string)
         if (gmError || !groupMember) return;
 
         const paymentType = groupMember.payment_type || groupMember.groups.payment_type;
+        const joinedAt = new Date(groupMember.joined_at || new Date());
 
-        // 2. Fetch All Payments for this Group
+        // 2. Fetch All Completed Payments
         const { data: payments } = await supabase
             .from('payment_records')
             .select('*')
             .eq('student_id', studentId)
             .eq('group_id', groupId)
-            .eq('status', 'completed'); // Only count completed payments
+            .eq('status', 'completed');
 
         const validPayments = payments || [];
-
         let updates: any = {};
 
-        // --- CALCULATION LOGIC ---
-
         if (paymentType === 'lesson_based') {
-            // A. Lesson Based
-            // Total Paid Lessons
+            // --- LESSON BASED LOGIC ---
             const totalPaidLessons = validPayments.reduce((sum, p) => sum + (p.lessons_attended || 0), 0);
 
-            // Total Used Lessons (Attendance)
             const { count: totalUsedLessons } = await supabase
                 .from('attendance_records')
                 .select('*', { count: 'exact', head: true })
@@ -890,51 +886,46 @@ async function recalculateStudentGroupStatus(studentId: string, groupId: string)
             updates.payment_status = lessonsRemaining > 0 ? 'paid' : 'overdue';
 
         } else {
-            // B. Monthly (Fixed or Rolling)
-            // Sort payments by date desc
-            validPayments.sort((a, b) => new Date(b.payment_date).getTime() - new Date(a.payment_date).getTime());
+            // --- MONTHLY LOGIC ---
+            // Sort payments by date ascending to process sequentially
+            validPayments.sort((a, b) => new Date(a.payment_date).getTime() - new Date(b.payment_date).getTime());
 
-            if (validPayments.length > 0) {
-                const lastPayment = validPayments[0];
-                // If we have month/year, use that.
-                if (lastPayment.month && lastPayment.year) {
-                    // Next due is the month AFTER the last paid month.
-                    const lastPaidDate = new Date(lastPayment.year, lastPayment.month - 1, 1);
-                    const nextDue = new Date(lastPaidDate);
-                    nextDue.setMonth(nextDue.getMonth() + 1);
-                    updates.next_due_date = nextDue.toISOString();
-                    updates.last_payment_date = lastPayment.payment_date;
+            // Start calculation from joined_at date
+            let paidUntil = new Date(joinedAt);
+            // Reset time to start of day for accurate comparison
+            paidUntil.setHours(0, 0, 0, 0);
+
+            // If joined in the past, we start from there.
+            // If joined in future (unlikely but possible), we start from there.
+
+            for (const payment of validPayments) {
+                if (payment.month && payment.year) {
+                    // Specific month payment
+                    // Set paidUntil to the end of that specific month
+                    // Actually, usually "paying for March" means paid until April 1st.
+                    const paidMonthStart = new Date(payment.year, payment.month - 1, 1);
+                    const paidMonthEnd = new Date(payment.year, payment.month, 1); // 1st of next month
+
+                    // If this payment extends our current paidUntil, update it.
+                    if (paidMonthEnd > paidUntil) {
+                        paidUntil = paidMonthEnd;
+                    }
                 } else {
-                    // Fallback: just add 1 month to payment date
-                    const nextDue = new Date(lastPayment.payment_date);
-                    nextDue.setMonth(nextDue.getMonth() + 1);
-                    updates.next_due_date = nextDue.toISOString();
-                    updates.last_payment_date = lastPayment.payment_date;
+                    // Generic payment (e.g. "1 month")
+                    // Add 1 month to current paidUntil
+                    paidUntil.setMonth(paidUntil.getMonth() + 1);
                 }
-            } else {
-                // No payments? Use joined_at as the first due date
-                if (groupMember.joined_at) {
-                    updates.next_due_date = groupMember.joined_at;
-                } else {
-                    // Fallback if no joined_at (shouldn't happen usually)
-                    updates.next_due_date = new Date().toISOString();
-                }
-                updates.payment_status = 'overdue'; // Initially overdue until paid
             }
 
-            // Check Status if we have a due date
-            if (updates.next_due_date) {
-                const today = new Date();
-                const dueDate = new Date(updates.next_due_date);
-                // If due date is in the future, it's paid (or pending). If past/today, it's overdue.
-                // Actually, if I just joined and haven't paid, I am overdue immediately if prepaid.
-                // But if we want to give grace period? For now, strict: overdue if not paid.
-                // Logic above sets 'overdue' if no payments.
-                // If payments exist, we check:
-                if (validPayments.length > 0) {
-                    updates.payment_status = dueDate > today ? 'paid' : 'overdue';
-                }
-            }
+            updates.next_due_date = paidUntil.toISOString();
+
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            // If paidUntil is today or in the future, they are paid.
+            // If paidUntil is in the past, they are overdue.
+            updates.payment_status = paidUntil > today ? 'paid' : 'overdue';
+            updates.last_payment_date = validPayments.length > 0 ? validPayments[validPayments.length - 1].payment_date : null;
         }
 
         // 3. Update Group Member
@@ -947,9 +938,9 @@ async function recalculateStudentGroupStatus(studentId: string, groupId: string)
         }
 
     } catch (e) {
-        console.error('Error recalculating status:', e);
+        console.error('Error calculating student status:', e);
     }
-};
+}
 
 // ==============================================================================
 // TEACHER MANAGEMENT ENDPOINTS
@@ -1232,6 +1223,77 @@ router.post('/settings/support', async (req, res) => {
         res.json({ success: true });
     } catch (error) {
         console.error('Error updating support info:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Create Group
+router.post('/groups', async (req, res) => {
+    const { name, price, teacher_id, schedule } = req.body;
+
+    try {
+        const { data, error } = await supabase
+            .from('groups')
+            .insert([{
+                name,
+                price,
+                teacher_id: teacher_id || null,
+                schedule
+            }])
+            .select()
+            .single();
+
+        if (error) throw error;
+
+        res.json(data);
+    } catch (error) {
+        console.error('Error creating group:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Update Group
+router.put('/groups/:id', async (req, res) => {
+    const { id } = req.params;
+    const { name, price, teacher_id, schedule } = req.body;
+
+    try {
+        const { data, error } = await supabase
+            .from('groups')
+            .update({
+                name,
+                price,
+                teacher_id: teacher_id || null,
+                schedule
+            })
+            .eq('id', id)
+            .select()
+            .single();
+
+        if (error) throw error;
+
+        res.json(data);
+    } catch (error) {
+        console.error('Error updating group:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Delete Group
+router.delete('/groups/:id', async (req, res) => {
+    const { id } = req.params;
+
+    try {
+        const { error } = await supabase
+            .from('groups')
+            .delete()
+            .eq('id', id);
+
+        if (error) throw error;
+
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Error deleting group:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
 });
