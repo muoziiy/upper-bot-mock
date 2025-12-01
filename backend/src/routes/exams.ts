@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { supabase } from '../supabase';
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import fetch from 'node-fetch';
+
 
 const router = Router();
 
