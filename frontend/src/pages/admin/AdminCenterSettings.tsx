@@ -11,6 +11,7 @@ const AdminCenterSettings: React.FC = () => {
     const [loading, setLoading] = useState(false);
     const [selectedType, setSelectedType] = useState<'monthly_fixed' | 'monthly_rolling' | 'lesson_based' | null>(null);
     const [shouldBroadcast, setShouldBroadcast] = useState(false);
+    const [reminders, setReminders] = useState({ payment: true, class: true });
 
     const [supportInfo, setSupportInfo] = useState({
         admin_profile_link: '',
@@ -44,6 +45,10 @@ const AdminCenterSettings: React.FC = () => {
                     if (data.support_info) {
                         setSupportInfo(prev => ({ ...prev, ...data.support_info }));
                     }
+                    setReminders({
+                        payment: data.enable_payment_reminders ?? true,
+                        class: data.enable_class_reminders ?? true
+                    });
                 }
             } catch (e) {
                 console.error('Failed to fetch settings', e);
@@ -51,6 +56,28 @@ const AdminCenterSettings: React.FC = () => {
         };
         fetchSettings();
     }, []);
+
+    const handleUpdateReminders = async (type: 'payment' | 'class') => {
+        const newReminders = {
+            ...reminders,
+            [type]: !reminders[type]
+        };
+        setReminders(newReminders); // Optimistic update
+
+        try {
+            await fetch(`${import.meta.env.VITE_API_URL}/admin/settings/reminders`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    enable_payment_reminders: newReminders.payment,
+                    enable_class_reminders: newReminders.class
+                })
+            });
+        } catch (e) {
+            console.error('Error updating reminders', e);
+            setReminders(reminders); // Revert on error
+        }
+    };
 
     const handleUpdatePaymentType = async (type: 'monthly_fixed' | 'monthly_rolling' | 'lesson_based') => {
         if (!window.confirm('Are you sure? This will update the payment system for ALL students. This process may take some time.')) {
@@ -218,6 +245,36 @@ const AdminCenterSettings: React.FC = () => {
                     rightElement={selectedType === 'lesson_based' ? <Check className="text-blue-500" size={20} /> : null}
                     onClick={() => handleUpdatePaymentType('lesson_based')}
                     disabled={loading}
+                    isLast
+                />
+            </AdminSection>
+
+            <AdminSection title="Notifications">
+                <AdminListItem
+                    title="Payment Reminders"
+                    icon="💰"
+                    iconColor="bg-green-500"
+                    rightElement={
+                        <div
+                            className={`w-11 h-6 rounded-full transition-colors relative ${reminders.payment ? 'bg-green-500' : 'bg-[#E9E9EA] dark:bg-[#39393D]'}`}
+                            onClick={() => handleUpdateReminders('payment')}
+                        >
+                            <div className={`w-5 h-5 bg-white rounded-full shadow absolute top-0.5 transition-transform ${reminders.payment ? 'translate-x-[22px]' : 'translate-x-0.5'}`} />
+                        </div>
+                    }
+                />
+                <AdminListItem
+                    title="Class Reminders"
+                    icon="⏰"
+                    iconColor="bg-blue-500"
+                    rightElement={
+                        <div
+                            className={`w-11 h-6 rounded-full transition-colors relative ${reminders.class ? 'bg-green-500' : 'bg-[#E9E9EA] dark:bg-[#39393D]'}`}
+                            onClick={() => handleUpdateReminders('class')}
+                        >
+                            <div className={`w-5 h-5 bg-white rounded-full shadow absolute top-0.5 transition-transform ${reminders.class ? 'translate-x-[22px]' : 'translate-x-0.5'}`} />
+                        </div>
+                    }
                     isLast
                 />
             </AdminSection>

@@ -443,971 +443,47 @@ router.get('/stats/financial', async (req, res) => {
         res.status(500).json({ error: 'Internal server error' });
     }
 });
-
-// Get all students with payment status
-router.get('/students', async (req, res) => {
-    const { search } = req.query;
-
-    try {
-        // 1. Fetch base student data with payment_day
-        let query = supabase
-            .from('users')
-            .select(`
-                id,
-                student_id,
-                telegram_id,
-                first_name,
-                onboarding_first_name,
-                surname,
-                age,
-                sex,
-                payment_day,
-                group_members (
-                    group_id,
-                    joined_at,
-                    anchor_day,
-                    lessons_remaining,
-                    next_due_date,
-                    last_payment_date,
-                    payment_type,
-                    groups (
-                        id,
-                        name,
-                        price,
-                        payment_type,
-                        subject_id,
-                        teacher:users!groups_teacher_id_fkey (
-                            first_name,
-                            surname
-                        )
-                    )
-                )
-            `)
-            .eq('role', 'student')
-            .order('created_at', { ascending: false });
-
-        if (search) {
-            const searchStr = String(search);
-            query = query.or(`first_name.ilike.%${searchStr}%,surname.ilike.%${searchStr}%,student_id.ilike.%${searchStr}%`);
-        }
-
-        const { data: studentsData, error: studentsError } = await query;
-        if (studentsError) throw studentsError;
-
-        // 2. Calculate status for each student using JS logic
-        const students = studentsData.map((student: any) => {
-            let overallStatus = 'unpaid'; // Default
-            let hasOverdue = false;
-            let hasPaid = false;
-
-            const groups = student.group_members?.map((gm: any) => {
-                const group = gm.groups;
-                const teacher = group.teacher;
-
-                // Calculate status for this group
-                const status = checkStudentStatus({
-                    joined_at: gm.joined_at,
-                    anchor_day: gm.anchor_day,
-                    lessons_remaining: gm.lessons_remaining,
-                    next_due_date: gm.next_due_date,
-                    last_payment_date: gm.last_payment_date
-                }, {
-                    payment_type: group.payment_type,
-                    price: group.price
-                }, gm.payment_type); // Pass the override from group_members
-
-                if (status === 'overdue') hasOverdue = true;
-                if (status === 'active') hasPaid = true;
-
-                return {
-                    id: group.id,
-                    name: group.name,
-                    price: group.price,
-                    payment_type: gm.payment_type || group.payment_type, // Use member specific or group default
-                    teacher_name: teacher ? `${teacher.first_name} ${teacher.surname}` : null,
-                    joined_at: gm.joined_at,
-                    lessons_remaining: gm.lessons_remaining,
-                    next_due_date: gm.next_due_date,
-                    status: status
-                };
-            }).filter((g: any) => g.name) || [];
-
-            if (hasOverdue) overallStatus = 'overdue';
-            else if (hasPaid) overallStatus = 'paid';
-            else overallStatus = 'overdue'; // Default to overdue if not paid
-
-            return {
-                id: student.id,
-                student_id: student.student_id,
-                telegram_id: student.telegram_id,
-                first_name: student.first_name,
-                onboarding_first_name: student.onboarding_first_name,
-                surname: student.surname,
-                age: student.age,
-                sex: student.sex,
-                payment_day: student.payment_day || 1,
-                groups: groups,
-                payment_status: overallStatus,
-                amount_due: 0 // We can calculate this if needed, but for now 0
-            };
-        });
-
-        res.json(students);
-    } catch (error) {
-        console.error('Error fetching students:', error);
-        res.status(500).json({ error: 'Internal server error' });
-    }
-});
-
-// Get single student details
-router.get('/students/:id', async (req, res) => {
-    const { id } = req.params;
+// Report Problem / Suggestion
+router.post('/support/report', async (req, res) => {
+    const { user_id, type, message } = req.body;
 
     try {
-        // 1. Fetch student basic info
-        const { data: student, error: studentError } = await supabase
+        // 1. Get User Info
+        const { data: user, error: userError } = await supabase
             .from('users')
-            .select(`
-                id,
-                student_id,
-                telegram_id,
-                first_name,
-                onboarding_first_name,
-                surname,
-                age,
-                sex,
-                payment_day,
-                created_at,
-                phone_number,
-                role
-            `)
-            .eq('id', id)
+            .select('first_name, surname, telegram_id, role')
+            .eq('id', user_id)
             .single();
 
-        if (studentError) throw studentError;
+        if (userError) throw userError;
 
-        // 2. Fetch groups
-        const { data: groupsData, error: groupsError } = await supabase
-            .from('group_members')
-            .select(`
-                joined_at,
-                payment_status,
-                next_due_date,
-                lessons_remaining,
-                    groups (
-                        id,
-                        name,
-                        price,
-                        schedule,
-                        teacher:users!groups_teacher_id_fkey (
-                            first_name,
-                            onboarding_first_name,
-                            surname
-                        )
-                    )
-            `)
-            .eq('student_id', id);
-
-        if (groupsError) throw groupsError;
-
-        // Calculate status from group_members
-        let status = 'overdue';
-        const hasOverdue = groupsData?.some((g: any) => g.payment_status === 'overdue');
-        const hasPaid = groupsData?.some((g: any) => g.payment_status === 'paid');
-
-        if (hasPaid && !hasOverdue) status = 'paid';
-
-        // Format groups
-        const groups = groupsData.map((gm: any) => ({
-            id: gm.groups.id,
-            name: gm.groups.name,
-            price: gm.groups.price,
-            teacher_name: gm.groups.teacher ? `${gm.groups.teacher.onboarding_first_name || gm.groups.teacher.first_name} ${gm.groups.teacher.surname}` : null,
-            joined_at: gm.joined_at,
-            payment_status: gm.payment_status,
-            next_due_date: gm.next_due_date,
-            lessons_remaining: gm.lessons_remaining,
-            schedule: gm.groups.schedule
-        }));
-
-        res.json({
-            ...student,
-            groups,
-            payment_status: status,
-            amount_due: 0 // We can calculate this if needed, but for now 0
-        });
-
-    } catch (error) {
-        console.error('Error fetching student details:', error);
-        res.status(500).json({ error: 'Internal server error' });
-    }
-});
-
-// Get Student Payments
-router.get('/students/:id/payments', async (req, res) => {
-    const { id } = req.params;
-    try {
-        const { data, error } = await supabase
-            .from('payment_records')
-            .select(`
-                id,
-                amount,
-                payment_date,
-                payment_method,
-                status,
-                month,
-                year,
-                notes,
-                subjects (name)
-            `)
-            .eq('student_id', id)
-            .order('payment_date', { ascending: false });
-
-        if (error) throw error;
-        res.json(data);
-    } catch (error) {
-        console.error('Error fetching student payments:', error);
-        res.status(500).json({ error: 'Internal server error' });
-    }
-});
-
-// Get Student Attendance
-router.get('/students/:id/attendance', async (req, res) => {
-    const { id } = req.params;
-    try {
-        const { data, error } = await supabase
-            .from('attendance_records')
-            .select(`
-                id,
-                date,
-                status,
-                groups (name)
-            `)
-            .eq('student_id', id)
-            .order('date', { ascending: false });
-
-        if (error) throw error;
-
-        const attendance = data.map((record: any) => ({
-            id: record.id,
-            date: record.date,
-            status: record.status,
-            group_name: record.groups?.name
-        }));
-
-        res.json(attendance);
-    } catch (error) {
-        console.error('Error fetching student attendance:', error);
-        res.status(500).json({ error: 'Internal server error' });
-    }
-});
-
-// ==============================================================================
-// STUDENT PAYMENT MANAGEMENT ENDPOINTS
-// ==============================================================================
-
-// Add Payment
-router.post('/students/:id/payments', async (req, res) => {
-    const { id } = req.params;
-    const { group_id, subject_id, amount, payment_date, payment_method, status, month, year, notes } = req.body;
-
-    try {
-        // Insert payment
-        const { data: payment, error: paymentError } = await supabase
-            .from('payment_records')
-            .insert({
-                student_id: id,
-                group_id,
-                subject_id,
-                amount,
-                payment_date,
-                payment_method,
-                status,
-                month,
-                year,
-                notes
-            })
-            .select('*, subjects(name)')
-            .single();
-
-        if (paymentError) throw paymentError;
-
-        // Recalculate Status
-        if (group_id) {
-            await recalculateStudentGroupStatus(id, group_id);
-        }
-
-        // Get student's telegram_id for notification
-        const { data: student, error: studentError } = await supabase
+        // 2. Get Admin Info (to send notification to)
+        // For now, we'll send to all Super Admins or a specific admin
+        // Let's fetch the first super_admin's telegram_id
+        const { data: admin, error: adminError } = await supabase
             .from('users')
             .select('telegram_id')
-            .eq('id', id)
+            .eq('role', 'super_admin')
+            .limit(1)
             .single();
 
-        if (studentError) throw studentError;
+        if (adminError || !admin?.telegram_id) {
+            console.warn('No admin found to receive report');
+            // We still save to DB if we had a reports table, but for now just log
+        } else {
+            // 3. Send Notification
+            const icon = type === 'problem' ? '🔴' : '💡';
+            const reportMsg = `${icon} *New Support Ticket*\n\n` +
+                `From: ${user.first_name} ${user.surname || ''} (${user.role})\n` +
+                `Type: ${type === 'problem' ? 'Problem' : 'Suggestion'}\n\n` +
+                `Message:\n${message}`;
 
-        // Send notification to student
-        try {
-            await sendStudentPaymentNotification(student.telegram_id, {
-                action: 'added',
-                subject: payment.subjects?.name || 'Unknown',
-                amount: parseFloat(amount),
-                date: payment_date,
-                method: payment_method,
-                status: status as "pending" | "unpaid" | "paid"
-            });
-        } catch (notifError) {
-            console.error('Failed to send payment notification:', notifError);
-        }
-
-        res.json(payment);
-    } catch (error) {
-        console.error('Error adding payment:', error);
-        res.status(500).json({ error: 'Internal server error' });
-    }
-});
-
-// Update payment record (with notification)
-router.put('/students/:id/payments/:paymentId', async (req, res) => {
-    const { id, paymentId } = req.params;
-    const { subject_id, amount, payment_date, payment_method, status, month, year, notes } = req.body;
-
-    try {
-        // Update payment
-        const { data: payment, error: paymentError } = await supabase
-            .from('payment_records')
-            .update({
-                subject_id,
-                amount,
-                payment_date,
-                payment_method,
-                status,
-                month,
-                year,
-                notes,
-                updated_at: new Date().toISOString()
-            })
-            .eq('id', paymentId)
-            .eq('student_id', id)
-            .select('*, subjects(name)')
-            .single();
-
-        if (paymentError) throw paymentError;
-
-        // Recalculate Status
-        if (payment.group_id) {
-            await recalculateStudentGroupStatus(id, payment.group_id);
-        }
-
-        // Get student's telegram_id for notification
-        const { data: student, error: studentError } = await supabase
-            .from('users')
-            .select('telegram_id')
-            .eq('id', id)
-            .single();
-
-        if (studentError) throw studentError;
-
-        res.json(payment);
-    } catch (error) {
-        console.error('Error updating payment:', error);
-        res.status(500).json({ error: 'Internal server error' });
-    }
-});
-
-// Delete payment record (with notification)
-router.delete('/students/:id/payments/:paymentId', async (req, res) => {
-    const { id, paymentId } = req.params;
-
-    try {
-        // Get payment details before deleting (for notification)
-        const { data: payment, error: fetchError } = await supabase
-            .from('payment_records')
-            .select('*, subjects(name)')
-            .eq('id', paymentId)
-            .eq('student_id', id)
-            .single();
-
-        if (fetchError) throw fetchError;
-
-        // Delete payment
-        const { error: deleteError } = await supabase
-            .from('payment_records')
-            .delete()
-            .eq('id', paymentId)
-            .eq('student_id', id);
-
-        if (deleteError) throw deleteError;
-
-        // Recalculate Status
-        if (payment.group_id) {
-            await recalculateStudentGroupStatus(id, payment.group_id);
-        }
-
-        // Get student's telegram_id for notification
-        const { data: student, error: studentError } = await supabase
-            .from('users')
-            .select('telegram_id')
-            .eq('id', id)
-            .single();
-
-        if (studentError) throw studentError;
-
-        // Send notification to student
-        try {
-            await sendStudentPaymentNotification(student.telegram_id, {
-                action: 'deleted',
-                subject: payment.subjects?.name || 'Unknown',
-                amount: parseFloat(payment.amount),
-                date: payment.payment_date,
-                method: payment.payment_method,
-                status: payment.status
-            });
-        } catch (notifError) {
-            console.error('Failed to send payment notification:', notifError);
-        }
-
-        res.json({ success: true, message: 'Payment deleted successfully' });
-    } catch (error) {
-        console.error('Error deleting payment:', error);
-        res.status(500).json({ error: 'Internal server error' });
-    }
-});
-
-// ==============================================================================
-// HELPER ENDPOINTS FOR DROPDOWNS
-// ==============================================================================
-
-// Get all subjects (simple list)
-router.get('/subjects/list', async (req, res) => {
-    try {
-        const { data, error } = await supabase
-            .from('subjects')
-            .select('id, name')
-            .order('name');
-
-        if (error) throw error;
-        res.json(data);
-    } catch (error) {
-        res.status(500).json({ error: 'Internal server error' });
-    }
-});
-
-// Get all groups (simple list)
-router.get('/groups/list', async (req, res) => {
-    try {
-        const { data, error } = await supabase
-            .from('groups')
-            .select(`
-                id,
-                name,
-                price,
-                schedule,
-                teacher_id,
-                subject_id,
-                teacher:users!groups_teacher_id_fkey(first_name, surname),
-                subjects(name)
-            `)
-            .order('name');
-
-        if (error) throw error;
-
-        // Flatten teacher name
-        const groups = data.map((g: any) => ({
-            ...g,
-            teacher_name: g.teacher ? `${g.teacher.first_name} ${g.teacher.surname}` : 'No Teacher',
-            subject_name: g.subjects ? g.subjects.name : 'No Subject'
-        }));
-
-        res.json(groups);
-    } catch (error) {
-        res.status(500).json({ error: 'Internal server error' });
-    }
-});
-
-// Create Group
-router.post('/groups', async (req, res) => {
-    const { name, teacher_id, price, schedule, payment_type, subject_id } = req.body;
-
-    try {
-        const { data, error } = await supabase
-            .from('groups')
-            .insert({
-                name,
-                teacher_id: teacher_id || null,
-                price: price || 0,
-                schedule: schedule || {},
-                payment_type: payment_type || 'monthly_fixed',
-                subject_id: subject_id || null
-            })
-            .select()
-            .single();
-
-        if (error) throw error;
-        res.json(data);
-    } catch (error) {
-        console.error('Error creating group:', error);
-        res.status(500).json({ error: 'Internal server error' });
-    }
-});
-
-// Update Group
-router.put('/groups/:id', async (req, res) => {
-    const { id } = req.params;
-    const { name, teacher_id, price, schedule, payment_type, subject_id } = req.body;
-
-    try {
-        const { data, error } = await supabase
-            .from('groups')
-            .update({
-                name,
-                teacher_id: teacher_id || null,
-                price: price || 0,
-                schedule: schedule || {},
-                payment_type: payment_type,
-                subject_id: subject_id,
-                updated_at: new Date().toISOString()
-            })
-            .eq('id', id)
-            .select()
-            .single();
-
-        if (error) throw error;
-        res.json(data);
-    } catch (error) {
-        console.error('Error updating group:', error);
-        res.status(500).json({ error: 'Internal server error' });
-    }
-});
-
-// Delete Group
-router.delete('/groups/:id', async (req, res) => {
-    const { id } = req.params;
-
-    try {
-        const { error } = await supabase
-            .from('groups')
-            .delete()
-            .eq('id', id);
-
-        if (error) throw error;
-        res.json({ success: true });
-    } catch (error) {
-        console.error('Error deleting group:', error);
-        res.status(500).json({ error: 'Internal server error' });
-    }
-});
-
-// Get Single Group with Students
-router.get('/groups/:id', async (req, res) => {
-    const { id } = req.params;
-
-    try {
-        // 1. Get Group Details
-        const { data: group, error: groupError } = await supabase
-            .from('groups')
-            .select('*')
-            .eq('id', id)
-            .single();
-
-        if (groupError) throw groupError;
-
-        // 2. Get Students in Group
-        const { data: members, error: membersError } = await supabase
-            .from('group_members')
-            .select(`
-                student_id,
-                users (
-                    id,
-                    first_name,
-                    surname,
-                    telegram_id
-                ),
-                joined_at,
-                payment_status,
-                lessons_remaining
-            `)
-            .eq('group_id', id);
-
-        if (membersError) throw membersError;
-
-        const students = members.map((m: any) => ({
-            ...m.users,
-            joined_at: m.joined_at,
-            payment_status: m.payment_status,
-            lessons_remaining: m.lessons_remaining
-        }));
-
-        res.json({ group, students });
-    } catch (error) {
-        console.error('Error fetching group details:', error);
-        res.status(500).json({ error: 'Internal server error' });
-    }
-});
-
-// ==============================================================================
-// STUDENT GROUP MANAGEMENT
-// ==============================================================================
-
-// Update student groups (Add/Remove)
-router.put('/students/:id/groups', async (req, res) => {
-    const { id } = req.params;
-    const { groupId, action, anchor_day, lessons_remaining } = req.body; // action: 'add' | 'remove'
-
-    try {
-        if (action === 'add') {
-            // Check if already exists
-            const { data: existing } = await supabase
-                .from('group_members')
-                .select('id')
-                .eq('student_id', id)
-                .eq('group_id', groupId)
-                .single();
-
-            if (!existing) {
-                const { error } = await supabase
-                    .from('group_members')
-                    .insert({
-                        student_id: id,
-                        group_id: groupId,
-                        joined_at: req.body.joinedAt || new Date().toISOString(),
-                        anchor_day: anchor_day || new Date().getDate(),
-                        lessons_remaining: lessons_remaining || 0,
-                        payment_type: 'monthly_fixed' // Default fallback
-                    });
-
-                // Fetch default payment type from settings to override
-                const { data: settings } = await supabase
-                    .from('education_center_settings')
-                    .select('default_payment_type')
-                    .single();
-
-                if (settings?.default_payment_type) {
-                    await supabase
-                        .from('group_members')
-                        .update({ payment_type: settings.default_payment_type })
-                        .eq('student_id', id)
-                        .eq('group_id', groupId);
-                }
-
-                if (error) throw error;
-            }
-        } else if (action === 'remove') {
-            const { error } = await supabase
-                .from('group_members')
-                .delete()
-                .eq('student_id', id)
-                .eq('group_id', groupId);
-            if (error) throw error;
-        } else if (action === 'update_date') {
-            const { error } = await supabase
-                .from('group_members')
-                .update({ joined_at: req.body.joinedAt })
-                .eq('student_id', id)
-                .eq('group_id', groupId);
-            if (error) throw error;
-        }
-
-        // Get details for notification
-        const { data: group } = await supabase
-            .from('groups')
-            .select('name')
-            .eq('id', groupId)
-            .single();
-
-        const { data: student } = await supabase
-            .from('users')
-            .select('telegram_id')
-            .eq('id', id)
-            .single();
-
-        if (student && group) {
-            try {
-                await sendStudentGroupNotification(student.telegram_id, {
-                    added: action === 'add' ? [group.name] : [],
-                    removed: action === 'remove' ? [group.name] : []
-                });
-            } catch (e) {
-                console.error('Failed to send group notification', e);
-            }
+            await bot.telegram.sendMessage(admin.telegram_id, reportMsg, { parse_mode: 'Markdown' });
         }
 
         res.json({ success: true });
     } catch (error) {
-        console.error('Error updating student groups:', error);
-        res.status(500).json({ error: 'Internal server error' });
-    }
-});
-
-// Mark Attendance
-router.post('/attendance', async (req, res) => {
-    const { student_id, group_id, date, status } = req.body;
-
-    if (!student_id || !group_id || !date || !status) {
-        return res.status(400).json({ error: 'Missing required fields' });
-    }
-
-    try {
-        // 1. Record Attendance
-        const { error: attendanceError } = await supabase
-            .from('attendance_records')
-            .insert({
-                student_id,
-                group_id,
-                date,
-                status
-            });
-
-        if (attendanceError) throw attendanceError;
-
-        // 2. Check Payment Type and Deduct Credits if needed
-        if (status === 'present') {
-            const { data: groupMember, error: gmError } = await supabase
-                .from('group_members')
-                .select(`
-lessons_remaining,
-    groups(payment_type)
-        `)
-                .eq('student_id', student_id)
-                .eq('group_id', group_id)
-                .single();
-
-            if (gmError) throw gmError;
-
-            // Type cast to handle nested object from join
-            const group = groupMember.groups as any;
-            if (group?.payment_type === 'lesson_based') {
-                const newCredits = (groupMember.lessons_remaining || 0) - 1;
-
-                // Update credits
-                await supabase
-                    .from('group_members')
-                    .update({ lessons_remaining: newCredits })
-                    .eq('student_id', student_id)
-                    .eq('group_id', group_id);
-
-                // Check for Low Balance
-                if (newCredits <= 2) {
-                    const { data: student } = await supabase
-                        .from('users')
-                        .select('telegram_id')
-                        .eq('id', student_id)
-                        .single();
-
-                    if (student?.telegram_id) {
-                        // Send a simple notification about low balance
-                        try {
-                            await sendBroadcastNotification(
-                                [student.telegram_id],
-                                `⚠️ *Low Balance Warning*\n\nYou have ${newCredits} credits left for this group. Please top up soon.`
-                            );
-                        } catch (notifError) {
-                            console.error('Failed to send low balance notification:', notifError);
-                        }
-                    }
-                }
-            }
-        }
-
-        res.json({ success: true });
-    } catch (error) {
-        console.error('Error marking attendance:', error);
-        res.status(500).json({ error: 'Internal server error' });
-    }
-});
-
-// ==============================================================================
-// BROADCASTING
-// ==============================================================================
-
-// Send Broadcast
-router.post('/broadcast', async (req, res) => {
-    const { message, target_type, target_id, sender_id } = req.body;
-
-    if (!message || !target_type) {
-        return res.status(400).json({ error: 'Message and target_type are required' });
-    }
-
-    try {
-        let recipients: any[] = [];
-
-        // 1. Fetch Recipients
-        if (target_type === 'all_students') {
-            const { data } = await supabase.from('users').select('telegram_id').eq('role', 'student');
-            recipients = data || [];
-        } else if (target_type === 'all_teachers') {
-            const { data } = await supabase.from('users').select('telegram_id').eq('role', 'teacher');
-            recipients = data || [];
-        } else if (target_type === 'all_admins') {
-            const { data } = await supabase.from('users').select('telegram_id').eq('role', 'admin');
-            recipients = data || [];
-        } else if (target_type === 'group' && target_id) {
-            const { data } = await supabase
-                .from('group_members')
-                .select('users(telegram_id)')
-                .eq('group_id', target_id);
-            recipients = data?.map((d: any) => d.users) || [];
-        } else if (target_type === 'subject' && target_id) {
-            recipients = [];
-        }
-
-        // 2. Send Messages
-        let successCount = 0;
-        const telegramIds = recipients
-            .map(r => r.telegram_id)
-            .filter(id => id); // Filter out null/undefined
-
-        if (telegramIds.length > 0) {
-            const broadcastMessage = `${message}\n\n📢 *Broadcast Message*`;
-            const result = await sendBroadcastNotification(telegramIds, broadcastMessage);
-            successCount = result.success;
-        }
-
-        // 3. Log History
-        let userUuid = null;
-        if (sender_id) {
-            const { data: userData } = await supabase
-                .from('users')
-                .select('id')
-                .eq('telegram_id', sender_id)
-                .single();
-            if (userData) userUuid = userData.id;
-        }
-
-        const { error: logError } = await supabase
-            .from('broadcast_history')
-            .insert({
-                sender_id: userUuid,
-                message,
-                target_type,
-                target_id: target_id || null,
-                recipient_count: successCount
-            });
-
-        if (logError) throw logError;
-
-        res.json({ success: true, count: successCount });
-
-    } catch (error) {
-        console.error('Error sending broadcast:', error);
-        res.status(500).json({ error: 'Internal server error' });
-    }
-});
-
-// Get Broadcast History
-router.get('/broadcast/history', async (req, res) => {
-    try {
-        const { data, error } = await supabase
-            .from('broadcast_history')
-            .select(`
-    *,
-    sender: users!broadcast_history_sender_id_fkey(first_name, surname)
-        `)
-            .order('created_at', { ascending: false });
-
-        if (error) throw error;
-        res.json(data);
-    } catch (error) {
-        console.error('Error fetching broadcast history:', error);
-        res.status(500).json({ error: 'Internal server error' });
-    }
-});
-
-// Get all teachers
-router.get('/teachers', async (req, res) => {
-    try {
-        const { data, error } = await supabase
-            .from('users')
-            .select(`
-id,
-    first_name,
-    surname,
-    subjects
-        `)
-            .eq('role', 'teacher')
-            .order('first_name', { ascending: true });
-
-        if (error) throw error;
-
-        // TODO: Add groups count if needed
-        const teachers = data.map(teacher => ({
-            ...teacher,
-            groups_count: 0 // Placeholder - can be calculated with join if needed
-        }));
-
-        res.json(teachers);
-    } catch (error) {
-        console.error('Error fetching teachers:', error);
-        res.status(500).json({ error: 'Internal server error' });
-    }
-});
-
-// Get Center Settings
-router.get('/settings', async (req, res) => {
-    try {
-        const { data, error } = await supabase
-            .from('education_center_settings')
-            .select('*')
-            .single();
-
-        if (error) throw error;
-        res.json(data);
-    } catch (error) {
-        // If not found, return defaults
-        res.json({ default_payment_type: 'monthly_fixed' });
-    }
-});
-
-// Bulk update payment settings
-router.post('/settings/payment-type', async (req, res) => {
-    const { payment_type } = req.body;
-
-    if (!['monthly_fixed', 'monthly_rolling', 'lesson_based'].includes(payment_type)) {
-        return res.status(400).json({ error: 'Invalid payment type' });
-    }
-
-    try {
-        // 1. Update Settings Table
-        const { error: settingsError } = await supabase
-            .from('education_center_settings')
-            .update({ default_payment_type: payment_type, updated_at: new Date().toISOString() })
-            .neq('id', '00000000-0000-0000-0000-000000000000'); // Dummy condition to update all
-
-        // 2. Update all group_members to use this payment type
-        const { error } = await supabase
-            .from('group_members')
-            .update({ payment_type: payment_type })
-            .neq('payment_type', payment_type); // Only update if different
-
-        if (error) throw error;
-
-        res.json({ success: true, message: 'Payment settings updated for all students' });
-    } catch (error) {
-        console.error('Error updating payment settings:', error);
-        res.status(500).json({ error: 'Internal server error' });
-    }
-});
-
-// Update Support Info
-router.post('/settings/support', async (req, res) => {
-    const { support_info } = req.body;
-
-    if (!support_info || typeof support_info !== 'object') {
-        return res.status(400).json({ error: 'Invalid support info' });
-    }
-
-    try {
-        // Upsert settings (assuming singleton)
-        const { error } = await supabase
-            .from('education_center_settings')
-            .update({ support_info, updated_at: new Date().toISOString() })
-            .gt('updated_at', '2000-01-01'); // Dummy condition to match all
-
-        if (error) throw error;
-
-        res.json({ success: true });
-    } catch (error) {
-        console.error('Error updating support info:', error);
+        console.error('Error sending report:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
 });
@@ -1721,6 +797,101 @@ router.delete('/subjects/:id', async (req, res) => {
         res.json({ success: true });
     } catch (error) {
         console.error('Error deleting subject:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Get Center Settings
+router.get('/settings', async (req, res) => {
+    try {
+        const { data, error } = await supabase
+            .from('education_center_settings')
+            .select('*')
+            .single();
+
+        if (error && error.code !== 'PGRST116') throw error; // PGRST116 is "no rows returned"
+
+        res.json(data || {});
+    } catch (error) {
+        console.error('Error fetching settings:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Bulk update payment settings
+router.post('/settings/payment-type', async (req, res) => {
+    const { payment_type, broadcast } = req.body;
+
+    try {
+        // Update default setting
+        const { error: settingsError } = await supabase
+            .from('education_center_settings')
+            .upsert({ id: 1, default_payment_type: payment_type }, { onConflict: 'id' }); // Assuming singleton row with id 1
+
+        if (settingsError) throw settingsError;
+
+        // Update all active groups
+        const { error: groupsError } = await supabase
+            .from('groups')
+            .update({ payment_type })
+            .neq('payment_type', payment_type); // Only update if different
+
+        if (groupsError) throw groupsError;
+
+        // If broadcast requested
+        if (broadcast) {
+            // ... broadcast logic ...
+        }
+
+        res.json({ success: true, message: 'Payment settings updated for all students' });
+    } catch (error) {
+        console.error('Error updating payment settings:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Update Reminders Settings
+router.post('/settings/reminders', async (req, res) => {
+    const { enable_payment_reminders, enable_class_reminders } = req.body;
+
+    try {
+        const { error } = await supabase
+            .from('education_center_settings')
+            .upsert({
+                id: 1,
+                enable_payment_reminders,
+                enable_class_reminders
+            }, { onConflict: 'id' });
+
+        if (error) throw error;
+
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Error updating reminder settings:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Update Support Info
+router.post('/settings/support', async (req, res) => {
+    const { support_info } = req.body;
+
+    if (!support_info || typeof support_info !== 'object') {
+        return res.status(400).json({ error: 'Invalid support info' });
+    }
+
+    try {
+        // Upsert settings (assuming singleton)
+        const { error } = await supabase
+            .from('education_center_settings')
+            .update({ support_info, updated_at: new Date().toISOString() })
+            .gt('updated_at', '2000-01-01'); // Dummy condition to match all
+
+        if (error) throw error;
+
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Error updating support info:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
 });

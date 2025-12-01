@@ -1,7 +1,6 @@
 import { Router } from 'express';
 import { supabase } from '../supabase';
-import { addDays, startOfDay, isSameDay, isBefore, differenceInDays } from 'date-fns';
-import { sendStudentPaymentNotification } from '../services/notifications'; // We might need a generic notification or reuse this
+import { addDays, startOfDay, isSameDay, isBefore, differenceInDays, addHours, format } from 'date-fns';
 import axios from 'axios';
 
 const router = Router();
@@ -21,14 +20,27 @@ async function sendReminder(telegramId: number, message: string) {
     }
 }
 
+// Helper to get settings
+async function getSettings() {
+    const { data } = await supabase
+        .from('education_center_settings')
+        .select('*')
+        .single();
+    return data || { enable_payment_reminders: true, enable_class_reminders: true }; // Default to true
+}
+
 // CRON Endpoint - Should be called daily at 08:00
 router.get('/daily', async (req, res) => {
     try {
+        const settings = await getSettings();
+        if (!settings.enable_payment_reminders) {
+            return res.json({ success: true, message: 'Payment reminders disabled' });
+        }
+
         const today = startOfDay(new Date());
         const threeDaysFromNow = addDays(today, 3);
 
         // Fetch all active group members with Type A/B (Monthly)
-        // We need to join with groups to check payment_type
         const { data: members, error } = await supabase
             .from('group_members')
             .select(`
@@ -64,7 +76,7 @@ router.get('/daily', async (req, res) => {
             if (isSameDay(dueDate, threeDaysFromNow)) {
                 await sendReminder(
                     user.telegram_id,
-                    `📅 *Payment Reminder*\n\nYour payment for *${group.name}* is due in 3 days (${member.next_due_date}).\nAmount: $${group.price}`
+                    `📅 *Payment Reminder*\n\nYour payment for *${group.name}* is due in 3 days (${member.next_due_date}).\nAmount: ${group.price.toLocaleString()} UZS`
                 );
                 processed++;
             }
@@ -103,6 +115,82 @@ router.get('/daily', async (req, res) => {
 
     } catch (error) {
         console.error('Error in daily scheduler:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Class Reminders - Should be called every 30 minutes
+router.get('/class-reminders', async (req, res) => {
+    try {
+        const settings = await getSettings();
+        if (!settings.enable_class_reminders) {
+            return res.json({ success: true, message: 'Class reminders disabled' });
+        }
+
+        // Target time: 1 hour from now (with some buffer)
+        const now = new Date();
+        const oneHourFromNow = addHours(now, 1);
+        const currentDay = format(now, 'EEEE'); // e.g., "Monday"
+        const targetTime = format(oneHourFromNow, 'HH:mm'); // e.g., "14:30"
+
+        // Fetch all groups
+        const { data: groups, error } = await supabase
+            .from('groups')
+            .select(`
+                id,
+                name,
+                schedule,
+                group_members (
+                    users (
+                        telegram_id,
+                        first_name
+                    )
+                )
+            `);
+
+        if (error) throw error;
+
+        let sentCount = 0;
+
+        for (const group of groups || []) {
+            const schedule = group.schedule as Record<string, string>; // { "Monday": "14:00" }
+            if (!schedule) continue;
+
+            const classTime = schedule[currentDay];
+            if (!classTime) continue;
+
+            // Check if class starts in roughly 1 hour
+            // Simple string comparison for now, assuming format HH:mm
+            // We check if the class time matches our target window
+            // To be robust, we should parse times, but exact match on HH:mm is okay if cron runs often enough
+            // Better: check if classTime is between now+55min and now+65min
+
+            // For simplicity in this iteration, let's assume strict 30-min slots and cron runs every 30 mins
+            // We'll just check if classTime starts with the target hour/minute roughly
+
+            // Let's use a simpler approach: 
+            // If cron runs at 13:00, we look for classes at 14:00.
+            // If cron runs at 13:30, we look for classes at 14:30.
+
+            // We'll match the first 5 chars (HH:mm)
+            if (classTime.substring(0, 5) === targetTime) {
+                // Send reminders
+                const students = group.group_members?.map((gm: any) => gm.users).filter((u: any) => u?.telegram_id);
+
+                for (const student of students || []) {
+                    await sendReminder(
+                        student.telegram_id,
+                        `🔔 *Class Reminder*\n\nHi ${student.first_name}, your *${group.name}* class starts in 1 hour (at ${classTime}).\nDon't be late!`
+                    );
+                    sentCount++;
+                }
+            }
+        }
+
+        res.json({ success: true, sent: sentCount, targetTime });
+
+    } catch (error) {
+        console.error('Error in class reminders:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
 });

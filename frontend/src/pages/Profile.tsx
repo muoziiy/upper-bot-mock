@@ -116,7 +116,7 @@ const Profile: React.FC = () => {
                     <span className="text-xs font-medium text-[#8E8E93] uppercase">AI Features</span>
                 </div>
                 <p className="text-xs text-[#8E8E93] mb-2 px-1">
-                    Turn on to enable experimental AI features. Talk to AI developers for more info.
+                    This can be turned on by talking to AI developers in Admin's Quick Actions.
                 </p>
             </div>
             <AdminSection>
