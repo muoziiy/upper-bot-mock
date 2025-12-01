@@ -38,6 +38,7 @@ const CountUp: React.FC<{ end: number; duration?: number; prefix?: string; suffi
 };
 
 import { useAppData } from '../../context/AppDataContext';
+import { mockService } from '../../services/mockData';
 
 const AdminStats: React.FC = () => {
     const { dashboardData } = useAppData();
@@ -66,19 +67,9 @@ const AdminStats: React.FC = () => {
     const fetchStats = async () => {
         setLoading(true);
         try {
-            const [genRes, finRes] = await Promise.all([
-                fetch(`${import.meta.env.VITE_API_URL}/admin/stats/general`),
-                fetch(`${import.meta.env.VITE_API_URL}/admin/stats/financial`)
-            ]);
-
-            if (genRes.ok) {
-                const genData = await genRes.json();
-                setGeneralStats(genData);
-            }
-            if (finRes.ok) {
-                const finData = await finRes.json();
-                setFinancialStats(finData);
-            }
+            const data = await mockService.getAdminStats();
+            setGeneralStats(data.general);
+            setFinancialStats(data.financial);
         } catch (e) {
             console.error('Failed to fetch stats', e);
         } finally {

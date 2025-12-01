@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import Lottie from 'lottie-react';
 import duckSuccess from '../../assets/animations/duck_success.json';
 import { AdminSection } from '../../pages/admin/components/AdminSection';
+import { mockService } from '../../services/mockData';
 
 interface EditCurriculumModalProps {
     isOpen: boolean;
@@ -43,15 +44,21 @@ const EditCurriculumModal: React.FC<EditCurriculumModalProps> = ({ isOpen, onClo
             return;
         }
 
-        console.log('Update curriculum:', formData);
-        webApp.HapticFeedback.notificationOccurred('success');
-        setShowSuccess(true);
+        mockService.updateCurriculum(formData).then((response) => {
+            if (response.success) {
+                webApp.HapticFeedback.notificationOccurred('success');
+                setShowSuccess(true);
 
-        setTimeout(() => {
-            setShowSuccess(false);
-            onClose();
-            setFormData({ subject: '', topic: '', description: '' });
-        }, 2000);
+                setTimeout(() => {
+                    setShowSuccess(false);
+                    onClose();
+                    setFormData({ subject: '', topic: '', description: '' });
+                }, 2000);
+            } else {
+                webApp.HapticFeedback.notificationOccurred('error');
+                alert('Failed to update curriculum');
+            }
+        });
     };
 
     return (

@@ -9,6 +9,7 @@ import PaymentHistoryModal from '../components/profile/PaymentHistoryModal';
 import SupportModal from '../components/profile/SupportModal';
 import { AdminSection } from './admin/components/AdminSection';
 import { AdminListItem } from './admin/components/AdminListItem';
+import { mockService } from '../services/mockData';
 
 const Profile: React.FC = () => {
     const { t } = useTranslation();
@@ -27,12 +28,9 @@ const Profile: React.FC = () => {
     useEffect(() => {
         const fetchSupportInfo = async () => {
             try {
-                const res = await fetch(`${import.meta.env.VITE_API_URL}/students/settings`);
-                if (res.ok) {
-                    const data = await res.json();
-                    if (data.support_info) {
-                        setSupportInfo(data.support_info);
-                    }
+                const data = await mockService.getStudentSettings();
+                if (data.support_info) {
+                    setSupportInfo(data.support_info);
                 }
             } catch (e) {
                 console.error('Failed to fetch support info', e);

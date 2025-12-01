@@ -5,6 +5,7 @@ import { cn } from '../../../lib/utils';
 import { useTelegram } from '../../../context/TelegramContext';
 import { AdminSection } from './AdminSection';
 import { AdminListItem } from './AdminListItem';
+import { mockService } from '../../../services/mockData';
 
 interface Payment {
     id: string;
@@ -81,11 +82,8 @@ const AdminPaymentModal: React.FC<AdminPaymentModalProps> = ({ isOpen, onClose, 
 
     const fetchPayments = async () => {
         try {
-            const res = await fetch(`${import.meta.env.VITE_API_URL}/admin/students/${studentId}/payments`);
-            if (res.ok) {
-                const data = await res.json();
-                setPayments(data);
-            }
+            const data = await mockService.getStudentPayments(studentId);
+            setPayments(data);
         } catch (e) {
             console.error('Failed to fetch payments', e);
         }
@@ -95,13 +93,9 @@ const AdminPaymentModal: React.FC<AdminPaymentModalProps> = ({ isOpen, onClose, 
         webApp.showConfirm('Are you sure you want to delete this payment?', async (confirm) => {
             if (confirm) {
                 try {
-                    const res = await fetch(`${import.meta.env.VITE_API_URL}/admin/students/${studentId}/payments/${paymentId}`, {
-                        method: 'DELETE'
-                    });
-                    if (res.ok) {
-                        fetchPayments();
-                        webApp.showAlert('Payment deleted');
-                    }
+                    await mockService.deleteStudentPayment(studentId, paymentId);
+                    fetchPayments();
+                    webApp.showAlert('Payment deleted');
                 } catch (e) {
                     webApp.showAlert('Failed to delete payment');
                 }
@@ -134,35 +128,27 @@ const AdminPaymentModal: React.FC<AdminPaymentModalProps> = ({ isOpen, onClose, 
 
         setLoading(true);
         try {
-            const res = await fetch(`${import.meta.env.VITE_API_URL}/admin/students/${studentId}/payments`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    amount: parseFloat(amount),
-                    payment_date: date,
-                    payment_method: method,
-                    group_id: selectedGroupId,
-                    lessons_attended: parseInt(lessonsAttended),
-                    status: 'completed',
-                    month: new Date(date).getMonth() + 1,
-                    year: new Date(date).getFullYear()
-                })
+            await mockService.addStudentPayment(studentId, {
+                amount: parseFloat(amount),
+                payment_date: date,
+                payment_method: method,
+                group_id: selectedGroupId,
+                lessons_attended: parseInt(lessonsAttended),
+                status: 'completed',
+                month: new Date(date).getMonth() + 1,
+                year: new Date(date).getFullYear()
             });
 
-            if (res.ok) {
-                webApp?.showPopup({
-                    title: 'Success',
-                    message: 'Payment saved successfully',
-                    buttons: [{ type: 'ok' }]
-                });
-                fetchPayments();
-                setView('history');
-                // Reset form
-                setAmount('');
-                setShowConfirmation(false);
-            } else {
-                throw new Error('Failed');
-            }
+            webApp?.showPopup({
+                title: 'Success',
+                message: 'Payment saved successfully',
+                buttons: [{ type: 'ok' }]
+            });
+            fetchPayments();
+            setView('history');
+            // Reset form
+            setAmount('');
+            setShowConfirmation(false);
         } catch (e) {
             webApp.showAlert('Failed to save payment');
         } finally {

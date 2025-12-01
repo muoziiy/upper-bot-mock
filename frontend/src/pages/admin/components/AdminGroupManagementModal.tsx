@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTelegram } from '../../../context/TelegramContext';
 import { Plus, ChevronLeft } from 'lucide-react';
+import { mockService } from '../../../services/mockData';
 
 interface Group {
     id: string;
@@ -67,13 +68,10 @@ const AdminGroupManagementModal: React.FC<AdminGroupManagementModalProps> = ({
 
     const fetchGroups = async () => {
         try {
-            const res = await fetch(`${import.meta.env.VITE_API_URL}/admin/groups/list`);
-            if (res.ok) {
-                const data = await res.json();
-                // Filter out groups the student is already in
-                const filtered = data.filter((g: Group) => !currentGroups.some(cg => cg.id === g.id));
-                setAvailableGroups(filtered);
-            }
+            const data = await mockService.getAdminGroups();
+            // Filter out groups the student is already in
+            const filtered = data.filter((g: Group) => !currentGroups.some(cg => cg.id === g.id));
+            setAvailableGroups(filtered);
         } catch (e) {
             console.error('Failed to fetch groups', e);
         }
@@ -84,24 +82,20 @@ const AdminGroupManagementModal: React.FC<AdminGroupManagementModalProps> = ({
 
         setLoading(true);
         try {
-            const res = await fetch(`${import.meta.env.VITE_API_URL}/admin/students/${studentId}/groups`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ groupId: selectedGroupToAdd.id, action: 'add', joinedAt: joinDate })
+            await mockService.updateStudentGroups(studentId, {
+                groupId: selectedGroupToAdd.id,
+                action: 'add',
+                joinedAt: joinDate
             });
 
-            if (res.ok) {
-                webApp?.showPopup({
-                    title: 'Success',
-                    message: 'Group added successfully.',
-                    buttons: [{ type: 'ok' }]
-                });
-                onUpdate();
-                setSelectedGroupToAdd(null);
-                setIsAdding(false);
-            } else {
-                throw new Error('Failed to add group');
-            }
+            webApp?.showPopup({
+                title: 'Success',
+                message: 'Group added successfully.',
+                buttons: [{ type: 'ok' }]
+            });
+            onUpdate();
+            setSelectedGroupToAdd(null);
+            setIsAdding(false);
         } catch (e) {
             webApp?.showAlert('Failed to add group');
         } finally {
@@ -112,22 +106,17 @@ const AdminGroupManagementModal: React.FC<AdminGroupManagementModalProps> = ({
     const handleRemoveGroup = async (groupId: string) => {
         setLoading(true);
         try {
-            const res = await fetch(`${import.meta.env.VITE_API_URL}/admin/students/${studentId}/groups`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ groupId, action: 'remove' })
+            await mockService.updateStudentGroups(studentId, {
+                groupId,
+                action: 'remove'
             });
 
-            if (res.ok) {
-                webApp?.showPopup({
-                    title: 'Success',
-                    message: 'Group removed successfully.',
-                    buttons: [{ type: 'ok' }]
-                });
-                onUpdate();
-            } else {
-                throw new Error('Failed to remove group');
-            }
+            webApp?.showPopup({
+                title: 'Success',
+                message: 'Group removed successfully.',
+                buttons: [{ type: 'ok' }]
+            });
+            onUpdate();
         } catch (e) {
             webApp?.showAlert('Failed to remove group');
         } finally {

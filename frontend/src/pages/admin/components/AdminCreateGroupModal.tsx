@@ -5,6 +5,7 @@ import { cn } from '../../../lib/utils';
 import { useTelegram } from '../../../context/TelegramContext';
 import { AdminSection } from './AdminSection';
 import { AdminListItem } from './AdminListItem';
+import { mockService } from '../../../services/mockData';
 
 interface Group {
     id: string;
@@ -81,11 +82,8 @@ const AdminCreateGroupModal: React.FC<AdminCreateGroupModalProps> = ({ isOpen, o
 
     const fetchTeachers = async () => {
         try {
-            const res = await fetch(`${import.meta.env.VITE_API_URL}/admin/users`);
-            if (res.ok) {
-                const data = await res.json();
-                setTeachers(data.filter((u: any) => u.role === 'teacher'));
-            }
+            const data = await mockService.getAdminTeachers();
+            setTeachers(data);
         } catch (e) {
             console.error('Failed to fetch teachers', e);
         }
@@ -120,37 +118,33 @@ const AdminCreateGroupModal: React.FC<AdminCreateGroupModalProps> = ({ isOpen, o
 
         setLoading(true);
         try {
-            const url = group
-                ? `${import.meta.env.VITE_API_URL}/admin/groups/${group.id}`
-                : `${import.meta.env.VITE_API_URL}/admin/groups`;
+            const groupData = {
+                name,
+                price: parseFloat(price),
+                teacher_id: teacherId || null,
+                schedule: {
+                    days: selectedDays,
+                    time
+                }
+            };
 
-            const method = group ? 'PUT' : 'POST';
-
-            const res = await fetch(url, {
-                method,
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    name,
-                    price: parseFloat(price),
-                    teacher_id: teacherId || null,
-                    schedule: {
-                        days: selectedDays,
-                        time
-                    }
-                })
-            });
-
-            if (res.ok) {
+            if (group) {
+                await mockService.updateGroup(group.id, groupData);
                 webApp?.showPopup({
                     title: 'Success',
-                    message: group ? 'Group updated successfully' : 'Group created successfully',
+                    message: 'Group updated successfully',
                     buttons: [{ type: 'ok' }]
                 });
-                onSuccess();
-                onClose();
             } else {
-                throw new Error('Failed to save group');
+                await mockService.createGroup(groupData);
+                webApp?.showPopup({
+                    title: 'Success',
+                    message: 'Group created successfully',
+                    buttons: [{ type: 'ok' }]
+                });
             }
+            onSuccess();
+            onClose();
         } catch (e) {
             webApp?.showAlert('Failed to save group');
         } finally {
@@ -165,21 +159,14 @@ const AdminCreateGroupModal: React.FC<AdminCreateGroupModalProps> = ({ isOpen, o
             if (confirm) {
                 setLoading(true);
                 try {
-                    const res = await fetch(`${import.meta.env.VITE_API_URL}/admin/groups/${group.id}`, {
-                        method: 'DELETE'
+                    await mockService.deleteGroup(group.id);
+                    webApp?.showPopup({
+                        title: 'Deleted',
+                        message: 'Group deleted successfully',
+                        buttons: [{ type: 'ok' }]
                     });
-
-                    if (res.ok) {
-                        webApp?.showPopup({
-                            title: 'Deleted',
-                            message: 'Group deleted successfully',
-                            buttons: [{ type: 'ok' }]
-                        });
-                        onSuccess();
-                        onClose();
-                    } else {
-                        throw new Error('Failed to delete group');
-                    }
+                    onSuccess();
+                    onClose();
                 } catch (e) {
                     webApp?.showAlert('Failed to delete group');
                 } finally {

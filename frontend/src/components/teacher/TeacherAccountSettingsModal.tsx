@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useTelegram } from '../../context/TelegramContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AdminSection } from '../../pages/admin/components/AdminSection';
+import { mockService } from '../../services/mockData';
 
 interface TeacherAccountSettingsModalProps {
     isOpen: boolean;
@@ -24,9 +25,14 @@ const TeacherAccountSettingsModal: React.FC<TeacherAccountSettingsModalProps> = 
     });
 
     const handleSave = () => {
-        console.log('Saving teacher info:', teacherInfo);
-        webApp.HapticFeedback.notificationOccurred('success');
-        onClose();
+        mockService.updateTeacherSettings(teacherInfo).then((response) => {
+            if (response.success) {
+                webApp.HapticFeedback.notificationOccurred('success');
+                onClose();
+            } else {
+                webApp.HapticFeedback.notificationOccurred('error');
+            }
+        });
     };
 
     // Handle back button

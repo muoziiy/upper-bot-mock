@@ -4,6 +4,7 @@ import WebApp from '@twa-dev/sdk';
 interface TelegramContextType {
     webApp: typeof WebApp;
     user: any;
+    setUser: (user: any) => void;
 }
 
 const TelegramContext = createContext<TelegramContextType | undefined>(undefined);
@@ -21,7 +22,7 @@ export const TelegramProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }, []);
 
     return (
-        <TelegramContext.Provider value={{ webApp: WebApp, user }}>
+        <TelegramContext.Provider value={{ webApp: WebApp, user, setUser }}>
             {children}
         </TelegramContext.Provider>
     );

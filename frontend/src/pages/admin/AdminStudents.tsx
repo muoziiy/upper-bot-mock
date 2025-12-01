@@ -9,6 +9,7 @@ import AdminFilterModal from './components/AdminFilterModal';
 import AdminGroupManagementModal from './components/AdminGroupManagementModal';
 import AdminAttendanceModal from './components/AdminAttendanceModal';
 import AdminStudentDetailsModal from './components/AdminStudentDetailsModal';
+import { mockService } from '../../services/mockData';
 
 // Interfaces
 interface Student {
@@ -57,11 +58,8 @@ const AdminStudents: React.FC = () => {
     // Fetch subjects
     const fetchSubjects = async () => {
         try {
-            const res = await fetch(`${import.meta.env.VITE_API_URL}/subjects/list`);
-            if (res.ok) {
-                const data = await res.json();
-                setSubjects(data);
-            }
+            const data = await mockService.getSubjects();
+            setSubjects(data);
         } catch (e) {
             console.error('Failed to fetch subjects', e);
         }
@@ -76,42 +74,45 @@ const AdminStudents: React.FC = () => {
         setLoading(true);
         setError(null);
         try {
-            const queryParams = new URLSearchParams();
-            if (searchQuery) queryParams.append('search', searchQuery);
+            const data = await mockService.getAdminStudents() as unknown as Student[];
+            // Client-side filtering
+            let filtered = data;
 
-            const res = await fetch(`${import.meta.env.VITE_API_URL}/admin/students?${queryParams.toString()}`);
-            if (res.ok) {
-                const data = await res.json();
-                // Client-side filtering
-                let filtered = data;
+            // Search Filter
+            if (searchQuery) {
+                const query = searchQuery.toLowerCase();
+                filtered = filtered.filter((s: Student) =>
+                    s.first_name.toLowerCase().includes(query) ||
+                    s.surname.toLowerCase().includes(query) ||
+                    (s.onboarding_first_name && s.onboarding_first_name.toLowerCase().includes(query)) ||
+                    s.student_id.includes(query)
+                );
+            }
 
-                // Status Filter
-                if (filters.status !== 'all') {
-                    if (filters.status === 'unpaid') {
-                        filtered = filtered.filter((s: Student) => s.payment_status === 'unpaid' || s.payment_status === 'overdue');
-                    } else {
-                        filtered = filtered.filter((s: Student) => s.payment_status === filters.status);
-                    }
+            // Status Filter
+            if (filters.status !== 'all') {
+                if (filters.status === 'unpaid') {
+                    filtered = filtered.filter((s: Student) => s.payment_status === 'unpaid' || s.payment_status === 'overdue');
+                } else {
+                    filtered = filtered.filter((s: Student) => s.payment_status === filters.status);
                 }
+            }
 
-                // Subject Filter
-                if (filters.subjectId !== 'all') {
-                    filtered = filtered.filter((s: Student) =>
-                        s.groups.some((g: any) => g.subject_id === filters.subjectId)
-                    );
+            // Subject Filter
+            if (filters.subjectId !== 'all') {
+                filtered = filtered.filter((s: Student) =>
+                    s.groups.some((g: any) => g.subject_id === filters.subjectId)
+                );
+            }
+
+            setStudents(filtered);
+
+            // Update selectedStudent if it exists
+            if (selectedStudent) {
+                const updatedSelected = filtered.find((s: Student) => s.id === selectedStudent.id);
+                if (updatedSelected) {
+                    setSelectedStudent(updatedSelected);
                 }
-
-                setStudents(filtered);
-
-                // Update selectedStudent if it exists
-                if (selectedStudent) {
-                    const updatedSelected = filtered.find((s: Student) => s.id === selectedStudent.id);
-                    if (updatedSelected) {
-                        setSelectedStudent(updatedSelected);
-                    }
-                }
-            } else {
-                setError('Failed to fetch students');
             }
         } catch (e) {
             console.error('Failed to fetch students', e);

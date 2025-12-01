@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useTelegram } from '../../context/TelegramContext';
 import { useTranslation } from 'react-i18next';
 import { AdminSection } from '../../pages/admin/components/AdminSection';
+import { mockService } from '../../services/mockData';
 
 interface ScheduleClassModalProps {
     isOpen: boolean;
@@ -44,25 +45,31 @@ const ScheduleClassModal: React.FC<ScheduleClassModalProps> = ({ isOpen, onClose
             return;
         }
 
-        console.log('Schedule class:', formData);
-        webApp.HapticFeedback.notificationOccurred('success');
+        mockService.scheduleClass(formData).then((response) => {
+            if (response.success) {
+                webApp.HapticFeedback.notificationOccurred('success');
 
-        // Show Telegram native popup with emoji
-        webApp.showPopup({
-            title: t('teacher.class_scheduled'),
-            message: '✅ ' + t('teacher.class_scheduled_success'),
-            buttons: [{ type: 'close' }]
-        }, () => {
-            // Popup closed callback
-            onClose();
-            setFormData({
-                groupId: '',
-                date: '',
-                time: '',
-                duration: '60',
-                location: '',
-                topic: ''
-            });
+                // Show Telegram native popup with emoji
+                webApp.showPopup({
+                    title: t('teacher.class_scheduled'),
+                    message: '✅ ' + t('teacher.class_scheduled_success'),
+                    buttons: [{ type: 'close' }]
+                }, () => {
+                    // Popup closed callback
+                    onClose();
+                    setFormData({
+                        groupId: '',
+                        date: '',
+                        time: '',
+                        duration: '60',
+                        location: '',
+                        topic: ''
+                    });
+                });
+            } else {
+                webApp.HapticFeedback.notificationOccurred('error');
+                alert('Failed to schedule class');
+            }
         });
     };
 

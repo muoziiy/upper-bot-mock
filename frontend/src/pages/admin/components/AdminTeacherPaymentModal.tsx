@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useTelegram } from '../../../context/TelegramContext';
 import { AdminSection } from './AdminSection';
 import { AdminListItem } from './AdminListItem';
+import { mockService } from '../../../services/mockData';
 
 interface Payment {
     id: string;
@@ -59,12 +60,9 @@ const AdminTeacherPaymentModal: React.FC<AdminTeacherPaymentModalProps> = ({ isO
 
     const fetchPayments = async () => {
         try {
-            const res = await fetch(`${import.meta.env.VITE_API_URL}/admin/teachers/${teacherId}/payments`);
-            if (res.ok) {
-                const data = await res.json();
-                const formattedData = data.map((p: any) => ({ ...p, status: p.status || 'paid' }));
-                setPayments(formattedData);
-            }
+            const data = await mockService.getTeacherPayments(); // In a real app, pass teacherId
+            const formattedData = data.map((p: any) => ({ ...p, status: p.status || 'paid' }));
+            setPayments(formattedData);
         } catch (e) {
             console.error('Failed to fetch payments', e);
         }
@@ -74,13 +72,9 @@ const AdminTeacherPaymentModal: React.FC<AdminTeacherPaymentModalProps> = ({ isO
         webApp.showConfirm('Are you sure you want to delete this payout?', async (confirm) => {
             if (confirm) {
                 try {
-                    const res = await fetch(`${import.meta.env.VITE_API_URL}/admin/teachers/${teacherId}/payments/${paymentId}`, {
-                        method: 'DELETE'
-                    });
-                    if (res.ok) {
-                        fetchPayments();
-                        webApp.showAlert('Payout deleted');
-                    }
+                    await mockService.deleteTeacherPayment(teacherId, paymentId);
+                    fetchPayments();
+                    webApp.showAlert('Payout deleted');
                 } catch (e) {
                     webApp.showAlert('Failed to delete payout');
                 }
@@ -107,30 +101,22 @@ const AdminTeacherPaymentModal: React.FC<AdminTeacherPaymentModalProps> = ({ isO
 
         setLoading(true);
         try {
-            const res = await fetch(`${import.meta.env.VITE_API_URL}/admin/teachers/${teacherId}/payments`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    amount: parseFloat(amount.replace(/\s/g, '')),
-                    payment_date: date,
-                    description,
-                    status: 'paid'
-                })
+            await mockService.addTeacherPayment(teacherId, {
+                amount: parseFloat(amount.replace(/\s/g, '')),
+                payment_date: date,
+                description,
+                status: 'paid'
             });
 
-            if (res.ok) {
-                webApp?.showPopup({
-                    title: 'Success',
-                    message: 'Payout saved successfully',
-                    buttons: [{ type: 'ok' }]
-                });
-                fetchPayments();
-                setView('history');
-                setAmount('');
-                setDescription('');
-            } else {
-                throw new Error('Failed');
-            }
+            webApp?.showPopup({
+                title: 'Success',
+                message: 'Payout saved successfully',
+                buttons: [{ type: 'ok' }]
+            });
+            fetchPayments();
+            setView('history');
+            setAmount('');
+            setDescription('');
         } catch (e) {
             webApp.showAlert('Failed to save payout');
         } finally {

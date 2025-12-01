@@ -4,6 +4,7 @@ import { useTelegram } from '../../context/TelegramContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AdminSection } from '../../pages/admin/components/AdminSection';
 import { AdminListItem } from '../../pages/admin/components/AdminListItem';
+import { mockService } from '../../services/mockData';
 
 interface TeacherPaymentHistoryModalProps {
     isOpen: boolean;
@@ -33,21 +34,10 @@ const TeacherPaymentHistoryModal: React.FC<TeacherPaymentHistoryModalProps> = ({
     // Fetch payments
     useEffect(() => {
         const fetchPayments = async () => {
-            if (!webApp?.initDataUnsafe?.user?.id) return;
-
             try {
                 setLoading(true);
-                const apiUrl = import.meta.env.VITE_API_URL;
-                const headers = {
-                    'x-user-id': webApp.initDataUnsafe.user.id.toString(),
-                    'Content-Type': 'application/json'
-                };
-
-                const response = await fetch(`${apiUrl}/teachers/payments`, { headers });
-                if (response.ok) {
-                    const data = await response.json();
-                    setPayments(data || []);
-                }
+                const data = await mockService.getTeacherPayments();
+                setPayments(data || []);
             } catch (error) {
                 console.error('Error fetching payments:', error);
             } finally {

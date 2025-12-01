@@ -35,7 +35,7 @@ const TakeExam = React.lazy(() => import('./pages/TakeExam'));
 const TeacherExams = React.lazy(() => import('./pages/TeacherExams'));
 
 const Onboarding = React.lazy(() => import('./pages/Onboarding'));
-const GuestDashboard = React.lazy(() => import('./pages/GuestDashboard'));
+// const GuestDashboard = React.lazy(() => import('./pages/GuestDashboard'));
 const WaitingPage = React.lazy(() => import('./pages/WaitingPage'));
 const Leaderboard = React.lazy(() => import('./pages/Leaderboard'));
 const Profile = React.lazy(() => import('./pages/Profile'));
@@ -45,6 +45,7 @@ const Lessons = React.lazy(() => import('./pages/Lessons'));
 const Groups = React.lazy(() => import('./pages/Groups'));
 const TeacherProfile = React.lazy(() => import('./pages/TeacherProfile'));
 const ParentProfile = React.lazy(() => import('./pages/ParentProfile'));
+const WelcomePage = React.lazy(() => import('./pages/WelcomePage'));
 
 const AppContent = () => {
   const { user } = useTelegram();
@@ -60,15 +61,15 @@ const AppContent = () => {
   const routes = [
     {
       path: '/',
-      element: !user ? <GuestDashboard /> :
+      element: !user ? <WelcomePage /> :
         !isOnboarded ? <Navigate to="/onboarding" /> :
           dashboardData?.user?.role === 'student' ? <StudentDashboard /> :
             dashboardData?.user?.role === 'teacher' ? <TeacherDashboard /> :
               dashboardData?.user?.role === 'parent' ? <ParentDashboard /> :
-                dashboardData?.user?.role === 'parent' ? <ParentDashboard /> :
-                  dashboardData?.user?.role === 'admin' || dashboardData?.user?.role === 'super_admin' ? <AdminStats /> :
-                    <WaitingPage />
+                dashboardData?.user?.role === 'admin' || dashboardData?.user?.role === 'super_admin' ? <AdminStats /> :
+                  <WaitingPage />
     },
+    { path: '/welcome', element: <WelcomePage /> },
     { path: '/onboarding', element: <Onboarding /> },
     { path: '/waiting', element: <WaitingPage /> },
     { path: '/leaderboard', element: <Leaderboard /> },

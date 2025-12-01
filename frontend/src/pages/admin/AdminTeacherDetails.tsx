@@ -4,6 +4,7 @@ import { useTelegram } from '../../context/TelegramContext';
 import { AdminSection } from './components/AdminSection';
 import { AdminListItem } from './components/AdminListItem';
 import AdminTeacherPaymentModal from './components/AdminTeacherPaymentModal';
+import { mockService } from '../../services/mockData';
 
 interface TeacherDetails {
     id: string;
@@ -59,13 +60,10 @@ const AdminTeacherDetails: React.FC = () => {
 
     const fetchTeacherDetails = async () => {
         try {
-            const res = await fetch(`${import.meta.env.VITE_API_URL}/admin/teachers/${id}`);
-            if (res.ok) {
-                const data = await res.json();
+            if (id) {
+                const data = await mockService.getTeacherDetails(id);
                 setTeacher(data.teacher);
                 setGroups(data.groups);
-            } else {
-                console.error('Failed to fetch teacher details');
             }
         } catch (e) {
             console.error('Error fetching teacher details', e);

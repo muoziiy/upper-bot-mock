@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { AdminSection } from './admin/components/AdminSection';
 import { AdminListItem } from './admin/components/AdminListItem';
 import { useTelegram } from '../context/TelegramContext';
+import { mockService } from '../services/mockData';
 
 interface Exam {
     id: string;
@@ -19,7 +20,7 @@ interface Exam {
 const TeacherExams: React.FC = () => {
     const { t } = useTranslation();
     const navigate = useNavigate();
-    const { user, webApp } = useTelegram();
+    const { webApp } = useTelegram();
     const [exams, setExams] = useState<Exam[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -37,15 +38,8 @@ const TeacherExams: React.FC = () => {
 
     const fetchExams = async () => {
         try {
-            const response = await fetch(`${import.meta.env.VITE_API_URL}/exams/teacher/list`, {
-                headers: {
-                    'x-user-id': user?.id?.toString() || ''
-                }
-            });
-            if (response.ok) {
-                const data = await response.json();
-                setExams(data);
-            }
+            const data = await mockService.getTeacherExams();
+            setExams(data as unknown as Exam[]); // Type assertion needed until types are shared
         } catch (error) {
             console.error('Failed to fetch exams', error);
         } finally {

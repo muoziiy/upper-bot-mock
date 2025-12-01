@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTelegram } from '../../context/TelegramContext';
 import { useAppData } from '../../context/AppDataContext';
+import { mockService } from '../../services/mockData';
 import GroupChatView from './GroupChatView';
 import GroupScheduleView from './GroupScheduleView';
 import { AdminSection } from '../../pages/admin/components/AdminSection';
@@ -35,13 +36,17 @@ const GroupDetailsModal: React.FC<GroupDetailsModalProps> = ({ isOpen, onClose, 
 
     if (!group) return null;
 
-    // Mock students data
-    const students = Array.from({ length: group.student_count || 10 }, (_, i) => ({
-        id: i + 1,
-        name: `Student ${i + 1}`,
-        attendance: '95%',
-        performance: 'A'
-    }));
+    const [students, setStudents] = useState<any[]>([]);
+
+    useEffect(() => {
+        const fetchStudents = async () => {
+            if (group?.id) {
+                const data = await mockService.getGroupStudents(group.id);
+                setStudents(data);
+            }
+        };
+        fetchStudents();
+    }, [group]);
 
     // Get messages for this group
     const groupMessages = teacherData?.messages?.find(m => m.group_id === group.id)?.messages || [];

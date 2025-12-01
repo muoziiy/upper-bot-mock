@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Save, ArrowLeft, Trash2, Image as ImageIcon, Mic, Wand2, Calendar, MapPin, Users, FileText, X } from 'lucide-react';
-import { supabase } from '../../lib/supabase';
+import { mockService } from '../../services/mockData';
 
 interface Question {
     id?: string;
@@ -61,100 +61,45 @@ const ExamEditor: React.FC = () => {
     }, [id]);
 
     const fetchGroups = async () => {
-        const { data } = await supabase.from('groups').select('id, name');
+        const data = await mockService.getGroups();
         setGroups(data || []);
     };
 
     const fetchExam = async () => {
-
         try {
-            const { data, error } = await supabase
-                .from('exams')
-                .select('*, questions(*)')
-                .eq('id', id)
-                .single();
+            const data = await mockService.getExamWithQuestions(id!);
 
-            if (error) throw error;
-            setTitle(data.title);
-            setDescription(data.description || '');
-            setDuration(data.duration_minutes || 60);
-            setType(data.type || 'online');
-            setLocation(data.location || '');
-            setQuestions(data.questions || []);
+            if (data) {
+                setTitle(data.title);
+                setDescription(data.description || '');
+                setDuration(data.duration_minutes || 60);
+                setType(data.type as any || 'online');
+                setLocation(data.location || '');
+                setQuestions(data.questions as any || []);
+            }
         } catch (error) {
             console.error('Error fetching exam:', error);
-        } finally {
-
         }
     };
 
     const handleSaveExam = async () => {
         setSaving(true);
         try {
-            const user = (await supabase.auth.getUser()).data.user;
             const examData = {
+                id: isNew ? undefined : id,
                 title,
                 description,
                 duration_minutes: duration,
                 type,
                 location: type === 'offline' ? location : null,
-                teacher_id: user?.id
+                questions: type === 'online' ? questions : [],
+                assignments: selectedGroups.map(groupId => ({
+                    group_id: groupId,
+                    scheduled_date: scheduledDate
+                }))
             };
 
-            let examId = id;
-
-            if (isNew) {
-                const { data, error } = await supabase
-                    .from('exams')
-                    .insert([examData])
-                    .select()
-                    .single();
-                if (error) throw error;
-                examId = data.id;
-            } else {
-                const { error } = await supabase
-                    .from('exams')
-                    .update(examData)
-                    .eq('id', id);
-                if (error) throw error;
-            }
-
-            // Save Questions (Only for Online)
-            if (type === 'online') {
-                if (!isNew) {
-                    await supabase.from('questions').delete().eq('exam_id', examId);
-                }
-
-                const questionsToSave = questions.map((q, index) => ({
-                    ...q,
-                    exam_id: examId,
-                    order_index: index
-                }));
-
-                if (questionsToSave.length > 0) {
-                    const { error: qError } = await supabase
-                        .from('questions')
-                        .insert(questionsToSave);
-                    if (qError) throw qError;
-                }
-            }
-
-            // Handle Assignments
-            if (selectedGroups.length > 0 && scheduledDate) {
-                const assignments = selectedGroups.map(groupId => ({
-                    exam_id: examId,
-                    group_id: groupId,
-                    scheduled_date: new Date(scheduledDate).toISOString(),
-                    status: 'scheduled'
-                }));
-
-                const { error: assignError } = await supabase
-                    .from('exam_assignments')
-                    .insert(assignments);
-
-                if (assignError) console.error('Error assigning groups:', assignError);
-            }
-
+            await mockService.saveExam(examData);
             navigate('/admin/exams');
         } catch (error) {
             console.error('Error saving exam:', error);
@@ -169,26 +114,16 @@ const ExamEditor: React.FC = () => {
         if (!file) return;
 
         try {
-            const fileExt = file.name.split('.').pop();
-            const fileName = `${Math.random()}.${fileExt}`;
-            const filePath = `${mediaType}s/${fileName}`;
-
-            const { error: uploadError } = await supabase.storage
-                .from('exam-media')
-                .upload(filePath, file);
-
-            if (uploadError) throw uploadError;
-
-            const { data } = supabase.storage.from('exam-media').getPublicUrl(filePath);
+            const { publicUrl } = await mockService.uploadFile(file);
 
             setTempQuestion(prev => ({
                 ...prev,
-                media_url: data.publicUrl,
+                media_url: publicUrl,
                 media_type: mediaType
             }));
         } catch (error) {
             console.error('Error uploading file:', error);
-            alert('Upload failed. Ensure "exam-media" bucket exists.');
+            alert('Upload failed.');
         }
     };
 
@@ -198,28 +133,13 @@ const ExamEditor: React.FC = () => {
 
         try {
             // 1. Upload PDF
-            const fileExt = aiFile.name.split('.').pop();
-            const fileName = `ai-uploads/${Math.random()}.${fileExt}`;
+            const { publicUrl } = await mockService.uploadFile(aiFile);
 
-            const { error: uploadError } = await supabase.storage
-                .from('exam-media')
-                .upload(fileName, aiFile);
-
-            if (uploadError) throw uploadError;
-
-            const { data: { publicUrl } } = supabase.storage.from('exam-media').getPublicUrl(fileName);
-
-            // 2. Call Backend
-            const response = await fetch(`${import.meta.env.VITE_API_URL}/exams/generate-ai`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ fileUrl: publicUrl, count: 5 })
-            });
-
-            const data = await response.json();
+            // 2. Call Mock AI Service
+            const data = await mockService.generateAIQuestions(publicUrl);
 
             if (data.questions) {
-                setQuestions([...questions, ...data.questions]);
+                setQuestions([...questions, ...data.questions as any]);
                 setShowAIModal(false);
                 setAiFile(null);
             } else {

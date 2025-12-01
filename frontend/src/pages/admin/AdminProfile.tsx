@@ -28,6 +28,31 @@ const AdminProfile: React.FC = () => {
                 <p className="text-[#8E8E93]">Administrator</p>
             </div>
 
+            <AdminSection title="AI Functions">
+                <AdminListItem
+                    icon="🤖"
+                    iconColor="bg-indigo-500"
+                    title="AI Teacher Assistant"
+                    onClick={() => { }}
+                    showChevron
+                />
+                <AdminListItem
+                    icon="📊"
+                    iconColor="bg-teal-500"
+                    title="Smart Analytics"
+                    onClick={() => { }}
+                    showChevron
+                />
+                <AdminListItem
+                    icon="📝"
+                    iconColor="bg-orange-500"
+                    title="Curriculum Generator"
+                    onClick={() => { }}
+                    showChevron
+                    isLast
+                />
+            </AdminSection>
+
             <AdminSection title="Settings">
                 <AdminListItem
                     icon="⚙️"

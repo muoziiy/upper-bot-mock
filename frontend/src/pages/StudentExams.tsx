@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { AdminSection } from './admin/components/AdminSection';
 import { AdminListItem } from './admin/components/AdminListItem';
 import { useTelegram } from '../context/TelegramContext';
+import { mockService } from '../services/mockData';
 
 interface StudentExam {
     id: string;
@@ -20,7 +21,7 @@ interface StudentExam {
 const StudentExams: React.FC = () => {
     const { t } = useTranslation();
     const navigate = useNavigate();
-    const { user, webApp } = useTelegram();
+    const { webApp } = useTelegram();
     const [exams, setExams] = useState<StudentExam[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -38,15 +39,8 @@ const StudentExams: React.FC = () => {
 
     const fetchExams = async () => {
         try {
-            const response = await fetch(`${import.meta.env.VITE_API_URL}/exams/student/list`, {
-                headers: {
-                    'x-user-id': user?.id?.toString() || ''
-                }
-            });
-            if (response.ok) {
-                const data = await response.json();
-                setExams(data);
-            }
+            const data = await mockService.getStudentExams();
+            setExams(data as any);
         } catch (error) {
             console.error('Failed to fetch exams', error);
         } finally {

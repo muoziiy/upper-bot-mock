@@ -6,6 +6,7 @@ import Lottie from 'lottie-react';
 import duckSuccess from '../../assets/animations/duck_success.json';
 import { AdminSection } from '../../pages/admin/components/AdminSection';
 import { useNavigate } from 'react-router-dom';
+import { mockService } from '../../services/mockData';
 
 interface CreateExamModalProps {
     isOpen: boolean;
@@ -14,7 +15,7 @@ interface CreateExamModalProps {
 }
 
 const CreateExamModal: React.FC<CreateExamModalProps> = ({ isOpen, onClose, groups }) => {
-    const { webApp, user } = useTelegram();
+    const { webApp } = useTelegram();
     const { t } = useTranslation();
     const navigate = useNavigate();
     const [formData, setFormData] = useState({
@@ -71,25 +72,17 @@ const CreateExamModal: React.FC<CreateExamModalProps> = ({ isOpen, onClose, grou
         try {
             const scheduledDate = new Date(`${formData.date}T${formData.time}`);
 
-            const response = await fetch(`${import.meta.env.VITE_API_URL}/exams/teacher/save`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'x-user-id': user?.id?.toString() || ''
-                },
-                body: JSON.stringify({
-                    title: formData.title,
-                    description: '',
-                    duration_minutes: 60, // Default
-                    type: formData.type,
-                    location: '',
-                    groups: [formData.groupId],
-                    scheduled_date: scheduledDate.toISOString()
-                })
+            const response = await mockService.createExam({
+                title: formData.title,
+                description: '',
+                duration_minutes: 60, // Default
+                type: formData.type,
+                location: '',
+                groups: [formData.groupId],
+                scheduled_date: scheduledDate.toISOString()
             });
 
-            if (response.ok) {
-                const data = await response.json();
+            if (response.success) {
                 webApp.HapticFeedback.notificationOccurred('success');
                 setShowSuccess(true);
 
@@ -107,7 +100,7 @@ const CreateExamModal: React.FC<CreateExamModalProps> = ({ isOpen, onClose, grou
 
                     // Redirect to edit questions if online
                     if (formData.type === 'online') {
-                        navigate(`/admin/exams/${data.examId}`); // Reusing Admin Editor for now
+                        navigate(`/admin/exams/${response.examId}`); // Reusing Admin Editor for now
                     }
                 }, 2000);
             } else {

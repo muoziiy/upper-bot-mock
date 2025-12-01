@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { CheckCircle, XCircle, Save, ArrowLeft, Clock } from 'lucide-react';
-import { supabase } from '../../lib/supabase';
+import { mockService } from '../../services/mockData';
 
 interface Submission {
     id: string;
@@ -39,39 +39,15 @@ const TeacherGrading: React.FC = () => {
     }, [examId]);
 
     const fetchData = async () => {
+        if (!examId) return;
         try {
             // Fetch Exam Questions
-            const { data: examData, error: examError } = await supabase
-                .from('exams')
-                .select('*, questions(*)')
-                .eq('id', examId)
-                .single();
-
-            if (examError) throw examError;
+            const examData = await mockService.getExamWithQuestions(examId);
             setExam(examData);
 
             // Fetch Submissions
-            const { data: subData, error: subError } = await supabase
-                .from('exam_results')
-                .select(`
-          id,
-          submitted_at,
-          score,
-          answers,
-          student:users (first_name, last_name)
-        `)
-                .eq('exam_id', examId);
-
-            if (subError) throw subError;
-
-            // Transform data if necessary or cast to any to avoid strict type issues with joins
-            const formattedSubmissions = (subData || []).map((sub: any) => ({
-                ...sub,
-                // Handle case where student might be returned as an array or object depending on Supabase client version/setup
-                student: Array.isArray(sub.student) ? sub.student[0] : sub.student
-            }));
-
-            setSubmissions(formattedSubmissions);
+            const submissionsData = await mockService.getExamSubmissions(examId);
+            setSubmissions(submissionsData as unknown as Submission[]);
         } catch (error) {
             console.error('Error fetching grading data:', error);
         } finally {
@@ -108,14 +84,7 @@ const TeacherGrading: React.FC = () => {
                 }
             });
 
-            const { error } = await supabase
-                .from('exam_results')
-                .update({
-                    score: totalScore,
-                })
-                .eq('id', selectedSubmission.id);
-
-            if (error) throw error;
+            await mockService.saveExamGrade(selectedSubmission.id, totalScore);
 
             // Update local state
             setSubmissions(prev => prev.map(s =>

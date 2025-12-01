@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAppData } from '../context/AppDataContext';
+import { mockService } from '../services/mockData';
 
 interface AdminData {
     students: any[];
@@ -34,16 +35,22 @@ export const useAdminData = () => {
         setData(prev => ({ ...prev, loading: true }));
 
         try {
-            const [studentsRes, groupsRes, teachersRes] = await Promise.all([
-                fetch(`${import.meta.env.VITE_API_URL}/admin/students`),
-                fetch(`${import.meta.env.VITE_API_URL}/admin/groups/list`),
-                fetch(`${import.meta.env.VITE_API_URL}/admin/users`) // Filter for teachers
+            const [students, groups, teachers] = await Promise.all([
+                mockService.getAdminStudents(),
+                mockService.getAdminGroups(),
+                mockService.getAdminTeachers()
             ]);
 
-            const students = await studentsRes.json();
-            const groups = await groupsRes.json();
-            const users = await teachersRes.json();
-            const teachers = users.filter((u: any) => u.role === 'teacher');
+            // const students = await studentsRes.json();
+            // const groups = await groupsRes.json();
+            // const users = await teachersRes.json();
+            // const teachers = users.filter((u: any) => u.role === 'teacher');
+
+            // Mock service returns data directly
+            // const students = await studentsRes.json();
+            // const groups = await groupsRes.json();
+            // const users = await teachersRes.json();
+            // const teachers = users.filter((u: any) => u.role === 'teacher');
 
             cache = {
                 students,

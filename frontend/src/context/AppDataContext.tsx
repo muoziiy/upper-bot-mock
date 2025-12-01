@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 import { useTelegram } from './TelegramContext';
 import type { JourneyData } from '../types/journey.types';
+import { mockService } from '../services/mockData';
 
 interface DashboardData {
     user: {
@@ -153,7 +154,7 @@ export const AppDataProvider: React.FC<{ children: ReactNode }> = ({ children })
     const { user } = useTelegram();
     const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
     const [teacherData, setTeacherData] = useState<TeacherData | null>(null);
-    const [parentData, setParentData] = useState<ParentData | null>(null);
+    const [parentData, _setParentData] = useState<ParentData | null>(null);
     const [leaderboardData, setLeaderboardData] = useState<LeaderboardData | null>(null);
     const [achievementsData, setAchievementsData] = useState<AchievementsData | null>(null);
     const [journeyData, setJourneyData] = useState<JourneyData | null>(null);
@@ -185,123 +186,64 @@ export const AppDataProvider: React.FC<{ children: ReactNode }> = ({ children })
     const [error, setError] = useState<string | null>(null);
 
     const fetchAllData = async () => {
-        if (!user?.id) return;
+        // If no user is logged in (e.g. initial load before role selection), we might want to wait or do nothing.
+        // But for the Welcome Page to work, we might not need data yet.
+        // However, once a user is set in TelegramContext, we should fetch data.
+
+        if (!user) {
+            setLoading(false);
+            return;
+        }
 
         setLoading(true);
         setError(null);
 
         try {
-            const apiUrl = import.meta.env.VITE_API_URL;
-            const headers = {
-                'x-user-id': user.id.toString(),
-                'Content-Type': 'application/json'
-            };
+            // Simulate Login
+            await mockService.login(user);
 
-            // Sync user data (Login)
-            await fetch(`${apiUrl}/auth/login`, {
-                method: 'POST',
-                headers,
-                body: JSON.stringify(user)
+            // Determine role based on the user object (which comes from mockData via WelcomePage)
+            // In our mock setup, the 'user' object from TelegramContext will already have the role if we set it from WelcomePage.
+            // Or we can just fetch everything based on the role property.
+
+            const role = user.role || 'student'; // Default to student if not specified
+
+            // Fetch Dashboard Data
+            if (role === 'student') {
+                const studentData = await mockService.getStudentDashboard();
+                setDashboardData(studentData as any);
+
+                const journey = await mockService.getJourneyData();
+                setJourneyData(journey as any);
+            } else if (role === 'teacher') {
+                const teacherInfo = await mockService.getTeacherData();
+                setTeacherData(teacherInfo as any);
+                // Also set basic dashboard data for user info
+                setDashboardData({ user: user } as any);
+            } else if (role === 'admin') {
+                const adminInfo = await mockService.getAdminData();
+                // We might need to map adminInfo to dashboardData or specific admin context
+                setDashboardData({ user: user } as any);
+                setAdminRequests(adminInfo.requests as any);
+            } else if (role === 'parent') {
+                setDashboardData({ user: user } as any);
+                // Fetch parent data...
+            }
+
+            // Common Data
+            setLeaderboardData({
+                leaderboard: [
+                    { rank: 1, score: 2850, users: { first_name: 'Sarah', last_name: 'J.' } },
+                    { rank: 2, score: 2720, users: { first_name: 'Mike', last_name: 'T.' } },
+                    { rank: 3, score: 2680, users: { first_name: 'Emma', last_name: 'W.' } },
+                ],
+                user_rank: { rank: 42, score: 1250 }
             });
 
-            const [dashboardRes, leaderboardRes, achievementsRes] = await Promise.all([
-                fetch(`${apiUrl}/students/dashboard`, { headers }),
-                fetch(`${apiUrl}/leaderboard?category=global&period=all-time&limit=50`, { headers }),
-                fetch(`${apiUrl}/students/achievements`, { headers }),
-                fetch(`${apiUrl}/students/journey`, { headers }),
-            ]);
-
-            let currentDashboardData: DashboardData | null = null;
-
-            if (dashboardRes.ok) {
-                currentDashboardData = await dashboardRes.json();
-                setDashboardData(currentDashboardData);
-
-                // If user is super_admin, fetch admin requests
-                if (currentDashboardData?.user?.role === 'super_admin') {
-                    try {
-                        const requestsRes = await fetch(`${apiUrl}/admin/requests`, { headers });
-                        if (requestsRes.ok) {
-                            const requests = await requestsRes.json();
-                            setAdminRequests(requests);
-                        }
-                    } catch (e) {
-                        console.error('Failed to fetch admin requests', e);
-                    }
-                }
-
-                // Fetch Parent Data if user is parent
-                if (currentDashboardData?.user?.role === 'parent') {
-                    try {
-                        const parentRes = await fetch(`${apiUrl}/students/parent-dashboard`, { headers });
-                        if (parentRes.ok) {
-                            const pData = await parentRes.json();
-                            setParentData(pData);
-                        }
-                    } catch (e) {
-                        console.error('Failed to fetch parent data', e);
-                    }
-                }
-            }
-
-            // Fetch Teacher Data if user is teacher
-            if (currentDashboardData?.user?.role === 'teacher') {
-                try {
-                    const [groupsRes, scheduleRes] = await Promise.all([
-                        fetch(`${apiUrl}/teachers/groups`, { headers }),
-                        fetch(`${apiUrl}/teachers/schedule`, { headers })
-                    ]);
-
-                    if (groupsRes.ok && scheduleRes.ok) {
-                        const groups = await groupsRes.json();
-                        const schedule = await scheduleRes.json();
-
-                        // Calculate stats
-                        const totalStudents = groups.reduce((sum: number, g: any) => sum + (g.student_count || 0), 0);
-                        const upcomingExamsCount = 0; // TODO: Fetch exams count if needed
-
-                        setTeacherData({
-                            groups,
-                            stats: {
-                                total_students: totalStudents,
-                                active_groups: groups.length,
-                                upcoming_exams_count: upcomingExamsCount,
-                            },
-                            schedule,
-                            messages: []
-                        });
-                    }
-                } catch (e) {
-                    console.error('Failed to fetch teacher data', e);
-                }
-            }
-
-            if (leaderboardRes.ok) {
-                setLeaderboardData({
-                    leaderboard: [
-                        { rank: 1, score: 2850, users: { first_name: 'Sarah', last_name: 'J.' } },
-                        { rank: 2, score: 2720, users: { first_name: 'Mike', last_name: 'T.' } },
-                        { rank: 3, score: 2680, users: { first_name: 'Emma', last_name: 'W.' } },
-                    ],
-                    user_rank: { rank: 42, score: 1250 }
-                });
-            } else {
-                setLeaderboardData({
-                    leaderboard: [
-                        { rank: 1, score: 2850, users: { first_name: 'Sarah', last_name: 'J.' } },
-                        { rank: 2, score: 2720, users: { first_name: 'Mike', last_name: 'T.' } },
-                        { rank: 3, score: 2680, users: { first_name: 'Emma', last_name: 'W.' } },
-                    ],
-                    user_rank: { rank: 42, score: 1250 }
-                });
-            }
-
-            if (achievementsRes.ok) {
-                const data = await achievementsRes.json();
-                setAchievementsData(data);
-            }
-
-            setJourneyData(null);
+            setAchievementsData({
+                achievements: [],
+                stats: { total: 10, unlocked: 3, total_points: 150 }
+            });
 
         } catch (err) {
             console.error('Failed to fetch app data:', err);

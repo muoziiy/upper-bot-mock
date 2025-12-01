@@ -6,6 +6,7 @@ import Lottie from 'lottie-react';
 import duckSuccess from '../../assets/animations/duck_success.json';
 import { AdminSection } from '../../pages/admin/components/AdminSection';
 import { AdminListItem } from '../../pages/admin/components/AdminListItem';
+import { mockService } from '../../services/mockData';
 
 interface AttendanceModalProps {
     isOpen: boolean;
@@ -63,19 +64,30 @@ const AttendanceModal: React.FC<AttendanceModalProps> = ({ isOpen, onClose, grou
         webApp.HapticFeedback.impactOccurred('light');
     };
 
-    const handleSave = () => {
+    const handleSave = async () => {
         console.log('Save attendance:', { selectedGroupId, selectedDate, students });
-        // TODO: Add API call to save attendance
-        webApp.HapticFeedback.notificationOccurred('success');
-        setShowSuccess(true);
 
-        // Close after animation
-        setTimeout(() => {
-            setShowSuccess(false);
-            onClose();
-            setSelectedGroupId('');
-            setStudents([]);
-        }, 2000);
+        const response = await mockService.saveAttendance({
+            groupId: selectedGroupId,
+            date: selectedDate,
+            students: students
+        });
+
+        if (response.success) {
+            webApp.HapticFeedback.notificationOccurred('success');
+            setShowSuccess(true);
+
+            // Close after animation
+            setTimeout(() => {
+                setShowSuccess(false);
+                onClose();
+                setSelectedGroupId('');
+                setStudents([]);
+            }, 2000);
+        } else {
+            webApp.HapticFeedback.notificationOccurred('error');
+            alert('Failed to save attendance');
+        }
     };
 
     const presentCount = students.filter(s => s.isPresent).length;
