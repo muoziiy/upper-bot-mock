@@ -10,7 +10,7 @@ import { AdminListItem } from './admin/components/AdminListItem';
 const TeacherProfile: React.FC = () => {
     const { t } = useTranslation();
     const { user, webApp } = useTelegram();
-    const { dashboardData } = useAppData();
+    const { dashboardData, logout } = useAppData();
     const [showAccountSettings, setShowAccountSettings] = useState(false);
     const [showPaymentHistory, setShowPaymentHistory] = useState(false);
 
@@ -26,40 +26,24 @@ const TeacherProfile: React.FC = () => {
         classesThisMonth: 28
     };
 
-    // Get profile photo from Telegram
-    const profilePhotoUrl = user?.photo_url;
-
     return (
         <div className="min-h-screen bg-[#F2F2F7] dark:bg-[#000000] pb-24 pt-6 text-black dark:text-white">
             {/* Profile Header */}
-            <div className="flex flex-col items-center justify-center mb-6 px-4">
-                {/* Profile Photo */}
-                <div className="w-24 h-24 rounded-full mb-3 overflow-hidden shadow-lg border-2 border-white dark:border-[#1C1C1E] bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+            <div className="flex flex-col items-center justify-center mb-8">
+                <div className="w-24 h-24 rounded-full bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center text-white text-4xl font-bold overflow-hidden shadow-lg mb-3">
                     {user?.emoji ? (
                         <span className="text-5xl">{user.emoji}</span>
-                    ) : profilePhotoUrl ? (
-                        <img
-                            src={profilePhotoUrl}
-                            alt="Profile"
-                            className="w-full h-full object-cover"
-                        />
                     ) : (
-                        <div className="w-full h-full flex items-center justify-center text-4xl font-bold text-white">
-                            {dashboardData?.user.first_name?.[0] || user?.first_name?.[0] || 'T'}
-                        </div>
+                        <span>{user?.first_name?.[0] || 'T'}</span>
                     )}
                 </div>
-
-                {/* Name */}
-                <div className="text-center">
-                    <h1 className="text-2xl font-bold">
-                        {dashboardData?.user.onboarding_first_name || dashboardData?.user.first_name || user?.first_name || 'Teacher'} {dashboardData?.user.last_name || user?.last_name || ''}
-                    </h1>
-                    <div className="flex items-center justify-center gap-2 text-sm text-[#8E8E93] mt-1">
-                        <span className="capitalize">{t('teacher_profile.role_teacher')}</span>
-                        <span>•</span>
-                        <span>ID: #{teacherId}</span>
-                    </div>
+                <h1 className="text-2xl font-bold text-black dark:text-white mt-2">
+                    {user?.first_name} {user?.last_name}
+                </h1>
+                <div className="flex items-center gap-2 text-[#8E8E93]">
+                    <span className="capitalize">{dashboardData?.user.role}</span>
+                    <span>•</span>
+                    <span>ID: #{teacherId}</span>
                 </div>
             </div>
 
@@ -113,8 +97,7 @@ const TeacherProfile: React.FC = () => {
                     iconColor="bg-blue-500"
                     onClick={() => {
                         webApp.HapticFeedback.impactOccurred('medium');
-                        localStorage.removeItem('telegram-user');
-                        window.location.reload();
+                        logout();
                     }}
                     showChevron
                 />
@@ -124,7 +107,7 @@ const TeacherProfile: React.FC = () => {
                     iconColor="bg-red-500"
                     onClick={() => {
                         webApp.HapticFeedback.impactOccurred('medium');
-                        // Implement logout logic here
+                        logout();
                     }}
                     destructive
                     isLast

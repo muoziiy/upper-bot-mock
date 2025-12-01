@@ -138,6 +138,7 @@ interface AppDataContextType {
     loading: boolean;
     error: string | null;
     refreshData: () => Promise<void>;
+    logout: () => void;
 }
 
 const AppDataContext = createContext<AppDataContextType | undefined>(undefined);
@@ -238,9 +239,9 @@ export const AppDataProvider: React.FC<{ children: ReactNode }> = ({ children })
             // Common Data
             setLeaderboardData({
                 leaderboard: [
-                    { rank: 1, score: 2850, users: { first_name: 'Sarah', last_name: 'J.' } },
-                    { rank: 2, score: 2720, users: { first_name: 'Mike', last_name: 'T.' } },
-                    { rank: 3, score: 2680, users: { first_name: 'Emma', last_name: 'W.' } },
+                    { rank: 1, score: 2850, users: { first_name: 'Jahongir', last_name: "P." } },
+                    { rank: 2, score: 2720, users: { first_name: 'Shahzod', last_name: 'B.' } },
+                    { rank: 3, score: 2680, users: { first_name: 'Temurbek', last_name: 'A.' } },
                 ],
                 user_rank: { rank: 42, score: 1250 }
             });
@@ -276,6 +277,12 @@ export const AppDataProvider: React.FC<{ children: ReactNode }> = ({ children })
         loading,
         error,
         refreshData: fetchAllData,
+        logout: () => {
+            setDashboardData(null);
+            setTeacherData(null);
+            localStorage.removeItem('telegram-user');
+            window.location.href = '/';
+        }
     };
 
     return <AppDataContext.Provider value={value}>{children}</AppDataContext.Provider>;

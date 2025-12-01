@@ -124,9 +124,11 @@ const AppContent = () => {
     '/admin/students/',
     '/student/exams/',
     '/teacher/exams/',
-    '/admin/exams/'
+    '/admin/exams/',
+    '/welcome'
   ];
-  const shouldShowNav = user && !hideNavPaths.some(path => location.pathname.startsWith(path));
+  const isRoot = location.pathname === '/';
+  const shouldShowNav = user && !isRoot && !hideNavPaths.some(path => location.pathname.startsWith(path));
 
   if (loading) {
     return <div className="flex h-screen items-center justify-center bg-tg-secondary text-tg-text">Loading...</div>;

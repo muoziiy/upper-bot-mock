@@ -7,25 +7,23 @@ import SettingsModal from '../../components/profile/SettingsModal';
 
 const AdminProfile: React.FC = () => {
     const { user } = useTelegram();
-    const { dashboardData } = useAppData();
+    const { logout } = useAppData();
     const [showSettings, setShowSettings] = useState(false);
 
     return (
-        <div className="min-h-screen bg-[#F2F2F7] dark:bg-[#000000] pt-6 pb-20">
+        <div className="min-h-screen bg-[#F2F2F7] dark:bg-[#000000] pb-24 pt-6 text-black dark:text-white">
             <SettingsModal isOpen={showSettings} onClose={() => setShowSettings(false)} />
 
             <div className="flex flex-col items-center justify-center mb-8">
-                <div className="w-24 h-24 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-4xl font-bold overflow-hidden shadow-lg mb-3">
+                <div className="w-24 h-24 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-4xl font-bold overflow-hidden shadow-lg mb-3">
                     {user?.emoji ? (
                         <span className="text-5xl">{user.emoji}</span>
-                    ) : user?.photo_url ? (
-                        <img src={user.photo_url} alt="Profile" className="w-full h-full object-cover" />
                     ) : (
-                        <span>{dashboardData?.user.first_name?.[0] || 'A'}</span>
+                        <span>{user?.first_name?.[0] || 'A'}</span>
                     )}
                 </div>
-                <h1 className="text-2xl font-bold text-black dark:text-white">
-                    {dashboardData?.user.onboarding_first_name || dashboardData?.user.first_name} {dashboardData?.user.last_name}
+                <h1 className="text-2xl font-bold text-black dark:text-white mt-2">
+                    {user?.first_name} {user?.last_name}
                 </h1>
                 <p className="text-[#8E8E93]">Administrator</p>
             </div>
@@ -87,10 +85,7 @@ const AdminProfile: React.FC = () => {
                     icon="🔄"
                     iconColor="bg-blue-500"
                     title="Switch Role"
-                    onClick={() => {
-                        localStorage.removeItem('telegram-user');
-                        window.location.reload();
-                    }}
+                    onClick={logout}
                     showChevron
                 />
                 <AdminListItem
@@ -98,7 +93,7 @@ const AdminProfile: React.FC = () => {
                     iconColor="bg-red-500"
                     title="Log Out"
                     destructive
-                    onClick={() => { }}
+                    onClick={logout}
                     isLast
                 />
             </AdminSection>

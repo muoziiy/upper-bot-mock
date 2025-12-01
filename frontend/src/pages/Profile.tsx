@@ -14,7 +14,7 @@ import { mockService } from '../services/mockData';
 const Profile: React.FC = () => {
     const { t } = useTranslation();
     const { user } = useTelegram();
-    const { dashboardData, loading } = useAppData();
+    const { dashboardData, loading, logout } = useAppData();
     const [showSettings, setShowSettings] = useState(false);
     const [showSupport, setShowSupport] = useState(false);
     const [supportInfo, setSupportInfo] = useState<any>(null);
@@ -122,11 +122,7 @@ const Profile: React.FC = () => {
                     icon="🔄"
                     iconColor="bg-blue-500"
                     title="Switch Role"
-                    onClick={() => {
-                        // Clear user data and reload to force welcome page
-                        localStorage.removeItem('telegram-user');
-                        window.location.reload();
-                    }}
+                    onClick={logout}
                     showChevron
                 />
                 <AdminListItem
@@ -160,32 +156,9 @@ const Profile: React.FC = () => {
                         {/* Payment History */}
                         <AdminListItem
                             icon="💰"
-                            iconColor="bg-green-500"
                             title={t('profile.payment_history')}
-                            onClick={() => setSelectedSubjectPayments({ name: group.name, payments: group.payments })}
+                            onClick={() => setSelectedSubjectPayments(group)}
                             showChevron
-                            rightElement={
-                                <div className="flex gap-1">
-                                    {group.payments && group.payments.length > 0 ? (
-                                        group.payments.slice(0, 3).map((payment: any, idx: number) => (
-                                            <div
-                                                key={idx}
-                                                className={`w-2 h-2 rounded-full ${payment.status === 'paid' ? 'bg-green-500' : payment.status === 'pending' ? 'bg-yellow-500' : 'bg-red-500'}`}
-                                            />
-                                        ))
-                                    ) : null}
-                                </div>
-                            }
-                        />
-
-                        {/* Attendance */}
-                        <AdminListItem
-                            icon="📅"
-                            iconColor="bg-blue-500"
-                            title={t('profile.view_attendance')}
-                            onClick={() => setSelectedSubjectAttendance({ name: group.name, attendance: group.attendance })}
-                            showChevron
-                            isLast
                         />
                     </AdminSection>
                 ))

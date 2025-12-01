@@ -10,33 +10,35 @@ export let MOCK_USERS = {
         last_name: "Po'latov",
         username: 'jahongir_p',
         role: 'student',
-        student_id: 'ST-2023-001',
-        sex: 'male',
-        emoji: '👨‍🎓'
+        emoji: '👨‍🎓',
+        sex: 'male'
     },
     teacher: {
         id: 'teacher_1',
-        first_name: 'Sarah',
-        last_name: 'Teacher',
-        username: 'sarah_teacher',
+        first_name: 'Azam',
+        last_name: 'Qahramoniy',
+        username: 'azam_q',
         role: 'teacher',
-        emoji: '👩‍🏫'
+        emoji: '👨‍🏫',
+        sex: 'male'
     },
     admin: {
         id: 'admin_1',
-        first_name: 'Admin',
-        last_name: 'User',
-        username: 'admin_user',
+        first_name: 'Shahzod',
+        last_name: 'Bahodirov',
+        username: 'shahzod_b',
         role: 'admin',
-        emoji: '🛡️'
+        emoji: '👨‍💼',
+        sex: 'male'
     },
     parent: {
         id: 'parent_1',
-        first_name: 'John',
-        last_name: 'Parent',
-        username: 'john_parent',
+        first_name: 'Temurbek',
+        last_name: 'Adhamov',
+        username: 'temurbek_a',
         role: 'parent',
-        emoji: '👨‍👩‍👦'
+        emoji: '👨‍👦',
+        sex: 'male'
     }
 };
 
@@ -111,15 +113,14 @@ export let MOCK_DASHBOARD_DATA = {
                 id: 'g1',
                 name: 'English A1',
                 status: 'active',
-                teacher: MOCK_USERS.teacher,
+                teacher: { ...MOCK_USERS.teacher, first_name: 'Malika', last_name: 'Karimova', emoji: '👩‍🏫' },
                 payments: [
-                    { id: 'p1', amount: 150000, date: '2023-11-01', status: 'paid' },
-                    { id: 'p2', amount: 150000, date: '2023-10-01', status: 'paid' },
-                    { id: 'p3', amount: 150000, date: '2023-12-01', status: 'pending' }
+                    { id: 'p1', amount: 500000, date: '2023-11-01', status: 'paid' },
+                    { id: 'p2', amount: 500000, date: '2023-10-01', status: 'paid' },
+                    { id: 'p3', amount: 500000, date: '2023-09-01', status: 'paid' }
                 ],
                 attendance: [
                     { date: '2023-11-20', status: 'present' },
-                    { date: '2023-11-18', status: 'present' },
                     { date: '2023-11-15', status: 'absent' }
                 ]
             },
@@ -127,7 +128,7 @@ export let MOCK_DASHBOARD_DATA = {
                 id: 'g2',
                 name: 'Physics Basics',
                 status: 'active',
-                teacher: { ...MOCK_USERS.teacher, first_name: 'Albert', last_name: 'Einstein', emoji: '👨‍🔬' },
+                teacher: { ...MOCK_USERS.teacher, first_name: 'Azam', last_name: 'Qahramoniy', emoji: '👨‍🔬' },
                 payments: [
                     { id: 'p4', amount: 200000, date: '2023-11-05', status: 'paid' }
                 ],
@@ -173,25 +174,47 @@ export let MOCK_ADMIN_DATA = {
             netIncome: 10000000,
             pendingPayments: 2500000,
             recentTransactions: [
-                { id: 'tx1', user: 'Jahongir P.', type: 'incoming', amount: 500000, date: '2023-12-01' },
-                { id: 'tx2', user: 'Sarah Teacher', type: 'outgoing', amount: 2000000, date: '2023-11-30' }
+                {
+                    id: 't1',
+                    user: 'Jahongir P.',
+                    amount: 500000,
+                    type: 'income',
+                    date: '2023-11-25',
+                    status: 'completed'
+                },
+                {
+                    id: 't2',
+                    user: 'Azam Q.',
+                    amount: 5000000,
+                    type: 'expense',
+                    date: '2023-11-24',
+                    status: 'completed'
+                }
             ]
         }
     },
     requests: [
-        { id: 'req_1', user_id: 'u_101', status: 'pending', created_at: '2023-12-01', users: { first_name: 'New', last_name: 'Student', username: 'new_student', emoji: '👤' } },
-        { id: 'req_2', user_id: 'u_102', status: 'pending', created_at: '2023-12-02', users: { first_name: 'Another', last_name: 'Teacher', username: 'new_teacher', emoji: '👤' } }
+        {
+            id: 'req_1',
+            user_id: 'new_user_1',
+            status: 'pending',
+            created_at: '2023-11-26T10:00:00',
+            users: {
+                first_name: 'Bekzod',
+                last_name: 'Mirahmedov',
+                username: 'bekzod_m',
+                telegram_id: '123456789'
+            }
+        }
     ]
 };
 
 export let MOCK_JOURNEY_DATA = {
-    userLevel: {
-        user_id: 'student_1',
-        current_level: UserLevel.INTERMEDIATE,
-        progress_percentage: 45,
-        level_started_at: '2023-09-01',
-        updated_at: '2023-12-01'
-    },
+    user_id: 'student_1',
+    current_level: UserLevel.INTERMEDIATE,
+    progress_percentage: 45,
+    level_started_at: '2023-09-01',
+    updated_at: '2023-12-01',
     curriculum: [
         { id: 'c1', level: UserLevel.BEGINNER, name: 'Beginner', description: 'Start your journey', order_index: 1, is_active: true, created_at: '', updated_at: '' },
         { id: 'c2', level: UserLevel.ELEMENTARY, name: 'Elementary', description: 'Basics', order_index: 2, is_active: true, created_at: '', updated_at: '' },
@@ -556,38 +579,6 @@ export const mockService = {
         }));
     },
 
-    getTeacherDetails: async (teacherId: string) => {
-        await new Promise(resolve => setTimeout(resolve, 300));
-        return {
-            teacher: {
-                id: teacherId,
-                first_name: 'Sarah',
-                surname: 'Teacher',
-                phone_number: '+1234567890',
-                bio: 'Mathematics Teacher with 10 years of experience.',
-                username: 'sarah_teacher',
-                telegram_id: 123456789,
-                emoji: '👩‍🏫'
-            },
-            groups: [
-                {
-                    id: 'g1',
-                    name: 'Mathematics 101',
-                    price: 500000,
-                    schedule: {},
-                    student_count: 15
-                },
-                {
-                    id: 'g2',
-                    name: 'Advanced Algebra',
-                    price: 600000,
-                    schedule: {},
-                    student_count: 10
-                }
-            ]
-        };
-    },
-
     deleteTeacherPayment: async (_teacherId: string, _paymentId: string) => {
         await new Promise(resolve => setTimeout(resolve, 300));
         return true;
@@ -649,23 +640,6 @@ export const mockService = {
         ];
     },
 
-    getAdminTeachers: async () => {
-        await new Promise(resolve => setTimeout(resolve, 300));
-        return [
-            { id: 't1', first_name: 'Sarah', surname: 'Teacher', role: 'teacher', subjects: ['Math'], groups_count: 3, emoji: '👩‍🏫' },
-            { id: 't2', first_name: 'Albert', surname: 'Einstein', role: 'teacher', subjects: ['Physics'], groups_count: 2, emoji: '👨‍🔬' }
-        ];
-    },
-
-    getSubjects: async () => {
-        await new Promise(resolve => setTimeout(resolve, 300));
-        return [
-            { id: 'sub1', name: 'Mathematics' },
-            { id: 'sub2', name: 'Physics' },
-            { id: 'sub3', name: 'English' }
-        ];
-    },
-
     createGroup: async (group: any) => {
         await new Promise(resolve => setTimeout(resolve, 300));
         console.log('Mock create group:', group);
@@ -710,5 +684,3 @@ export const mockService = {
         return { success: true };
     }
 };
-
-
