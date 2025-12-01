@@ -159,10 +159,24 @@ export let MOCK_TEACHER_DATA = {
 
 export let MOCK_ADMIN_DATA = {
     stats: {
-        total_students: 150,
-        total_teachers: 12,
-        total_revenue: 15000000,
-        active_groups: 15
+        general: {
+            totalStudents: 150,
+            totalTeachers: 12,
+            activeGroups: 15,
+            totalSubjects: 3,
+            newStudents: 5,
+            newGroups: 2
+        },
+        financial: {
+            totalRevenue: 15000000,
+            totalOutgoing: 5000000,
+            netIncome: 10000000,
+            pendingPayments: 2500000,
+            recentTransactions: [
+                { id: 'tx1', user: 'Jahongir P.', type: 'incoming', amount: 500000, date: '2023-12-01' },
+                { id: 'tx2', user: 'Sarah Teacher', type: 'outgoing', amount: 2000000, date: '2023-11-30' }
+            ]
+        }
     },
     requests: [
         { id: 'req_1', user_id: 'u_101', status: 'pending', created_at: '2023-12-01', users: { first_name: 'New', last_name: 'Student', username: 'new_student', emoji: '👤' } },
@@ -697,48 +711,4 @@ export const mockService = {
     }
 };
 
-const MOCK_TEACHER_EXAMS = [
-    {
-        id: 'exam_t1',
-        title: 'Midterm English',
-        description: 'Midterm examination covering all topics from the first half of the semester.',
-        duration_minutes: 60,
-        type: 'online',
-        questions: [{ count: 20 }],
-        exam_assignments: [{ count: 12 }],
-        created_at: '2023-11-25T10:00:00'
-    },
-    {
-        id: 'exam_t2',
-        title: 'Physics Quiz',
-        description: 'Quick quiz on Newton\'s laws.',
-        duration_minutes: 30,
-        type: 'offline',
-        questions: [{ count: 10 }],
-        exam_assignments: [{ count: 8 }],
-        created_at: '2023-12-01T14:00:00'
-    }
-];
 
-const MOCK_TEACHER_PAYMENTS = [
-    { id: 'tp1', amount: 5000000, payment_date: '2023-11-30', description: 'Salary for November', status: 'paid' },
-    { id: 'tp2', amount: 5000000, payment_date: '2023-10-31', description: 'Salary for October', status: 'paid' },
-    { id: 'tp3', amount: 5000000, payment_date: '2023-09-30', description: 'Salary for September', status: 'paid' }
-];
-
-const MOCK_EXAM_SUBMISSIONS = [
-    {
-        id: 'sub_1',
-        submitted_at: '2023-12-05T10:30:00',
-        score: 0,
-        answers: { 'q1': '4', 'q2': 'Gravity is a force.' },
-        student: { first_name: 'Alex', last_name: 'Student' }
-    },
-    {
-        id: 'sub_2',
-        submitted_at: '2023-12-05T10:35:00',
-        score: 0,
-        answers: { 'q1': '3', 'q2': 'I dont know.' },
-        student: { first_name: 'John', last_name: 'Doe' }
-    }
-];
