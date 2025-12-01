@@ -60,7 +60,9 @@ const ParentProfile: React.FC = () => {
                 {/* Profile Header */}
                 <div className="flex flex-col items-center justify-center space-y-3">
                     <div className="w-24 h-24 rounded-full bg-gradient-to-br from-tg-button to-tg-accent flex items-center justify-center text-white text-4xl font-bold overflow-hidden shadow-lg">
-                        {user?.photo_url ? (
+                        {user?.emoji ? (
+                            <span className="text-5xl">{user.emoji}</span>
+                        ) : user?.photo_url ? (
                             <img src={user.photo_url} alt="Profile" className="w-full h-full object-cover" />
                         ) : (
                             <span>{dashboardData?.user.first_name?.[0] || 'P'}</span>
@@ -101,7 +103,11 @@ const ParentProfile: React.FC = () => {
                                 {/* Child Header */}
                                 <div className="p-4 border-b border-tg-secondary/50 flex items-center gap-3 relative">
                                     <div className="w-12 h-12 rounded-full bg-gradient-to-br from-tg-button to-tg-accent flex items-center justify-center text-white text-lg font-bold">
-                                        {child.first_name?.[0] || '?'}
+                                        {child.emoji ? (
+                                            <span className="text-2xl">{child.emoji}</span>
+                                        ) : (
+                                            <span>{child.first_name?.[0] || '?'}</span>
+                                        )}
                                     </div>
                                     <div>
                                         <h3 className="text-lg font-semibold text-tg-text">

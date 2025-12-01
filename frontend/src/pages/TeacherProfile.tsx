@@ -34,15 +34,17 @@ const TeacherProfile: React.FC = () => {
             {/* Profile Header */}
             <div className="flex flex-col items-center justify-center mb-6 px-4">
                 {/* Profile Photo */}
-                <div className="w-24 h-24 rounded-full mb-3 overflow-hidden shadow-lg border-2 border-white dark:border-[#1C1C1E]">
-                    {profilePhotoUrl ? (
+                <div className="w-24 h-24 rounded-full mb-3 overflow-hidden shadow-lg border-2 border-white dark:border-[#1C1C1E] bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+                    {user?.emoji ? (
+                        <span className="text-5xl">{user.emoji}</span>
+                    ) : profilePhotoUrl ? (
                         <img
                             src={profilePhotoUrl}
                             alt="Profile"
                             className="w-full h-full object-cover"
                         />
                     ) : (
-                        <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-4xl font-bold text-white">
+                        <div className="w-full h-full flex items-center justify-center text-4xl font-bold text-white">
                             {dashboardData?.user.first_name?.[0] || user?.first_name?.[0] || 'T'}
                         </div>
                     )}

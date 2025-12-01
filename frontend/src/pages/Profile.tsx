@@ -76,7 +76,9 @@ const Profile: React.FC = () => {
 
             <div className="flex flex-col items-center justify-center mb-8">
                 <div className="w-24 h-24 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-4xl font-bold overflow-hidden shadow-lg mb-3 relative">
-                    {user?.photo_url ? (
+                    {user?.emoji ? (
+                        <span className="text-5xl">{user.emoji}</span>
+                    ) : user?.photo_url ? (
                         <img src={user.photo_url} alt="Profile" className="w-full h-full object-cover" />
                     ) : (
                         <span>{dashboardData?.user.first_name?.[0] || 'U'}</span>

@@ -1,17 +1,18 @@
 import { UserLevel } from '../types/journey.types';
 
-// Mock Data Store
+// --- Mutable Data Store ---
 
-export const MOCK_USERS = {
+// 1. Users with Emojis and Correct Names
+export let MOCK_USERS = {
     student: {
         id: 'student_1',
-        first_name: 'Alex',
-        last_name: 'Student',
-        username: 'alex_student',
+        first_name: 'Jahongir',
+        last_name: "Po'latov",
+        username: 'jahongir_p',
         role: 'student',
         student_id: 'ST-2023-001',
         sex: 'male',
-        photo_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Alex'
+        emoji: '👨‍🎓'
     },
     teacher: {
         id: 'teacher_1',
@@ -19,7 +20,7 @@ export const MOCK_USERS = {
         last_name: 'Teacher',
         username: 'sarah_teacher',
         role: 'teacher',
-        photo_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah'
+        emoji: '👩‍🏫'
     },
     admin: {
         id: 'admin_1',
@@ -27,7 +28,7 @@ export const MOCK_USERS = {
         last_name: 'User',
         username: 'admin_user',
         role: 'admin',
-        photo_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Admin'
+        emoji: '🛡️'
     },
     parent: {
         id: 'parent_1',
@@ -35,11 +36,12 @@ export const MOCK_USERS = {
         last_name: 'Parent',
         username: 'john_parent',
         role: 'parent',
-        photo_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=John'
+        emoji: '👨‍👩‍👦'
     }
 };
 
-export const MOCK_DASHBOARD_DATA = {
+// 2. Dashboard Data (Mutable)
+export let MOCK_DASHBOARD_DATA = {
     student: {
         user: MOCK_USERS.student,
         streak: {
@@ -70,7 +72,7 @@ export const MOCK_DASHBOARD_DATA = {
             },
             {
                 id: 'lesson_2',
-                title: 'Newton\'s Laws',
+                title: "Newton's Laws",
                 subject_id: 'sub_2',
                 status: 'in_progress',
                 description: 'Understanding the three laws of motion.',
@@ -125,7 +127,7 @@ export const MOCK_DASHBOARD_DATA = {
                 id: 'g2',
                 name: 'Physics Basics',
                 status: 'active',
-                teacher: { ...MOCK_USERS.teacher, first_name: 'Albert', last_name: 'Einstein' },
+                teacher: { ...MOCK_USERS.teacher, first_name: 'Albert', last_name: 'Einstein', emoji: '👨‍🔬' },
                 payments: [
                     { id: 'p4', amount: 200000, date: '2023-11-05', status: 'paid' }
                 ],
@@ -137,7 +139,7 @@ export const MOCK_DASHBOARD_DATA = {
     }
 };
 
-export const MOCK_TEACHER_DATA = {
+export let MOCK_TEACHER_DATA = {
     groups: [
         { id: 'g1', name: 'English A1', student_count: 12, next_class: 'Today, 14:00' },
         { id: 'g2', name: 'English B2', student_count: 8, next_class: 'Tomorrow, 10:00' },
@@ -155,7 +157,7 @@ export const MOCK_TEACHER_DATA = {
     messages: []
 };
 
-export const MOCK_ADMIN_DATA = {
+export let MOCK_ADMIN_DATA = {
     stats: {
         total_students: 150,
         total_teachers: 12,
@@ -163,12 +165,12 @@ export const MOCK_ADMIN_DATA = {
         active_groups: 15
     },
     requests: [
-        { id: 'req_1', user_id: 'u_101', status: 'pending', created_at: '2023-12-01', users: { first_name: 'New', last_name: 'Student', username: 'new_student' } },
-        { id: 'req_2', user_id: 'u_102', status: 'pending', created_at: '2023-12-02', users: { first_name: 'Another', last_name: 'Teacher', username: 'new_teacher' } }
+        { id: 'req_1', user_id: 'u_101', status: 'pending', created_at: '2023-12-01', users: { first_name: 'New', last_name: 'Student', username: 'new_student', emoji: '👤' } },
+        { id: 'req_2', user_id: 'u_102', status: 'pending', created_at: '2023-12-02', users: { first_name: 'Another', last_name: 'Teacher', username: 'new_teacher', emoji: '👤' } }
     ]
 };
 
-export const MOCK_JOURNEY_DATA = {
+export let MOCK_JOURNEY_DATA = {
     userLevel: {
         user_id: 'student_1',
         current_level: UserLevel.INTERMEDIATE,
@@ -194,7 +196,7 @@ export const MOCK_JOURNEY_DATA = {
     }
 };
 
-export const MOCK_STUDENT_EXAMS = [
+export let MOCK_STUDENT_EXAMS = [
     {
         id: 'exam_1',
         title: 'Midterm English',
@@ -209,7 +211,7 @@ export const MOCK_STUDENT_EXAMS = [
     {
         id: 'exam_2',
         title: 'Physics Quiz',
-        description: 'Quick quiz on Newton\'s laws.',
+        description: "Quick quiz on Newton's laws.",
         duration_minutes: 30,
         type: 'offline',
         questions: [{ count: 10 }],
@@ -230,43 +232,173 @@ export const MOCK_STUDENT_EXAMS = [
     }
 ];
 
-// Mock Service Functions
+export let MOCK_TEACHER_EXAMS = [
+    {
+        id: 'exam_t1',
+        title: 'Midterm English',
+        description: 'Midterm examination covering all topics from the first half of the semester.',
+        duration_minutes: 60,
+        type: 'online',
+        questions: [{ count: 20 }],
+        exam_assignments: [{ count: 12 }],
+        created_at: '2023-11-25T10:00:00'
+    },
+    {
+        id: 'exam_t2',
+        title: 'Physics Quiz',
+        description: "Quick quiz on Newton's laws.",
+        duration_minutes: 30,
+        type: 'offline',
+        questions: [{ count: 10 }],
+        exam_assignments: [{ count: 8 }],
+        created_at: '2023-12-01T14:00:00'
+    }
+];
+
+export let MOCK_TEACHER_PAYMENTS = [
+    { id: 'tp1', amount: 5000000, payment_date: '2023-11-30', description: 'Salary for November', status: 'paid' },
+    { id: 'tp2', amount: 5000000, payment_date: '2023-10-31', description: 'Salary for October', status: 'paid' },
+    { id: 'tp3', amount: 5000000, payment_date: '2023-09-30', description: 'Salary for September', status: 'paid' }
+];
+
+export let MOCK_EXAM_SUBMISSIONS = [
+    {
+        id: 'sub_1',
+        submitted_at: '2023-12-05T10:30:00',
+        score: 0,
+        answers: { 'q1': '4', 'q2': 'Gravity is a force.' },
+        student: { first_name: 'Jahongir', last_name: "Po'latov" }
+    },
+    {
+        id: 'sub_2',
+        submitted_at: '2023-12-05T10:35:00',
+        score: 0,
+        answers: { 'q1': '3', 'q2': 'I dont know.' },
+        student: { first_name: 'Shahzod', last_name: 'Bahodirov' }
+    }
+];
+
+// List of Students with Correct Names
+export let MOCK_STUDENTS_LIST = [
+    {
+        id: 's1',
+        student_id: '1001',
+        first_name: 'Jahongir',
+        surname: "Po'latov",
+        age: 16,
+        sex: 'male',
+        groups: [
+            { id: 'g1', name: 'Math 101', price: 500000, teacher_name: 'Mr. Smith', joined_at: '2023-09-01' }
+        ],
+        payment_status: 'paid',
+        emoji: '👨‍🎓'
+    },
+    {
+        id: 's2',
+        student_id: '1002',
+        first_name: 'Shahzod',
+        surname: 'Bahodirov',
+        age: 15,
+        sex: 'male',
+        groups: [
+            { id: 'g2', name: 'Physics 101', price: 450000, teacher_name: 'Mrs. Johnson', joined_at: '2023-09-05' }
+        ],
+        payment_status: 'overdue',
+        emoji: '👨‍🎓'
+    },
+    {
+        id: 's3',
+        student_id: '1003',
+        first_name: 'Temurbek',
+        surname: 'Adhamov',
+        age: 17,
+        sex: 'male',
+        groups: [],
+        payment_status: 'paid',
+        emoji: '👨‍🎓'
+    },
+    {
+        id: 's4',
+        student_id: '1004',
+        first_name: 'Bekzod',
+        surname: 'Mirahmedov',
+        age: 16,
+        sex: 'male',
+        groups: [],
+        payment_status: 'unpaid',
+        emoji: '👨‍🎓'
+    },
+    {
+        id: 's5',
+        student_id: '1005',
+        first_name: 'Avazbek',
+        surname: 'Tulovov',
+        age: 15,
+        sex: 'male',
+        groups: [],
+        payment_status: 'paid',
+        emoji: '👨‍🎓'
+    },
+    {
+        id: 's6',
+        student_id: '1006',
+        first_name: 'Xurshid',
+        surname: "O'roqov",
+        age: 16,
+        sex: 'male',
+        groups: [],
+        payment_status: 'paid',
+        emoji: '👨‍🎓'
+    },
+    {
+        id: 's7',
+        student_id: '1007',
+        first_name: 'Azam',
+        surname: 'Qahramoniy',
+        age: 16,
+        sex: 'male',
+        groups: [],
+        payment_status: 'paid',
+        emoji: '👨‍🎓'
+    }
+];
+
+
+// --- Service Functions ---
+
 export const mockService = {
     login: async (_user: any) => {
-        // Simulate network delay
-        await new Promise(resolve => setTimeout(resolve, 500));
-
-        // Return mock data based on role (defaulting to student if not specified in logic, but we'll handle this in context)
+        await new Promise(resolve => setTimeout(resolve, 300));
         return { success: true };
     },
 
     getStudentDashboard: async () => {
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise(resolve => setTimeout(resolve, 300));
         return MOCK_DASHBOARD_DATA.student;
     },
 
     getStudentExams: async () => {
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise(resolve => setTimeout(resolve, 300));
         return MOCK_STUDENT_EXAMS;
     },
 
     getTeacherData: async () => {
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise(resolve => setTimeout(resolve, 300));
         return MOCK_TEACHER_DATA;
     },
 
     getAdminData: async () => {
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise(resolve => setTimeout(resolve, 300));
         return MOCK_ADMIN_DATA;
     },
 
     getJourneyData: async () => {
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise(resolve => setTimeout(resolve, 300));
         return MOCK_JOURNEY_DATA;
     },
 
     getStudentSettings: async () => {
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise(resolve => setTimeout(resolve, 300));
         return {
             support_info: {
                 phone: '+998 90 123 45 67',
@@ -279,44 +411,55 @@ export const mockService = {
         };
     },
 
-    createExam: async (_examData: any) => {
+    createExam: async (examData: any) => {
         await new Promise(resolve => setTimeout(resolve, 500));
-        return { success: true, examId: 'new_exam_1' };
+        // STATEFUL UPDATE
+        const newExam = {
+            id: `exam_${Date.now()}`,
+            title: examData.title,
+            description: examData.description || '',
+            duration_minutes: examData.duration_minutes || 60,
+            type: examData.type,
+            questions: [{ count: 0 }],
+            exam_assignments: [{ count: 0 }],
+            created_at: new Date().toISOString()
+        };
+        MOCK_TEACHER_EXAMS.push(newExam);
+        return { success: true, examId: newExam.id };
     },
 
     saveAttendance: async (_data: any) => {
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise(resolve => setTimeout(resolve, 300));
         return { success: true };
     },
 
     updateCurriculum: async (_data: any) => {
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise(resolve => setTimeout(resolve, 300));
         return { success: true };
     },
 
     scheduleClass: async (_data: any) => {
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise(resolve => setTimeout(resolve, 300));
         return { success: true };
     },
 
     getTeacherExams: async () => {
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise(resolve => setTimeout(resolve, 300));
         return MOCK_TEACHER_EXAMS;
     },
 
     getTeacherPayments: async () => {
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise(resolve => setTimeout(resolve, 300));
         return MOCK_TEACHER_PAYMENTS;
     },
 
     updateTeacherSettings: async (_data: any) => {
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise(resolve => setTimeout(resolve, 300));
         return { success: true };
     },
 
     getExamWithQuestions: async (examId: string) => {
-        await new Promise(resolve => setTimeout(resolve, 500));
-        // Return a mock exam with questions
+        await new Promise(resolve => setTimeout(resolve, 300));
         return {
             id: examId,
             title: 'Mock Exam Title',
@@ -332,17 +475,22 @@ export const mockService = {
     },
 
     getExamSubmissions: async (_examId: string) => {
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise(resolve => setTimeout(resolve, 300));
         return MOCK_EXAM_SUBMISSIONS;
     },
 
     saveExamGrade: async (_submissionId: string, _score: number) => {
         await new Promise(resolve => setTimeout(resolve, 500));
+        // STATEFUL UPDATE (Mock)
+        const sub = MOCK_EXAM_SUBMISSIONS.find(s => s.id === _submissionId);
+        if (sub) {
+            sub.score = _score;
+        }
         return { success: true };
     },
 
     getGroups: async () => {
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise(resolve => setTimeout(resolve, 300));
         return [
             { id: 'g1', name: 'Mathematics 101' },
             { id: 'g2', name: 'Physics 202' },
@@ -351,17 +499,17 @@ export const mockService = {
     },
 
     saveExam: async (examData: any) => {
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        await new Promise(resolve => setTimeout(resolve, 500));
         return { success: true, id: examData.id || 'new_exam_id' };
     },
 
     uploadFile: async (file: File) => {
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        await new Promise(resolve => setTimeout(resolve, 500));
         return { publicUrl: URL.createObjectURL(file) };
     },
 
     generateAIQuestions: async (_fileUrl: string) => {
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        await new Promise(resolve => setTimeout(resolve, 1500));
         return {
             questions: [
                 {
@@ -383,26 +531,29 @@ export const mockService = {
     },
 
     getGroupStudents: async (_groupId: string) => {
-        await new Promise(resolve => setTimeout(resolve, 500));
-        return Array.from({ length: 10 }, (_, i) => ({
-            id: i + 1,
-            name: `Student ${i + 1}`,
+        await new Promise(resolve => setTimeout(resolve, 300));
+        // Return subset of correct students
+        return MOCK_STUDENTS_LIST.slice(0, 5).map(s => ({
+            id: s.id,
+            name: `${s.first_name} ${s.surname}`,
             attendance: '95%',
-            performance: 'A'
+            performance: 'A',
+            emoji: s.emoji
         }));
     },
 
     getTeacherDetails: async (teacherId: string) => {
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise(resolve => setTimeout(resolve, 300));
         return {
             teacher: {
                 id: teacherId,
-                first_name: 'John',
-                surname: 'Doe',
+                first_name: 'Sarah',
+                surname: 'Teacher',
                 phone_number: '+1234567890',
                 bio: 'Mathematics Teacher with 10 years of experience.',
-                username: 'johndoe',
-                telegram_id: 123456789
+                username: 'sarah_teacher',
+                telegram_id: 123456789,
+                emoji: '👩‍🏫'
             },
             groups: [
                 {
@@ -424,134 +575,37 @@ export const mockService = {
     },
 
     deleteTeacherPayment: async (_teacherId: string, _paymentId: string) => {
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise(resolve => setTimeout(resolve, 300));
         return true;
     },
 
     addTeacherPayment: async (_teacherId: string, payment: any) => {
-        await new Promise(resolve => setTimeout(resolve, 500));
-        return {
+        await new Promise(resolve => setTimeout(resolve, 300));
+        const newPayment = {
             id: Date.now().toString(),
             ...payment
         };
+        MOCK_TEACHER_PAYMENTS.unshift(newPayment);
+        return newPayment;
     },
 
     getAdminStats: async () => {
-        await new Promise(resolve => setTimeout(resolve, 500));
-        return {
-            general: {
-                totalStudents: 150,
-                totalTeachers: 12,
-                activeGroups: 25,
-                totalSubjects: 8,
-                newStudents: 15,
-                newGroups: 3
-            },
-            financial: {
-                totalRevenue: 15000000,
-                totalOutgoing: 5000000,
-                netIncome: 10000000,
-                pendingPayments: 2500000,
-                recentTransactions: [
-                    { id: 't1', user: 'Student 1', amount: 500000, type: 'incoming', date: new Date().toISOString() },
-                    { id: 't2', user: 'Teacher A', amount: 2000000, type: 'outgoing', date: new Date().toISOString() },
-                    { id: 't3', user: 'Student 2', amount: 450000, type: 'incoming', date: new Date().toISOString() }
-                ]
-            }
-        };
+        await new Promise(resolve => setTimeout(resolve, 300));
+        return MOCK_ADMIN_DATA.stats;
     },
 
     getAdminStudents: async () => {
-        await new Promise(resolve => setTimeout(resolve, 500));
-        return [
-            {
-                id: 's1',
-                student_id: '1001',
-                first_name: 'Jahongir',
-                surname: "Po'latov",
-                age: 16,
-                sex: 'male',
-                groups: [
-                    { id: 'g1', name: 'Math 101', price: 500000, teacher_name: 'Mr. Smith', joined_at: '2023-09-01' }
-                ],
-                payment_status: 'paid'
-            },
-            {
-                id: 's2',
-                student_id: '1002',
-                first_name: 'Shahzod',
-                surname: 'Bahodirov',
-                age: 15,
-                sex: 'male',
-                groups: [
-                    { id: 'g2', name: 'Physics 101', price: 450000, teacher_name: 'Mrs. Johnson', joined_at: '2023-09-05' }
-                ],
-                payment_status: 'overdue'
-            },
-            {
-                id: 's3',
-                student_id: '1003',
-                first_name: 'Temurbek',
-                surname: 'Adhamov',
-                age: 17,
-                sex: 'male',
-                groups: [],
-                payment_status: 'paid'
-            },
-            {
-                id: 's4',
-                student_id: '1004',
-                first_name: 'Bekzod',
-                surname: 'Mirahmedov',
-                age: 16,
-                sex: 'male',
-                groups: [],
-                payment_status: 'unpaid'
-            },
-            {
-                id: 's5',
-                student_id: '1005',
-                first_name: 'Avazbek',
-                surname: 'Tulovov',
-                age: 15,
-                sex: 'male',
-                groups: [],
-                payment_status: 'paid'
-            },
-            {
-                id: 's6',
-                student_id: '1006',
-                first_name: 'Xurshid',
-                surname: "O'roqov",
-                age: 16,
-                sex: 'male',
-                groups: [],
-                payment_status: 'paid'
-            },
-            {
-                id: 's7',
-                student_id: '1007',
-                first_name: 'Azam',
-                surname: 'Qahramoniy',
-                age: 16,
-                sex: 'male',
-                groups: [],
-                payment_status: 'paid'
-            }
-        ];
+        await new Promise(resolve => setTimeout(resolve, 300));
+        return MOCK_STUDENTS_LIST;
     },
 
     getAdminStudentDetails: async (id: string) => {
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise(resolve => setTimeout(resolve, 300));
+        const student = MOCK_STUDENTS_LIST.find(s => s.id === id) || MOCK_STUDENTS_LIST[0];
         return {
-            id: id,
-            student_id: '1001',
-            first_name: 'John',
-            surname: 'Doe',
-            age: 16,
-            sex: 'male',
+            ...student,
             phone_number: '+998901234567',
-            username: 'johndoe',
+            username: student.first_name.toLowerCase(),
             groups: [
                 {
                     id: 'g1',
@@ -561,13 +615,12 @@ export const mockService = {
                     payment_status: 'paid',
                     schedule: { 'monday': ['10:00'], 'wednesday': ['10:00'] }
                 }
-            ],
-            payment_status: 'paid'
+            ]
         };
     },
 
     getStudentAttendance: async (_studentId: string) => {
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise(resolve => setTimeout(resolve, 300));
         return [
             { id: 'a1', date: new Date().toISOString(), status: 'present' },
             { id: 'a2', date: new Date(Date.now() - 86400000).toISOString(), status: 'absent' }
@@ -575,7 +628,7 @@ export const mockService = {
     },
 
     getAdminGroups: async () => {
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise(resolve => setTimeout(resolve, 300));
         return [
             { id: 'g1', name: 'Math 101', teacher_id: 't1', subject_id: 'sub1', schedule: 'Mon, Wed 10:00' },
             { id: 'g2', name: 'Physics 101', teacher_id: 't2', subject_id: 'sub2', schedule: 'Tue, Thu 14:00' }
@@ -583,15 +636,15 @@ export const mockService = {
     },
 
     getAdminTeachers: async () => {
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise(resolve => setTimeout(resolve, 300));
         return [
-            { id: 't1', first_name: 'Mr.', surname: 'Smith', role: 'teacher', subjects: ['Math'], groups_count: 3 },
-            { id: 't2', first_name: 'Mrs.', surname: 'Johnson', role: 'teacher', subjects: ['Physics'], groups_count: 2 }
+            { id: 't1', first_name: 'Sarah', surname: 'Teacher', role: 'teacher', subjects: ['Math'], groups_count: 3, emoji: '👩‍🏫' },
+            { id: 't2', first_name: 'Albert', surname: 'Einstein', role: 'teacher', subjects: ['Physics'], groups_count: 2, emoji: '👨‍🔬' }
         ];
     },
 
     getSubjects: async () => {
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise(resolve => setTimeout(resolve, 300));
         return [
             { id: 'sub1', name: 'Mathematics' },
             { id: 'sub2', name: 'Physics' },
@@ -600,25 +653,25 @@ export const mockService = {
     },
 
     createGroup: async (group: any) => {
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise(resolve => setTimeout(resolve, 300));
         console.log('Mock create group:', group);
         return { success: true };
     },
 
     updateGroup: async (id: string, group: any) => {
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise(resolve => setTimeout(resolve, 300));
         console.log('Mock update group:', id, group);
         return { success: true };
     },
 
     deleteGroup: async (id: string) => {
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise(resolve => setTimeout(resolve, 300));
         console.log('Mock delete group:', id);
         return { success: true };
     },
 
     getStudentPayments: async (_studentId: string) => {
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise(resolve => setTimeout(resolve, 300));
         return [
             { id: 'p1', amount: 500000, payment_date: '2023-10-01', payment_method: 'cash', subject_name: 'Math 101', group_id: 'g1' },
             { id: 'p2', amount: 450000, payment_date: '2023-09-01', payment_method: 'card', subject_name: 'Physics 101', group_id: 'g2' }
@@ -626,19 +679,19 @@ export const mockService = {
     },
 
     deleteStudentPayment: async (studentId: string, paymentId: string) => {
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise(resolve => setTimeout(resolve, 300));
         console.log('Mock delete student payment:', studentId, paymentId);
         return { success: true };
     },
 
     addStudentPayment: async (studentId: string, payment: any) => {
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise(resolve => setTimeout(resolve, 300));
         console.log('Mock add student payment:', studentId, payment);
         return { success: true };
     },
 
     updateStudentGroups: async (studentId: string, data: { groupId: string, action: 'add' | 'remove' | 'update_date', joinedAt?: string }) => {
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise(resolve => setTimeout(resolve, 300));
         console.log('Mock update student groups:', studentId, data);
         return { success: true };
     }

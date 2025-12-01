@@ -36,24 +36,4 @@ Fill in the following details:
 2. Select your bot.
 3. Go to **Bot Settings** > **Menu Button** > **Configure Menu Button**.
 4. Send the URL provided by Render (e.g., `https://upper-bot-demo.onrender.com`).
-5. Now, when users open your bot, the "Open App" button will launch this demo.
-
-## Troubleshooting
-- **Build Failed?** Check the logs. Ensure `Root Directory` is set to `frontend`.
-- **404 Errors?** Ensure `Publish Directory` is set to `dist`.
-
-## Running the Bot Script (Optional)
-If you want the bot to reply to `/start` with a button to open the app:
-
-1.  Create a `.env` file in the root directory (based on `.env.example`).
-2.  Add your variables:
-    ```
-    TELEGRAM_BOT_TOKEN=your_token_here
-    WEB_APP_URL=https://your-app-url.onrender.com
-    ```
-3.  Run the script:
-    ```bash
-    npm install node-telegram-bot-api dotenv
-    node bot.js
-    ```
     *Note: You will need Node.js installed on your machine or run this on a server.*
