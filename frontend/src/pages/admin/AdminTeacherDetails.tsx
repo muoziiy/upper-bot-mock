@@ -32,9 +32,6 @@ const AdminTeacherDetails: React.FC = () => {
     const [groups, setGroups] = useState<TeacherGroup[]>([]);
     const [loading, setLoading] = useState(true);
     const [showPaymentModal, setShowPaymentModal] = useState(false);
-    const [showBioModal, setShowBioModal] = useState(false);
-    const [bioText, setBioText] = useState('');
-    const [savingBio, setSavingBio] = useState(false);
 
     useEffect(() => {
         if (webApp) {
@@ -42,8 +39,6 @@ const AdminTeacherDetails: React.FC = () => {
             const handleBack = () => {
                 if (showPaymentModal) {
                     setShowPaymentModal(false);
-                } else if (showBioModal) {
-                    setShowBioModal(false);
                 } else {
                     navigate(-1);
                 }
@@ -51,10 +46,10 @@ const AdminTeacherDetails: React.FC = () => {
             webApp.BackButton.onClick(handleBack);
             return () => {
                 webApp.BackButton.offClick(handleBack);
-                if (!showPaymentModal && !showBioModal) webApp.BackButton.hide();
+                if (!showPaymentModal) webApp.BackButton.hide();
             };
         }
-    }, [webApp, navigate, showPaymentModal, showBioModal]);
+    }, [webApp, navigate, showPaymentModal]);
 
     useEffect(() => {
         if (id) {
@@ -68,7 +63,6 @@ const AdminTeacherDetails: React.FC = () => {
             if (res.ok) {
                 const data = await res.json();
                 setTeacher(data.teacher);
-                setBioText(data.teacher.bio || '');
                 setGroups(data.groups);
             } else {
                 console.error('Failed to fetch teacher details');
@@ -77,30 +71,6 @@ const AdminTeacherDetails: React.FC = () => {
             console.error('Error fetching teacher details', e);
         } finally {
             setLoading(false);
-        }
-    };
-
-    const handleSaveBio = async () => {
-        setSavingBio(true);
-        try {
-            const res = await fetch(`${import.meta.env.VITE_API_URL}/admin/teachers/${id}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ bio: bioText })
-            });
-
-            if (res.ok) {
-                setTeacher(prev => prev ? { ...prev, bio: bioText } : null);
-                setShowBioModal(false);
-                webApp.showAlert('Bio updated successfully');
-            } else {
-                webApp.showAlert('Failed to update bio');
-            }
-        } catch (e) {
-            console.error('Error updating bio', e);
-            webApp.showAlert('Error updating bio');
-        } finally {
-            setSavingBio(false);
         }
     };
 
@@ -148,8 +118,6 @@ const AdminTeacherDetails: React.FC = () => {
                     value={teacher.bio || 'No bio provided'}
                     icon="📝"
                     iconColor="bg-gray-500"
-                    onClick={() => setShowBioModal(true)}
-                    showChevron
                     isLast
                 />
             </AdminSection>
@@ -158,7 +126,6 @@ const AdminTeacherDetails: React.FC = () => {
             <AdminSection title="Finance">
                 <AdminListItem
                     title="Payment History"
-                    // subtitle removed
                     icon="💳"
                     iconColor="bg-blue-500"
                     onClick={() => setShowPaymentModal(true)}
@@ -188,7 +155,6 @@ const AdminTeacherDetails: React.FC = () => {
                         <AdminListItem
                             key={group.id}
                             title={group.name}
-                            // subtitle removed
                             value={
                                 <div className="flex flex-col items-end">
                                     <span className="text-sm text-[#8E8E93]">{group.student_count} students</span>
@@ -214,33 +180,6 @@ const AdminTeacherDetails: React.FC = () => {
                 teacherId={id!}
                 teacherName={`${teacher.onboarding_first_name || teacher.first_name} ${teacher.surname || ''}`}
             />
-
-            {/* Edit Bio Modal */}
-            {showBioModal && (
-                <div className="fixed inset-0 z-[60] bg-black/50 flex items-center justify-center p-4">
-                    <div className="bg-[#F2F2F7] dark:bg-[#1C1C1E] w-full max-w-md rounded-xl overflow-hidden">
-                        <div className="px-4 py-3 border-b border-[#C6C6C8] dark:border-[#38383A] flex items-center justify-between bg-[#F2F2F7] dark:bg-[#1C1C1E]">
-                            <h2 className="text-lg font-semibold text-black dark:text-white">Edit Bio</h2>
-                            <button onClick={() => setShowBioModal(false)} className="text-blue-500 font-medium">Cancel</button>
-                        </div>
-                        <div className="p-4">
-                            <textarea
-                                value={bioText}
-                                onChange={(e) => setBioText(e.target.value)}
-                                className="w-full h-32 bg-white dark:bg-[#2C2C2E] text-black dark:text-white p-3 rounded-xl border-none outline-none resize-none text-[17px]"
-                                placeholder="Enter teacher bio..."
-                            />
-                            <button
-                                onClick={handleSaveBio}
-                                disabled={savingBio}
-                                className="w-full mt-4 py-3 rounded-xl bg-blue-500 text-white font-semibold active:scale-[0.98] transition-all"
-                            >
-                                {savingBio ? 'Saving...' : 'Save'}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
         </div>
     );
 };
