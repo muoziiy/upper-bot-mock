@@ -82,6 +82,16 @@ const AdminProfile: React.FC = () => {
 
             <AdminSection>
                 <AdminListItem
+                    icon="🔄"
+                    iconColor="bg-blue-500"
+                    title="Switch Role"
+                    onClick={() => {
+                        localStorage.removeItem('telegram-user');
+                        window.location.reload();
+                    }}
+                    showChevron
+                />
+                <AdminListItem
                     icon="🚪"
                     iconColor="bg-red-500"
                     title="Log Out"

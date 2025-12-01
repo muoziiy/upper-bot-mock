@@ -41,3 +41,15 @@ Fill in the following details:
 ## Troubleshooting
 - **Build Failed?** Check the logs. Ensure `Root Directory` is set to `frontend`.
 - **404 Errors?** Ensure `Publish Directory` is set to `dist`.
+
+## Running the Bot Script (Optional)
+If you want the bot to reply to `/start` with a button to open the app:
+
+1.  Open `bot.js` and replace `'YOUR_TELEGRAM_BOT_TOKEN'` with your actual token.
+2.  Replace `'https://upper-bot-demo.onrender.com'` with your deployed Render URL.
+3.  Run the script:
+    ```bash
+    npm install node-telegram-bot-api
+    node bot.js
+    ```
+    *Note: You will need Node.js installed on your machine or run this on a server.*

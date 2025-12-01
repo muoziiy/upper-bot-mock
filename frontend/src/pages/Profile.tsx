@@ -117,6 +117,17 @@ const Profile: React.FC = () => {
                     showChevron
                 />
                 <AdminListItem
+                    icon="🔄"
+                    iconColor="bg-blue-500"
+                    title="Switch Role"
+                    onClick={() => {
+                        // Clear user data and reload to force welcome page
+                        localStorage.removeItem('telegram-user');
+                        window.location.reload();
+                    }}
+                    showChevron
+                />
+                <AdminListItem
                     icon="❓"
                     iconColor="bg-blue-500"
                     title="Support & Info"

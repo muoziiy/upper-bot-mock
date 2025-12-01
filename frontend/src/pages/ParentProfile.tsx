@@ -184,6 +184,23 @@ const ParentProfile: React.FC = () => {
                     </div>
                     <ChevronRight size={20} className="text-red-500" />
                 </button>
+
+                {/* Switch Role Button */}
+                <button
+                    onClick={() => {
+                        localStorage.removeItem('telegram-user');
+                        window.location.reload();
+                    }}
+                    className="w-full bg-blue-500/10 rounded-xl p-4 flex items-center justify-between hover:bg-blue-500/20 active:bg-blue-500/30 transition-colors shadow-sm border border-blue-500/20"
+                >
+                    <div className="flex items-center gap-3">
+                        <div className="bg-blue-500/10 p-2 rounded-lg">
+                            <Users size={20} className="text-blue-500" />
+                        </div>
+                        <span className="text-blue-500 font-medium">Switch Role</span>
+                    </div>
+                    <ChevronRight size={20} className="text-blue-500" />
+                </button>
             </div>
         </div>
     );

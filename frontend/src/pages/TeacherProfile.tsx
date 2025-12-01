@@ -106,6 +106,17 @@ const TeacherProfile: React.FC = () => {
             {/* App Info Group */}
             <AdminSection title={t('teacher_profile.app')}>
                 <AdminListItem
+                    title="Switch Role"
+                    icon="🔄"
+                    iconColor="bg-blue-500"
+                    onClick={() => {
+                        webApp.HapticFeedback.impactOccurred('medium');
+                        localStorage.removeItem('telegram-user');
+                        window.location.reload();
+                    }}
+                    showChevron
+                />
+                <AdminListItem
                     title={t('teacher_profile.log_out')}
                     icon="🚪"
                     iconColor="bg-red-500"

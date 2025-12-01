@@ -34,7 +34,7 @@ const StudentExams = React.lazy(() => import('./pages/StudentExams'));
 const TakeExam = React.lazy(() => import('./pages/TakeExam'));
 const TeacherExams = React.lazy(() => import('./pages/TeacherExams'));
 
-const Onboarding = React.lazy(() => import('./pages/Onboarding'));
+// const Onboarding = React.lazy(() => import('./pages/Onboarding'));
 // const GuestDashboard = React.lazy(() => import('./pages/GuestDashboard'));
 const WaitingPage = React.lazy(() => import('./pages/WaitingPage'));
 const Leaderboard = React.lazy(() => import('./pages/Leaderboard'));
@@ -56,21 +56,20 @@ const AppContent = () => {
   // If loading is true, we wait. If loading is false and no dashboardData, maybe not onboarded?
   // But fetchAllData tries to login. If login fails (404), dashboardData is null.
   // So !!dashboardData is a good proxy for isOnboarded.
-  const isOnboarded = !!dashboardData?.user;
+  // const isOnboarded = !!dashboardData?.user;
 
   const routes = [
     {
       path: '/',
       element: !user ? <WelcomePage /> :
-        !isOnboarded ? <Navigate to="/onboarding" /> :
-          dashboardData?.user?.role === 'student' ? <StudentDashboard /> :
-            dashboardData?.user?.role === 'teacher' ? <TeacherDashboard /> :
-              dashboardData?.user?.role === 'parent' ? <ParentDashboard /> :
-                dashboardData?.user?.role === 'admin' || dashboardData?.user?.role === 'super_admin' ? <AdminStats /> :
-                  <WaitingPage />
+        dashboardData?.user?.role === 'student' ? <StudentDashboard /> :
+          dashboardData?.user?.role === 'teacher' ? <TeacherDashboard /> :
+            dashboardData?.user?.role === 'parent' ? <ParentDashboard /> :
+              dashboardData?.user?.role === 'admin' || dashboardData?.user?.role === 'super_admin' ? <AdminStats /> :
+                <WaitingPage />
     },
     { path: '/welcome', element: <WelcomePage /> },
-    { path: '/onboarding', element: <Onboarding /> },
+    // { path: '/onboarding', element: <Onboarding /> },
     { path: '/waiting', element: <WaitingPage /> },
     { path: '/leaderboard', element: <Leaderboard /> },
     { path: '/profile', element: <Profile /> },
@@ -119,14 +118,14 @@ const AppContent = () => {
 
   // Hide bottom nav on specific pages
   const hideNavPaths = [
-    '/onboarding',
+    // '/onboarding',
     '/waiting',
     '/admin/students/',
     '/student/exams/',
     '/teacher/exams/',
     '/admin/exams/'
   ];
-  const shouldShowNav = user && isOnboarded && !hideNavPaths.some(path => location.pathname.startsWith(path));
+  const shouldShowNav = user && !hideNavPaths.some(path => location.pathname.startsWith(path));
 
   if (loading) {
     return <div className="flex h-screen items-center justify-center bg-tg-secondary text-tg-text">Loading...</div>;
