@@ -27,12 +27,18 @@ const AdminExportData = React.lazy(() => import('./pages/admin/AdminExportData')
 const AdminRequests = React.lazy(() => import('./pages/admin/AdminRequests'));
 const AdminManageAdmins = React.lazy(() => import('./pages/admin/AdminManageAdmins'));
 const AdminAttendance = React.lazy(() => import('./pages/admin/AdminAttendance'));
+const AdminExams = React.lazy(() => import('./pages/admin/AdminExams'));
+const ExamEditor = React.lazy(() => import('./pages/admin/ExamEditor'));
+const TeacherGrading = React.lazy(() => import('./pages/admin/TeacherGrading'));
+const StudentExams = React.lazy(() => import('./pages/StudentExams'));
+const ExamTaker = React.lazy(() => import('./pages/ExamTaker'));
+
 const Onboarding = React.lazy(() => import('./pages/Onboarding'));
 const GuestDashboard = React.lazy(() => import('./pages/GuestDashboard'));
 const WaitingPage = React.lazy(() => import('./pages/WaitingPage'));
 const Leaderboard = React.lazy(() => import('./pages/Leaderboard'));
 const Profile = React.lazy(() => import('./pages/Profile'));
-const Exams = React.lazy(() => import('./pages/Exams'));
+
 const ParentExams = React.lazy(() => import('./pages/ParentExams'));
 const Lessons = React.lazy(() => import('./pages/Lessons'));
 const Groups = React.lazy(() => import('./pages/Groups'));
@@ -87,7 +93,8 @@ const AppContent: React.FC = () => {
     // Student Routes
     { path: "/student", element: <StudentDashboard /> },
     { path: "/student/journey", element: <Navigate to="/student" replace /> }, // Deprecated
-    { path: "/student/exams", element: <Exams /> },
+    { path: "/student/exams", element: <StudentExams /> },
+    { path: "/student/exams/:examId/take", element: <ExamTaker /> },
     { path: "/student/leaderboard", element: <Leaderboard /> },
     { path: "/student/profile", element: <Profile /> },
 
@@ -107,11 +114,11 @@ const AppContent: React.FC = () => {
     { path: "/admin/stats", element: <AdminStats /> },
     { path: "/admin/groups", element: <AdminGroups /> },
     { path: "/admin/teachers", element: <AdminTeachers /> },
-    { path: "/admin/teachers/:id", element: <AdminTeacherDetails /> }, // New Page
+    { path: "/admin/teachers/:id", element: <AdminTeacherDetails /> },
     { path: "/admin/actions", element: <AdminActions /> },
     { path: "/admin/subjects", element: <AdminSubjects /> },
     { path: "/admin/students", element: <AdminStudents /> },
-    { path: "/admin/students/:id", element: <AdminStudentDetails /> }, // New Page
+    { path: "/admin/students/:id", element: <AdminStudentDetails /> },
     { path: "/admin/profile", element: <AdminProfile /> },
     { path: "/admin/broadcast", element: <AdminBroadcast /> },
     { path: "/admin/notifications", element: <AdminNotifications /> },
@@ -121,6 +128,9 @@ const AppContent: React.FC = () => {
     { path: "/admin/requests", element: <AdminRequests /> },
     { path: "/admin/admins", element: <AdminManageAdmins /> },
     { path: "/admin/attendance", element: <AdminAttendance /> },
+    { path: "/admin/exams", element: <AdminExams /> },
+    { path: "/admin/exams/:id", element: <ExamEditor /> },
+    { path: "/admin/exams/:examId/grading", element: <TeacherGrading /> },
   ]);
 
   if (loading) {
