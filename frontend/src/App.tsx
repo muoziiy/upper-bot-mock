@@ -66,7 +66,7 @@ const AppContent = () => {
           dashboardData?.user?.role === 'teacher' ? <TeacherDashboard /> :
             dashboardData?.user?.role === 'parent' ? <ParentDashboard /> :
               dashboardData?.user?.role === 'admin' || dashboardData?.user?.role === 'super_admin' ? <AdminStats /> :
-                <WaitingPage />
+                <WelcomePage />
     },
     { path: '/welcome', element: <WelcomePage /> },
     // { path: '/onboarding', element: <Onboarding /> },
@@ -75,6 +75,7 @@ const AppContent = () => {
     { path: '/profile', element: <Profile /> },
 
     // Student Routes
+    { path: '/student/profile', element: <Profile /> },
     { path: '/student/exams', element: <StudentExams /> },
     { path: '/student/exams/:id/take', element: <TakeExam /> },
 

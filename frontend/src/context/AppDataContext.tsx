@@ -206,7 +206,12 @@ export const AppDataProvider: React.FC<{ children: ReactNode }> = ({ children })
             // In our mock setup, the 'user' object from TelegramContext will already have the role if we set it from WelcomePage.
             // Or we can just fetch everything based on the role property.
 
-            const role = user.role || 'student'; // Default to student if not specified
+            const role = user.role; // Do not default to 'student'
+
+            if (!role) {
+                setLoading(false);
+                return;
+            }
 
             // Fetch Dashboard Data
             if (role === 'student') {
