@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useAppData } from '../context/AppDataContext';
-import { ChevronLeft, ChevronRight, Clock, MapPin } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { AdminSection } from './admin/components/AdminSection';
+import { AdminListItem } from './admin/components/AdminListItem';
 
 const Lessons: React.FC = () => {
     const { t } = useTranslation();
@@ -11,7 +13,7 @@ const Lessons: React.FC = () => {
     const [selectedDate, setSelectedDate] = useState(new Date());
 
     if (loading) {
-        return <div className="flex min-h-screen items-center justify-center bg-tg-secondary text-tg-text">Loading...</div>;
+        return <div className="flex min-h-screen items-center justify-center bg-[#F2F2F7] dark:bg-[#000000] text-black dark:text-white">Loading...</div>;
     }
 
     // Filter lessons for the selected date
@@ -54,14 +56,14 @@ const Lessons: React.FC = () => {
                     whileTap={{ scale: 0.9 }}
                     onClick={() => setSelectedDate(date)}
                     className={`h-10 w-10 rounded-full flex items-center justify-center text-sm font-medium transition-colors relative
-                        ${isSelected ? 'bg-tg-button text-tg-button-text' : 'text-tg-text hover:bg-tg-secondary'}
-                        ${isToday && !isSelected ? 'border border-tg-button text-tg-button' : ''}
+                        ${isSelected ? 'bg-blue-500 text-white' : 'text-black dark:text-white hover:bg-[#E5E5EA] dark:hover:bg-[#2C2C2E]'}
+                        ${isToday && !isSelected ? 'text-blue-500 font-bold' : ''}
                     `}
                 >
                     {i}
                     {/* Dot indicator for days with lessons */}
                     {hasLessons && (
-                        <div className={`absolute bottom-1 w-1 h-1 rounded-full ${isSelected ? 'bg-white' : 'bg-tg-button'}`} />
+                        <div className={`absolute bottom-1.5 w-1 h-1 rounded-full ${isSelected ? 'bg-white' : 'bg-blue-500'}`} />
                     )}
                 </motion.button>
             );
@@ -84,31 +86,31 @@ const Lessons: React.FC = () => {
     ];
 
     return (
-        <div className="min-h-screen bg-tg-bg pb-24 pt-4 text-tg-text px-4">
-            <header className="mb-6 flex items-center justify-between">
+        <div className="min-h-screen bg-[#F2F2F7] dark:bg-[#000000] pb-24 pt-4 text-black dark:text-white">
+            <header className="mb-6 px-4 flex items-center justify-between">
                 <div>
-                    <h1 className="text-2xl font-bold">{t('nav.lessons')}</h1>
-                    <p className="text-tg-hint">{selectedDate.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}</p>
+                    <h1 className="text-3xl font-bold">{t('nav.lessons')}</h1>
+                    <p className="text-[#8E8E93] text-lg">{selectedDate.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}</p>
                 </div>
             </header>
 
             {/* Calendar Widget */}
-            <div className="bg-tg-secondary rounded-2xl p-4 mb-6 shadow-sm">
+            <div className="mx-4 bg-white dark:bg-[#1C1C1E] rounded-xl p-4 mb-6 shadow-sm">
                 <div className="flex items-center justify-between mb-4">
-                    <button onClick={prevMonth} className="p-2 hover:bg-tg-bg rounded-full text-tg-hint hover:text-tg-text transition-colors">
-                        <ChevronLeft size={20} />
+                    <button onClick={prevMonth} className="p-2 hover:bg-[#F2F2F7] dark:hover:bg-[#2C2C2E] rounded-full text-blue-500 transition-colors">
+                        <ChevronLeft size={24} />
                     </button>
-                    <h2 className="font-semibold text-lg">
+                    <h2 className="font-semibold text-lg text-black dark:text-white">
                         {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
                     </h2>
-                    <button onClick={nextMonth} className="p-2 hover:bg-tg-bg rounded-full text-tg-hint hover:text-tg-text transition-colors">
-                        <ChevronRight size={20} />
+                    <button onClick={nextMonth} className="p-2 hover:bg-[#F2F2F7] dark:hover:bg-[#2C2C2E] rounded-full text-blue-500 transition-colors">
+                        <ChevronRight size={24} />
                     </button>
                 </div>
 
                 <div className="grid grid-cols-7 gap-1 mb-2 text-center">
                     {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, i) => (
-                        <div key={i} className="text-xs font-medium text-tg-hint h-8 flex items-center justify-center">
+                        <div key={i} className="text-xs font-semibold text-[#8E8E93] h-8 flex items-center justify-center uppercase">
                             {day}
                         </div>
                     ))}
@@ -120,47 +122,25 @@ const Lessons: React.FC = () => {
             </div>
 
             {/* Lessons List */}
-            <div>
-                <h3 className="text-sm font-medium text-tg-hint uppercase mb-3 px-1">
-                    Schedule
-                </h3>
-
-                <div className="space-y-3">
-                    {lessons.map((lesson) => (
-                        <motion.div
+            <AdminSection title="Schedule">
+                {lessons.length > 0 ? (
+                    lessons.map((lesson, index) => (
+                        <AdminListItem
                             key={lesson.id}
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className="bg-tg-secondary p-4 rounded-xl border-l-4 border-tg-button shadow-sm"
-                        >
-                            <div className="flex justify-between items-start mb-2">
-                                <h4 className="font-bold text-tg-text">{lesson.title}</h4>
-                                <span className="text-xs font-medium bg-tg-bg px-2 py-1 rounded text-tg-hint">
-                                    {lesson.group}
-                                </span>
-                            </div>
-
-                            <div className="flex flex-col gap-2 text-sm text-tg-hint">
-                                <div className="flex items-center gap-2">
-                                    <Clock size={16} className="text-tg-button" />
-                                    <span>{lesson.time}</span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <MapPin size={16} className="text-tg-button" />
-                                    <span>{lesson.location}</span>
-                                </div>
-                            </div>
-                        </motion.div>
-                    ))}
-
-                    {/* Empty State */}
-                    {lessons.length === 0 && (
-                        <div className="text-center py-10 text-tg-hint">
-                            <p>No lessons scheduled for this day.</p>
-                        </div>
-                    )}
-                </div>
-            </div>
+                            title={lesson.title}
+                            subtitle={`${lesson.time} • ${lesson.location}`}
+                            icon="📚"
+                            iconColor="bg-blue-500"
+                            value={lesson.group}
+                            isLast={index === lessons.length - 1}
+                        />
+                    ))
+                ) : (
+                    <div className="p-4 text-center text-[#8E8E93] bg-white dark:bg-[#1C1C1E]">
+                        No lessons scheduled for this day.
+                    </div>
+                )}
+            </AdminSection>
         </div>
     );
 };

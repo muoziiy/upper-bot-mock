@@ -1,32 +1,22 @@
 import React, { useState } from 'react';
 import { useAppData } from '../context/AppDataContext';
 import { motion } from 'framer-motion';
-import { Users, ChevronRight, Clock } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import GroupDetailsModal from '../components/teacher/GroupDetailsModal';
+import { AdminSection } from './admin/components/AdminSection';
+import { AdminListItem } from './admin/components/AdminListItem';
 
 const Groups: React.FC = () => {
     const { teacherData, loading } = useAppData();
+    const { t } = useTranslation();
     const [selectedGroup, setSelectedGroup] = useState<any>(null);
 
     if (loading) {
-        return <div className="flex min-h-screen items-center justify-center bg-tg-secondary text-tg-text">Loading...</div>;
+        return <div className="flex min-h-screen items-center justify-center bg-[#F2F2F7] dark:bg-[#000000] text-black dark:text-white">Loading...</div>;
     }
 
-    const containerVariants = {
-        hidden: { opacity: 0 },
-        visible: {
-            opacity: 1,
-            transition: { staggerChildren: 0.1 }
-        }
-    };
-
-    const itemVariants = {
-        hidden: { opacity: 0, y: 20 },
-        visible: { opacity: 1, y: 0 }
-    };
-
     return (
-        <div className="min-h-screen bg-tg-secondary pb-24 pt-4 text-tg-text px-4">
+        <div className="min-h-screen bg-[#F2F2F7] dark:bg-[#000000] pb-24 pt-4 text-black dark:text-white">
             <GroupDetailsModal
                 isOpen={!!selectedGroup}
                 onClose={() => setSelectedGroup(null)}
@@ -34,53 +24,34 @@ const Groups: React.FC = () => {
             />
 
             <motion.div
-                initial="hidden"
-                animate="visible"
-                variants={containerVariants}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
             >
-                <header className="mb-6">
-                    <h1 className="text-2xl font-bold">My Groups</h1>
-                    <p className="text-tg-hint">Manage your classes and students</p>
+                <header className="mb-6 px-4">
+                    <h1 className="text-3xl font-bold text-black dark:text-white">{t('teacher.my_groups')}</h1>
+                    <p className="text-[#8E8E93] text-lg">{t('teacher.manage_classes')}</p>
                 </header>
 
-                <div className="space-y-4">
-                    {teacherData?.groups.map((group) => (
-                        <motion.div
-                            key={group.id}
-                            variants={itemVariants}
-                            className="bg-tg-bg p-4 rounded-xl shadow-sm border border-tg-secondary/50"
-                        >
-                            <div className="flex justify-between items-start mb-3">
-                                <div>
-                                    <h3 className="text-lg font-bold text-tg-text">{group.name}</h3>
-                                    <p className="text-xs text-tg-hint">ID: {group.id.toUpperCase()}</p>
-                                </div>
-                                <span className="bg-tg-button/10 text-tg-button text-xs font-bold px-2 py-1 rounded-md">
-                                    Active
-                                </span>
-                            </div>
-
-                            <div className="flex items-center gap-4 mb-4">
-                                <div className="flex items-center gap-1.5 text-sm text-tg-hint">
-                                    <Users className="w-4 h-4" />
-                                    <span>{group.student_count} Students</span>
-                                </div>
-                                <div className="flex items-center gap-1.5 text-sm text-tg-hint">
-                                    <Clock className="w-4 h-4" />
-                                    <span>{group.next_class}</span>
-                                </div>
-                            </div>
-
-                            <button
+                <AdminSection title={t('teacher.active_groups')}>
+                    {teacherData?.groups && teacherData.groups.length > 0 ? (
+                        teacherData.groups.map((group, index) => (
+                            <AdminListItem
+                                key={group.id}
+                                title={group.name}
+                                subtitle={`${group.student_count} Students • ${group.next_class}`}
+                                icon="👥"
+                                iconColor="bg-blue-500"
                                 onClick={() => setSelectedGroup(group)}
-                                className="w-full bg-tg-secondary hover:bg-tg-secondary/80 text-tg-button font-medium py-2 rounded-lg flex items-center justify-center gap-2 transition-colors"
-                            >
-                                View Details
-                                <ChevronRight className="w-4 h-4" />
-                            </button>
-                        </motion.div>
-                    ))}
-                </div>
+                                showChevron
+                                isLast={index === teacherData.groups.length - 1}
+                            />
+                        ))
+                    ) : (
+                        <div className="p-4 text-center text-[#8E8E93] bg-white dark:bg-[#1C1C1E]">
+                            {t('teacher.no_groups')}
+                        </div>
+                    )}
+                </AdminSection>
             </motion.div>
         </div>
     );

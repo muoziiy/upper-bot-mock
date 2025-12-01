@@ -211,14 +211,15 @@ export const AppDataProvider: React.FC<{ children: ReactNode }> = ({ children })
                 fetch(`${apiUrl}/students/journey`, { headers }),
             ]);
 
+            let currentDashboardData: DashboardData | null = null;
+
             if (dashboardRes.ok) {
-                const data = await dashboardRes.json();
-                setDashboardData(data);
+                currentDashboardData = await dashboardRes.json();
+                setDashboardData(currentDashboardData);
 
                 // If user is super_admin, fetch admin requests
-                if (data.user?.role === 'super_admin') {
+                if (currentDashboardData?.user?.role === 'super_admin') {
                     try {
-                        // Assuming we will create this endpoint or it will be handled
                         const requestsRes = await fetch(`${apiUrl}/admin/requests`, { headers });
                         if (requestsRes.ok) {
                             const requests = await requestsRes.json();
@@ -230,7 +231,7 @@ export const AppDataProvider: React.FC<{ children: ReactNode }> = ({ children })
                 }
 
                 // Fetch Parent Data if user is parent
-                if (data.user?.role === 'parent') {
+                if (currentDashboardData?.user?.role === 'parent') {
                     try {
                         const parentRes = await fetch(`${apiUrl}/students/parent-dashboard`, { headers });
                         if (parentRes.ok) {
@@ -243,60 +244,39 @@ export const AppDataProvider: React.FC<{ children: ReactNode }> = ({ children })
                 }
             }
 
-            // Mock Teacher Data (Injecting it always for now to support development)
-            setTeacherData({
-                groups: [
-                    { id: 'g1', name: 'Mathematics 101', student_count: 24, next_class: 'Today, 14:00' },
-                    { id: 'g2', name: 'Physics Advanced', student_count: 18, next_class: 'Tomorrow, 10:00' },
-                    { id: 'g3', name: 'Geometry Basics', student_count: 30, next_class: 'Wed, 16:00' },
-                ],
-                stats: {
-                    total_students: 72,
-                    active_groups: 3,
-                    upcoming_exams_count: 2,
-                },
-                schedule: [
-                    {
-                        id: 's1',
-                        title: 'Mathematics - Algebra',
-                        group: 'Mathematics 101',
-                        time: '09:00 - 10:30',
-                        location: 'Room 101',
-                        date: new Date() // Today
-                    },
-                    {
-                        id: 's2',
-                        title: 'Physics - Mechanics',
-                        group: 'Physics Advanced',
-                        time: '11:00 - 12:30',
-                        location: 'Lab 2',
-                        date: new Date() // Today
-                    },
-                    {
-                        id: 's3',
-                        title: 'Geometry - Triangles',
-                        group: 'Geometry Basics',
-                        time: '14:00 - 15:30',
-                        location: 'Room 305',
-                        date: new Date(new Date().setDate(new Date().getDate() + 1)) // Tomorrow
-                    }
-                ],
-                messages: [
-                    {
-                        group_id: 'g1',
-                        messages: [
-                            { id: 'm1', sender: 'Student 1', text: 'Teacher, when is the exam?', time: '10:00', is_me: false },
-                            { id: 'm2', sender: 'You', text: 'Next Monday!', time: '10:05', is_me: true },
-                        ]
-                    }
-                ]
-            });
+            // Fetch Teacher Data if user is teacher
+            if (currentDashboardData?.user?.role === 'teacher') {
+                try {
+                    const [groupsRes, scheduleRes] = await Promise.all([
+                        fetch(`${apiUrl}/teachers/groups`, { headers }),
+                        fetch(`${apiUrl}/teachers/schedule`, { headers })
+                    ]);
 
+                    if (groupsRes.ok && scheduleRes.ok) {
+                        const groups = await groupsRes.json();
+                        const schedule = await scheduleRes.json();
 
+                        // Calculate stats
+                        const totalStudents = groups.reduce((sum: number, g: any) => sum + (g.student_count || 0), 0);
+                        const upcomingExamsCount = 0; // TODO: Fetch exams count if needed
+
+                        setTeacherData({
+                            groups,
+                            stats: {
+                                total_students: totalStudents,
+                                active_groups: groups.length,
+                                upcoming_exams_count: upcomingExamsCount,
+                            },
+                            schedule,
+                            messages: []
+                        });
+                    }
+                } catch (e) {
+                    console.error('Failed to fetch teacher data', e);
+                }
+            }
 
             if (leaderboardRes.ok) {
-                // const data = await leaderboardRes.json();
-                // setLeaderboardData(data);
                 setLeaderboardData({
                     leaderboard: [
                         { rank: 1, score: 2850, users: { first_name: 'Sarah', last_name: 'J.' } },
@@ -306,7 +286,6 @@ export const AppDataProvider: React.FC<{ children: ReactNode }> = ({ children })
                     user_rank: { rank: 42, score: 1250 }
                 });
             } else {
-                // Fallback mock data if fetch fails (or just always use it for now as requested)
                 setLeaderboardData({
                     leaderboard: [
                         { rank: 1, score: 2850, users: { first_name: 'Sarah', last_name: 'J.' } },
@@ -322,8 +301,6 @@ export const AppDataProvider: React.FC<{ children: ReactNode }> = ({ children })
                 setAchievementsData(data);
             }
 
-            // Real Journey Data (if available) or empty
-            // We are now using dashboardData for lessons/subjects
             setJourneyData(null);
 
         } catch (err) {
