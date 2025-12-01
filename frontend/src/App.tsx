@@ -9,7 +9,7 @@ import './i18n'; // Initialize i18n
 const StudentDashboard = React.lazy(() => import('./pages/StudentDashboard'));
 const TeacherDashboard = React.lazy(() => import('./pages/TeacherDashboard'));
 const ParentDashboard = React.lazy(() => import('./pages/ParentDashboard'));
-const AdminDashboard = React.lazy(() => import('./pages/admin/AdminDashboard'));
+
 const AdminStats = React.lazy(() => import('./pages/admin/AdminStats'));
 const AdminGroups = React.lazy(() => import('./pages/admin/AdminGroups'));
 const AdminTeachers = React.lazy(() => import('./pages/admin/AdminTeachers'));
@@ -65,8 +65,9 @@ const AppContent = () => {
           dashboardData?.user?.role === 'student' ? <StudentDashboard /> :
             dashboardData?.user?.role === 'teacher' ? <TeacherDashboard /> :
               dashboardData?.user?.role === 'parent' ? <ParentDashboard /> :
-                dashboardData?.user?.role === 'admin' || dashboardData?.user?.role === 'super_admin' ? <AdminDashboard /> :
-                  <WaitingPage />
+                dashboardData?.user?.role === 'parent' ? <ParentDashboard /> :
+                  dashboardData?.user?.role === 'admin' || dashboardData?.user?.role === 'super_admin' ? <AdminStats /> :
+                    <WaitingPage />
     },
     { path: '/onboarding', element: <Onboarding /> },
     { path: '/waiting', element: <WaitingPage /> },

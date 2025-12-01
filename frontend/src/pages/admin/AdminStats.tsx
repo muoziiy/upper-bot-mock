@@ -37,7 +37,10 @@ const CountUp: React.FC<{ end: number; duration?: number; prefix?: string; suffi
     return <span>{prefix}{count.toLocaleString()}{suffix}</span>;
 };
 
+import { useAppData } from '../../context/AppDataContext';
+
 const AdminStats: React.FC = () => {
+    const { dashboardData } = useAppData();
     const [activeTab, setActiveTab] = useState('general');
     const [loading, setLoading] = useState(true);
     const [generalStats, setGeneralStats] = useState({
@@ -119,7 +122,7 @@ const AdminStats: React.FC = () => {
                 <SegmentedControl
                     options={[
                         { label: 'General', value: 'general' },
-                        { label: 'Financial', value: 'financial' },
+                        ...(dashboardData?.user.role !== 'super_admin' ? [{ label: 'Financial', value: 'financial' }] : []),
                     ]}
                     value={activeTab}
                     onChange={setActiveTab}

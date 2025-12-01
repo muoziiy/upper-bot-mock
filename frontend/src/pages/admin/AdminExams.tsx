@@ -117,7 +117,7 @@ const AdminExams: React.FC = () => {
                                         <span>{exam.type === 'offline' ? 'Offline' : 'Online'}</span>
                                         <span>•</span>
                                         <span>{exam.duration_minutes} min</span>
-                                        {exam.questions?.[0]?.count > 0 && (
+                                        {exam.questions && exam.questions.length > 0 && exam.questions[0]?.count > 0 && (
                                             <>
                                                 <span>•</span>
                                                 <span>{exam.questions[0].count} Qs</span>

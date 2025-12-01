@@ -44,9 +44,15 @@ const BottomNav: React.FC = () => {
         { name: 'Actions', icon: Zap, path: '/admin/actions' },
     ];
 
+    const superAdminTabs = [
+        { name: 'Stats', icon: BarChart2, path: '/admin/stats' },
+        { name: 'Actions', icon: Zap, path: '/admin/actions' },
+    ];
+
     const tabs = role === 'teacher' ? teacherTabs
         : role === 'parent' ? parentTabs
-            : (role === 'admin' || role === 'super_admin' ? adminTabs : studentTabs);
+            : role === 'super_admin' ? superAdminTabs
+                : role === 'admin' ? adminTabs : studentTabs;
 
     return (
         <div className="fixed bottom-4 left-4 right-4 z-50">
