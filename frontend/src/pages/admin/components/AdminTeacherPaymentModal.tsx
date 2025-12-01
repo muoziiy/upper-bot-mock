@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Trash2, Plus, Check, Clock, X as XIcon } from 'lucide-react';
+import { Trash2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTelegram } from '../../../context/TelegramContext';
+import { AdminSection } from './AdminSection';
+import { AdminListItem } from './AdminListItem';
 
 interface Payment {
     id: string;
     amount: number;
     payment_date: string;
     description?: string;
-    status?: 'paid' | 'pending' | 'unpaid'; // Added status to interface
+    status?: 'paid' | 'pending' | 'unpaid';
 }
 
 interface AdminTeacherPaymentModalProps {
@@ -60,7 +62,6 @@ const AdminTeacherPaymentModal: React.FC<AdminTeacherPaymentModalProps> = ({ isO
             const res = await fetch(`${import.meta.env.VITE_API_URL}/admin/teachers/${teacherId}/payments`);
             if (res.ok) {
                 const data = await res.json();
-                // Ensure status exists, default to 'paid' if missing for old records
                 const formattedData = data.map((p: any) => ({ ...p, status: p.status || 'paid' }));
                 setPayments(formattedData);
             }
@@ -102,7 +103,7 @@ const AdminTeacherPaymentModal: React.FC<AdminTeacherPaymentModalProps> = ({ isO
                     amount: parseFloat(amount),
                     payment_date: date,
                     description,
-                    status: 'paid' // Default to paid for admin payouts
+                    status: 'paid'
                 })
             });
 
@@ -114,7 +115,6 @@ const AdminTeacherPaymentModal: React.FC<AdminTeacherPaymentModalProps> = ({ isO
                 });
                 fetchPayments();
                 setView('history');
-                // Reset form
                 setAmount('');
                 setDescription('');
             } else {
@@ -128,15 +128,9 @@ const AdminTeacherPaymentModal: React.FC<AdminTeacherPaymentModalProps> = ({ isO
     };
 
     const getStatusIcon = (status: string) => {
-        if (status === 'paid') return <Check className="w-4 h-4 text-green-500" />;
-        if (status === 'pending') return <Clock className="w-4 h-4 text-yellow-500" />;
-        return <XIcon className="w-4 h-4 text-red-500" />;
-    };
-
-    const getStatusBgColor = (status: string) => {
-        if (status === 'paid') return 'bg-green-500/10';
-        if (status === 'pending') return 'bg-yellow-500/10';
-        return 'bg-red-500/10';
+        if (status === 'paid') return '✅';
+        if (status === 'pending') return '⏳';
+        return '❌';
     };
 
     if (!isOpen) return null;
@@ -148,10 +142,13 @@ const AdminTeacherPaymentModal: React.FC<AdminTeacherPaymentModalProps> = ({ isO
                 <h2 className="text-lg font-semibold text-black dark:text-white">
                     {view === 'add' ? 'Add Payout' : `Payouts - ${teacherName}`}
                 </h2>
+                <button onClick={onClose} className="text-blue-500 font-medium">
+                    Done
+                </button>
             </div>
 
             {/* Content */}
-            <div className="flex-1 overflow-y-auto p-4">
+            <div className="flex-1 overflow-y-auto pt-4">
                 <AnimatePresence mode="wait">
                     {view === 'history' ? (
                         <motion.div
@@ -159,68 +156,46 @@ const AdminTeacherPaymentModal: React.FC<AdminTeacherPaymentModalProps> = ({ isO
                             initial={{ opacity: 0, x: -20 }}
                             animate={{ opacity: 1, x: 0 }}
                             exit={{ opacity: 0, x: 20 }}
-                            className="space-y-4"
                         >
-                            {/* Add Button */}
-                            <button
-                                onClick={() => setView('add')}
-                                className="w-full py-3 rounded-xl bg-blue-500 text-white font-semibold flex items-center justify-center gap-2 active:scale-95 transition-transform shadow-lg shadow-blue-500/20"
-                            >
-                                <Plus size={20} />
-                                Add Payout
-                            </button>
+                            <AdminSection>
+                                <AdminListItem
+                                    title="Add Payout"
+                                    icon="➕"
+                                    iconColor="bg-blue-500"
+                                    onClick={() => setView('add')}
+                                    isLast
+                                />
+                            </AdminSection>
 
-                            {/* List */}
-                            <div className="bg-white dark:bg-[#1C1C1E] rounded-xl overflow-hidden shadow-sm">
+                            <AdminSection title="History">
                                 {payments.length > 0 ? (
                                     payments.map((payment, index) => (
-                                        <motion.div
+                                        <AdminListItem
                                             key={payment.id}
-                                            initial={{ opacity: 0, y: 20 }}
-                                            animate={{ opacity: 1, y: 0 }}
-                                            transition={{ delay: index * 0.05 }}
-                                            className={`p-4 flex items-center justify-between ${index !== payments.length - 1 ? 'border-b border-[#C6C6C8]/50 dark:border-[#38383A]/50' : ''}`}
-                                        >
-                                            <div>
-                                                <h3 className="font-medium text-black dark:text-white">
-                                                    {new Date(payment.payment_date).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
-                                                </h3>
-                                                <div className="flex items-center gap-1.5 mt-1">
-                                                    {getStatusIcon(payment.status || 'paid')}
-                                                    <span className="text-xs text-[#8E8E93]">
-                                                        {payment.status === 'paid' ? `Paid on ${new Date(payment.payment_date).toLocaleDateString()}` : payment.status}
-                                                    </span>
-                                                </div>
-                                                {payment.description && (
-                                                    <div className="text-xs text-[#8E8E93] mt-1 italic">
-                                                        {payment.description}
-                                                    </div>
-                                                )}
-                                            </div>
-                                            <div className="flex items-center gap-3">
-                                                <div className="text-right">
-                                                    <span className="text-lg font-bold block text-black dark:text-white">
-                                                        {payment.amount.toLocaleString()} UZS
-                                                    </span>
-                                                    <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${getStatusBgColor(payment.status || 'paid')} text-black dark:text-white`}>
-                                                        {(payment.status || 'paid').toUpperCase()}
-                                                    </span>
-                                                </div>
+                                            title={`${payment.amount.toLocaleString()} UZS`}
+                                            subtitle={`${new Date(payment.payment_date).toLocaleDateString()} • ${payment.status || 'paid'}`}
+                                            icon={getStatusIcon(payment.status || 'paid')}
+                                            iconColor="bg-transparent"
+                                            rightElement={
                                                 <button
-                                                    onClick={() => handleDelete(payment.id)}
-                                                    className="p-2 text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleDelete(payment.id);
+                                                    }}
+                                                    className="p-2 text-red-500 active:opacity-70"
                                                 >
                                                     <Trash2 size={20} />
                                                 </button>
-                                            </div>
-                                        </motion.div>
+                                            }
+                                            isLast={index === payments.length - 1}
+                                        />
                                     ))
                                 ) : (
-                                    <div className="text-center py-12 text-[#8E8E93]">
+                                    <div className="p-4 text-center text-[#8E8E93] bg-white dark:bg-[#1C1C1E]">
                                         No payout history found.
                                     </div>
                                 )}
-                            </div>
+                            </AdminSection>
                         </motion.div>
                     ) : (
                         <motion.div
@@ -228,51 +203,43 @@ const AdminTeacherPaymentModal: React.FC<AdminTeacherPaymentModalProps> = ({ isO
                             initial={{ opacity: 0, x: 20 }}
                             animate={{ opacity: 1, x: 0 }}
                             exit={{ opacity: 0, x: -20 }}
-                            className="space-y-6"
                         >
-                            {/* Date */}
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium text-[#8E8E93] ml-1">Date</label>
-                                <div className="relative">
-                                    <Calendar className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#8E8E93]" size={18} />
+                            <AdminSection title="Payout Details">
+                                <div className="px-4 py-3 bg-white dark:bg-[#1C1C1E] border-b border-[#C6C6C8] dark:border-[#38383A] flex items-center justify-between">
+                                    <span className="text-[17px] text-black dark:text-white">Date</span>
                                     <input
                                         type="date"
                                         value={date}
                                         onChange={(e) => setDate(e.target.value)}
-                                        className="w-full bg-white dark:bg-[#1C1C1E] text-black dark:text-white pl-11 p-3.5 rounded-xl border-none outline-none focus:ring-2 focus:ring-blue-500/20"
+                                        className="bg-transparent text-right text-[17px] text-[#8E8E93] outline-none"
                                     />
                                 </div>
-                            </div>
+                                <div className="px-4 py-3 bg-white dark:bg-[#1C1C1E] border-b border-[#C6C6C8] dark:border-[#38383A] flex items-center justify-between">
+                                    <span className="text-[17px] text-black dark:text-white">Amount</span>
+                                    <input
+                                        type="number"
+                                        value={amount}
+                                        onChange={(e) => setAmount(e.target.value)}
+                                        placeholder="0"
+                                        className="bg-transparent text-right text-[17px] text-blue-500 outline-none w-32"
+                                    />
+                                </div>
+                                <div className="px-4 py-3 bg-white dark:bg-[#1C1C1E] flex flex-col gap-2">
+                                    <span className="text-[17px] text-black dark:text-white">Note</span>
+                                    <textarea
+                                        value={description}
+                                        onChange={(e) => setDescription(e.target.value)}
+                                        placeholder="Optional description..."
+                                        className="w-full bg-transparent text-[17px] text-black dark:text-white outline-none resize-none h-20 placeholder:text-[#8E8E93]"
+                                    />
+                                </div>
+                            </AdminSection>
 
-                            {/* Amount */}
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium text-[#8E8E93] ml-1">Amount (UZS)</label>
-                                <input
-                                    type="number"
-                                    value={amount}
-                                    onChange={(e) => setAmount(e.target.value)}
-                                    placeholder="0"
-                                    className="w-full bg-white dark:bg-[#1C1C1E] text-black dark:text-white p-3.5 rounded-xl border-none outline-none focus:ring-2 focus:ring-blue-500/20 text-lg font-semibold"
-                                />
-                            </div>
-
-                            {/* Description */}
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium text-[#8E8E93] ml-1">Note (Optional)</label>
-                                <textarea
-                                    value={description}
-                                    onChange={(e) => setDescription(e.target.value)}
-                                    placeholder="e.g. Salary for October"
-                                    className="w-full bg-white dark:bg-[#1C1C1E] text-black dark:text-white p-3.5 rounded-xl border-none outline-none focus:ring-2 focus:ring-blue-500/20 resize-none h-24"
-                                />
-                            </div>
-
-                            {/* Save Button */}
-                            <div className="pt-4">
+                            <div className="px-4 mt-4">
                                 <button
                                     onClick={handleSave}
                                     disabled={loading}
-                                    className="w-full py-3.5 rounded-xl bg-blue-500 text-white font-semibold active:scale-[0.98] transition-all shadow-lg shadow-blue-500/20"
+                                    className="w-full py-3.5 rounded-xl bg-blue-500 text-white font-semibold active:scale-[0.98] transition-all"
                                 >
                                     {loading ? 'Saving...' : 'Save Payout'}
                                 </button>

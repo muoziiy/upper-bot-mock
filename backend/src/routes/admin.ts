@@ -45,8 +45,9 @@ router.get('/students', async (req, res) => {
                         id,
                         name,
                         price,
-                        users (first_name, surname)
+                        users:users!groups_teacher_id_fkey (first_name, surname)
                     )
+                )
                 )
             `)
             .eq('role', 'student')
@@ -174,7 +175,7 @@ router.get('/students/:id', async (req, res) => {
                         name,
                         price,
                         teacher_id,
-                        users (first_name, surname)
+                        users:users!groups_teacher_id_fkey (first_name, surname)
                     )
                 )
             `)
@@ -993,6 +994,34 @@ router.get('/teachers/:id', async (req, res) => {
         });
     } catch (error) {
         console.error('Error fetching teacher details:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Update Teacher Details
+router.put('/teachers/:id', async (req, res) => {
+    const { id } = req.params;
+    const { bio, first_name, surname, phone_number } = req.body;
+
+    try {
+        const updates: any = {};
+        if (bio !== undefined) updates.bio = bio;
+        if (first_name !== undefined) updates.first_name = first_name;
+        if (surname !== undefined) updates.surname = surname;
+        if (phone_number !== undefined) updates.phone_number = phone_number;
+
+        const { data, error } = await supabase
+            .from('users')
+            .update(updates)
+            .eq('id', id)
+            .select()
+            .single();
+
+        if (error) throw error;
+
+        res.json(data);
+    } catch (error) {
+        console.error('Error updating teacher details:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
 });

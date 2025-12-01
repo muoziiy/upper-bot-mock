@@ -135,68 +135,6 @@ const AdminCenterSettings: React.FC = () => {
         <div className="page-content pt-4 pb-20 bg-[#F2F2F7] dark:bg-[#000000] min-h-screen">
             <h1 className="text-3xl font-bold mb-4 px-4 text-black dark:text-white">Center Settings</h1>
 
-            <AdminSection title="Support & Contact Info">
-                <div className="p-4 space-y-3 bg-white dark:bg-[#1C1C1E]">
-                    <div>
-                        <label className="text-xs text-[#8E8E93] mb-1 block">Admin Profile Link (Telegram)</label>
-                        <input
-                            type="text"
-                            value={supportInfo.admin_profile_link}
-                            onChange={(e) => setSupportInfo({ ...supportInfo, admin_profile_link: e.target.value })}
-                            placeholder="https://t.me/username"
-                            className="w-full bg-[#E3E3E8] dark:bg-[#2C2C2E] text-black dark:text-white p-2 rounded-[10px] border-none focus:ring-2 focus:ring-blue-500/50 focus:outline-none placeholder:text-[#8E8E93]"
-                        />
-                    </div>
-                    <div>
-                        <label className="text-xs text-[#8E8E93] mb-1 block">Admin Phone Number</label>
-                        <input
-                            type="text"
-                            value={supportInfo.admin_phone}
-                            onChange={(e) => setSupportInfo({ ...supportInfo, admin_phone: e.target.value })}
-                            placeholder="+998 90 123 45 67"
-                            className="w-full bg-[#E3E3E8] dark:bg-[#2C2C2E] text-black dark:text-white p-2 rounded-[10px] border-none focus:ring-2 focus:ring-blue-500/50 focus:outline-none placeholder:text-[#8E8E93]"
-                        />
-                    </div>
-                    <div>
-                        <label className="text-xs text-[#8E8E93] mb-1 block">Working Hours</label>
-                        <input
-                            type="text"
-                            value={supportInfo.working_hours}
-                            onChange={(e) => setSupportInfo({ ...supportInfo, working_hours: e.target.value })}
-                            placeholder="Mon-Sat, 9:00 - 18:00"
-                            className="w-full bg-[#E3E3E8] dark:bg-[#2C2C2E] text-black dark:text-white p-2 rounded-[10px] border-none focus:ring-2 focus:ring-blue-500/50 focus:outline-none placeholder:text-[#8E8E93]"
-                        />
-                    </div>
-                    <div>
-                        <label className="text-xs text-[#8E8E93] mb-1 block">Location Text</label>
-                        <input
-                            type="text"
-                            value={supportInfo.location_text}
-                            onChange={(e) => setSupportInfo({ ...supportInfo, location_text: e.target.value })}
-                            placeholder="Tashkent, Chilonzor..."
-                            className="w-full bg-[#E3E3E8] dark:bg-[#2C2C2E] text-black dark:text-white p-2 rounded-[10px] border-none focus:ring-2 focus:ring-blue-500/50 focus:outline-none placeholder:text-[#8E8E93]"
-                        />
-                    </div>
-                    <div>
-                        <label className="text-xs text-[#8E8E93] mb-1 block">Location Link (Google Maps)</label>
-                        <input
-                            type="text"
-                            value={supportInfo.location_link}
-                            onChange={(e) => setSupportInfo({ ...supportInfo, location_link: e.target.value })}
-                            placeholder="https://maps.google.com/..."
-                            className="w-full bg-[#E3E3E8] dark:bg-[#2C2C2E] text-black dark:text-white p-2 rounded-[10px] border-none focus:ring-2 focus:ring-blue-500/50 focus:outline-none placeholder:text-[#8E8E93]"
-                        />
-                    </div>
-                    <button
-                        onClick={handleSaveSupportInfo}
-                        disabled={loading}
-                        className="w-full bg-blue-500 text-white py-2 rounded-[10px] font-medium mt-2 active:opacity-80 disabled:opacity-50 shadow-lg shadow-blue-500/20"
-                    >
-                        {loading ? 'Saving...' : 'Save Support Info'}
-                    </button>
-                </div>
-            </AdminSection>
-
             <AdminSection title="Global Payment System">
                 <div className="px-4 mb-4 space-y-3">
                     <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-[10px] p-3 flex gap-3 items-start">
@@ -277,6 +215,68 @@ const AdminCenterSettings: React.FC = () => {
                     }
                     isLast
                 />
+            </AdminSection>
+
+            <AdminSection title="Support & Contact Info">
+                <div className="p-4 space-y-3 bg-white dark:bg-[#1C1C1E]">
+                    <div>
+                        <label className="text-xs text-[#8E8E93] mb-1 block">Admin Profile Link (Telegram)</label>
+                        <input
+                            type="text"
+                            value={supportInfo.admin_profile_link}
+                            onChange={(e) => setSupportInfo({ ...supportInfo, admin_profile_link: e.target.value })}
+                            placeholder="https://t.me/username"
+                            className="w-full bg-[#E3E3E8] dark:bg-[#2C2C2E] text-black dark:text-white p-2 rounded-[10px] border-none focus:ring-2 focus:ring-blue-500/50 focus:outline-none placeholder:text-[#8E8E93]"
+                        />
+                    </div>
+                    <div>
+                        <label className="text-xs text-[#8E8E93] mb-1 block">Admin Phone Number</label>
+                        <input
+                            type="text"
+                            value={supportInfo.admin_phone}
+                            onChange={(e) => setSupportInfo({ ...supportInfo, admin_phone: e.target.value })}
+                            placeholder="+998 90 123 45 67"
+                            className="w-full bg-[#E3E3E8] dark:bg-[#2C2C2E] text-black dark:text-white p-2 rounded-[10px] border-none focus:ring-2 focus:ring-blue-500/50 focus:outline-none placeholder:text-[#8E8E93]"
+                        />
+                    </div>
+                    <div>
+                        <label className="text-xs text-[#8E8E93] mb-1 block">Working Hours</label>
+                        <input
+                            type="text"
+                            value={supportInfo.working_hours}
+                            onChange={(e) => setSupportInfo({ ...supportInfo, working_hours: e.target.value })}
+                            placeholder="Mon-Sat, 9:00 - 18:00"
+                            className="w-full bg-[#E3E3E8] dark:bg-[#2C2C2E] text-black dark:text-white p-2 rounded-[10px] border-none focus:ring-2 focus:ring-blue-500/50 focus:outline-none placeholder:text-[#8E8E93]"
+                        />
+                    </div>
+                    <div>
+                        <label className="text-xs text-[#8E8E93] mb-1 block">Location Text</label>
+                        <input
+                            type="text"
+                            value={supportInfo.location_text}
+                            onChange={(e) => setSupportInfo({ ...supportInfo, location_text: e.target.value })}
+                            placeholder="Tashkent, Chilonzor..."
+                            className="w-full bg-[#E3E3E8] dark:bg-[#2C2C2E] text-black dark:text-white p-2 rounded-[10px] border-none focus:ring-2 focus:ring-blue-500/50 focus:outline-none placeholder:text-[#8E8E93]"
+                        />
+                    </div>
+                    <div>
+                        <label className="text-xs text-[#8E8E93] mb-1 block">Location Link (Google Maps)</label>
+                        <input
+                            type="text"
+                            value={supportInfo.location_link}
+                            onChange={(e) => setSupportInfo({ ...supportInfo, location_link: e.target.value })}
+                            placeholder="https://maps.google.com/..."
+                            className="w-full bg-[#E3E3E8] dark:bg-[#2C2C2E] text-black dark:text-white p-2 rounded-[10px] border-none focus:ring-2 focus:ring-blue-500/50 focus:outline-none placeholder:text-[#8E8E93]"
+                        />
+                    </div>
+                    <button
+                        onClick={handleSaveSupportInfo}
+                        disabled={loading}
+                        className="w-full bg-blue-500 text-white py-2 rounded-[10px] font-medium mt-2 active:opacity-80 disabled:opacity-50 shadow-lg shadow-blue-500/20"
+                    >
+                        {loading ? 'Saving...' : 'Save Support Info'}
+                    </button>
+                </div>
             </AdminSection>
         </div>
     );
