@@ -1,19 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
-import { Plus, Search } from 'lucide-react';
-import { supabase } from '../../lib/supabase';
-
-interface Exam {
-    id: string;
-    title: string;
-    description: string;
-    duration_minutes: number;
-    created_at: string;
-    is_published: boolean;
-    type: 'online' | 'offline';
-    location?: string;
-    questions: any[];
+duration_minutes: number;
+created_at: string;
+is_published: boolean;
+type: 'online' | 'offline';
+location ?: string;
+questions: any[];
 }
 
 const AdminExams: React.FC = () => {
@@ -80,8 +70,8 @@ const AdminExams: React.FC = () => {
                 <button
                     onClick={() => setActiveTab('upcoming')}
                     className={`flex-1 py-1.5 text-sm font-medium rounded-md transition-all ${activeTab === 'upcoming'
-                            ? 'bg-white dark:bg-gray-700 shadow-sm'
-                            : 'text-gray-500 hover:text-gray-700'
+                        ? 'bg-white dark:bg-gray-700 shadow-sm'
+                        : 'text-gray-500 hover:text-gray-700'
                         }`}
                 >
                     📅 Upcoming
@@ -89,8 +79,8 @@ const AdminExams: React.FC = () => {
                 <button
                     onClick={() => setActiveTab('passed')}
                     className={`flex-1 py-1.5 text-sm font-medium rounded-md transition-all ${activeTab === 'passed'
-                            ? 'bg-white dark:bg-gray-700 shadow-sm'
-                            : 'text-gray-500 hover:text-gray-700'
+                        ? 'bg-white dark:bg-gray-700 shadow-sm'
+                        : 'text-gray-500 hover:text-gray-700'
                         }`}
                 >
                     ✅ Passed
