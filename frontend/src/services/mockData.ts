@@ -682,5 +682,61 @@ export const mockService = {
         await new Promise(resolve => setTimeout(resolve, 300));
         console.log('Mock update student groups:', studentId, data);
         return { success: true };
+    },
+
+    // --- Added to fix build errors ---
+
+    getAdminTeachers: async () => {
+        await new Promise(resolve => setTimeout(resolve, 300));
+        return MOCK_TEACHERS_LIST;
+    },
+
+    getSubjects: async () => {
+        await new Promise(resolve => setTimeout(resolve, 300));
+        return MOCK_SUBJECTS_LIST;
+    },
+
+    getTeacherDetails: async (id: string) => {
+        await new Promise(resolve => setTimeout(resolve, 300));
+        const teacher = MOCK_TEACHERS_LIST.find(t => t.id === id) || MOCK_TEACHERS_LIST[0];
+        // Mock groups for this teacher
+        const groups = [
+            { id: 'g1', name: 'Math 101', price: 500000, student_count: 15, schedule: 'Mon, Wed 10:00' },
+            { id: 'g2', name: 'Math 102', price: 600000, student_count: 10, schedule: 'Tue, Thu 14:00' }
+        ];
+        return { teacher, groups };
     }
 };
+
+// --- Added Missing Data Lists ---
+
+export let MOCK_TEACHERS_LIST = [
+    {
+        id: 'teacher_1',
+        first_name: 'Azam',
+        surname: 'Qahramoniy',
+        username: 'azam_q',
+        role: 'teacher',
+        phone_number: '+998901234567',
+        bio: 'Physics teacher with 10 years of experience.',
+        telegram_id: 123456789,
+        emoji: '👨‍🏫'
+    },
+    {
+        id: 'teacher_2',
+        first_name: 'Malika',
+        surname: 'Karimova',
+        username: 'malika_k',
+        role: 'teacher',
+        phone_number: '+998909876543',
+        bio: 'English language expert.',
+        telegram_id: 987654321,
+        emoji: '👩‍🏫'
+    }
+];
+
+export let MOCK_SUBJECTS_LIST = [
+    { id: 'sub_1', name: 'English' },
+    { id: 'sub_2', name: 'Physics' },
+    { id: 'sub_3', name: 'Mathematics' }
+];
