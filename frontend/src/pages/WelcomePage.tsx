@@ -4,7 +4,7 @@ import { useTelegram } from '../context/TelegramContext';
 import { MOCK_USERS } from '../services/mockData';
 import { GraduationCap, Users, ShieldCheck, UserCircle } from 'lucide-react';
 
-import logo from '../assets/logo.png';
+
 
 const WelcomePage: React.FC = () => {
     const { setUser } = useTelegram();
@@ -20,7 +20,7 @@ const WelcomePage: React.FC = () => {
         <div className="min-h-screen bg-tg-secondary p-6 flex flex-col items-center justify-center text-tg-text">
             <div className="w-full max-w-md space-y-8">
                 <div className="text-center space-y-2 flex flex-col items-center">
-                    <img src={logo} alt="Logo" className="w-24 h-24 mb-4 object-contain" />
+                    {/* Logo removed as per request */}
                     <h1 className="text-3xl font-bold tracking-tight">Education Center</h1>
                     <p className="text-tg-hint text-lg">Select a role to explore the demo</p>
                 </div>
